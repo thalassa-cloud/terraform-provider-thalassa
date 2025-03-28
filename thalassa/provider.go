@@ -32,8 +32,12 @@ func Provider() *schema.Provider {
 				DefaultFunc: schema.EnvDefaultFunc("THALASSA_ORGANISATION", ""),
 			},
 		},
-		ResourcesMap:         map[string]*schema.Resource{},
-		DataSourcesMap:       map[string]*schema.Resource{},
+		ResourcesMap: map[string]*schema.Resource{},
+		DataSourcesMap: map[string]*schema.Resource{
+			"thalassa_organisation": dataSourceOrganisations(),
+			"thalassa_region":       dataSourceRegion(),
+			"thalassa_regions":      dataSourceRegions(),
+		},
 		ConfigureContextFunc: providerConfigure,
 	}
 }
