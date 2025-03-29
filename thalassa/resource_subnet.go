@@ -7,6 +7,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	validate "github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	tcclient "github.com/thalassa-cloud/client-go/pkg/client"
 
 	iaas "github.com/thalassa-cloud/client-go/pkg/iaas"
@@ -28,7 +29,7 @@ func resourceSubnet() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Organisation of the Subnet",
+				Description: "Reference to the Organisation of the Subnet. If not provided, the organisation of the (Terraform) provider will be used.",
 			},
 			"vpc": {
 				Type:        schema.TypeString,
@@ -37,25 +38,29 @@ func resourceSubnet() *schema.Resource {
 				Description: "VPC of the Subnet",
 			},
 			"name": {
-				Type:        schema.TypeString,
-				Required:    true,
-				ForceNew:    true,
-				Description: "Name of the Subnet",
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validate.StringLenBetween(1, 62),
+				ForceNew:     true,
+				Description:  "Name of the Subnet",
 			},
 			"slug": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Slug of the Subnet",
 			},
 			"cidr": {
-				Type:        schema.TypeString,
-				Required:    true,
-				ForceNew:    true,
-				Description: "CIDR of the Subnet",
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     true,
+				ValidateFunc: validate.IsCIDR,
+				Description:  "CIDR of the Subnet",
 			},
 			"description": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "A human readable description about the subnet",
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validate.StringLenBetween(0, 255),
+				Description:  "A human readable description about the subnet",
 			},
 			"labels": {
 				Type:        schema.TypeMap,

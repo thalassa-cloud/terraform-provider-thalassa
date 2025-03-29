@@ -7,6 +7,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	validate "github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	tcclient "github.com/thalassa-cloud/client-go/pkg/client"
 
 	iaas "github.com/thalassa-cloud/client-go/pkg/iaas"
@@ -28,7 +29,7 @@ func resourceRouteTable() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Organisation of the RouteTable",
+				Description: "Reference to the Organisation of the RouteTable. If not provided, the organisation of the (Terraform) provider will be used.",
 			},
 			"vpc": {
 				Type:        schema.TypeString,
@@ -37,18 +38,21 @@ func resourceRouteTable() *schema.Resource {
 				Description: "VPC of the RouteTable",
 			},
 			"name": {
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "Name of the RouteTable",
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     true,
+				ValidateFunc: validate.StringLenBetween(1, 62),
+				Description:  "Name of the RouteTable",
 			},
 			"slug": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
 			"description": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "A human readable description about the routeTable",
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validate.StringLenBetween(0, 255),
+				Description:  "A human readable description about the routeTable",
 			},
 			"labels": {
 				Type:        schema.TypeMap,

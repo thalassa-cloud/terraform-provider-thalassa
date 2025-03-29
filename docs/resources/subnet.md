@@ -19,7 +19,7 @@ Create an subnet
 
 - `cidr` (String) CIDR of the Subnet
 - `name` (String) Name of the Subnet
-- `organisation` (String) Organisation of the Subnet
+- `organisation` (String) Reference to the Organisation of the Subnet. If not provided, the organisation of the (Terraform) provider will be used.
 - `vpc` (String) VPC of the Subnet
 - `zone` (String) Zone of the Subnet
 
@@ -33,4 +33,4 @@ Create an subnet
 ### Read-Only
 
 - `id` (String) The ID of this resource.
-- `slug` (String)
+- `slug` (String) Slug of the Subnet

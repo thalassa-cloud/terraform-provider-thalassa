@@ -6,6 +6,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	validate "github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	tcclient "github.com/thalassa-cloud/client-go/pkg/client"
 
 	iaas "github.com/thalassa-cloud/client-go/pkg/iaas"
@@ -27,12 +28,14 @@ func resourceVpc() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Organisation of the Vpc",
+				Description: "Reference to the Organisation of the Vpc. If not provided, the organisation of the (Terraform) provider will be used.",
 			},
 			"name": {
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "Name of the Vpc",
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     true,
+				ValidateFunc: validate.StringLenBetween(1, 62),
+				Description:  "Name of the Vpc",
 			},
 			"slug": {
 				Type:     schema.TypeString,
@@ -43,13 +46,15 @@ func resourceVpc() *schema.Resource {
 				Required:    true,
 				Description: "List of CIDRs for the Vpc",
 				Elem: &schema.Schema{
-					Type: schema.TypeString,
+					Type:         schema.TypeString,
+					ValidateFunc: validate.IsCIDR,
 				},
 			},
 			"description": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "A human readable description about the vpc",
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validate.StringLenBetween(0, 255),
+				Description:  "A human readable description about the vpc",
 			},
 			"region": {
 				Type:        schema.TypeString,

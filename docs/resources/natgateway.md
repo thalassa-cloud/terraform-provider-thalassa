@@ -18,7 +18,7 @@ Create an natGateway
 ### Required
 
 - `name` (String) Name of the NatGateway
-- `organisation` (String) Organisation of the NatGateway
+- `organisation` (String) Reference to the Organisation of the NatGateway. If not provided, the organisation of the (Terraform) provider will be used.
 - `subnet` (String) Subnet of the NatGateway
 - `vpc` (String) VPC of the NatGateway
 

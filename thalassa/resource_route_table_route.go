@@ -6,6 +6,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	validate "github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	tcclient "github.com/thalassa-cloud/client-go/pkg/client"
 
 	iaas "github.com/thalassa-cloud/client-go/pkg/iaas"
@@ -35,14 +36,16 @@ func resourceRouteTableRoute() *schema.Resource {
 				Description: "RouteTable of the Route",
 			},
 			"destination_cidr": {
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "Destination CIDR of the Route",
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validate.IsCIDR,
+				Description:  "Destination CIDR of the Route",
 			},
 			"notes": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "Notes for the Route",
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validate.StringLenBetween(0, 255),
+				Description:  "Notes for the Route",
 			},
 			"target_gateway": {
 				Type:        schema.TypeString,
@@ -55,9 +58,10 @@ func resourceRouteTableRoute() *schema.Resource {
 				Description: "Target NAT Gateway of the Route",
 			},
 			"gateway_address": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "Gateway Address of the Route",
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validate.IsIPAddress,
+				Description:  "Gateway Address of the Route",
 			},
 		},
 		Importer: &schema.ResourceImporter{
@@ -160,13 +164,14 @@ func resourceRouteTableRouteDelete(ctx context.Context, d *schema.ResourceData, 
 	if err != nil {
 		return diag.FromErr(err)
 	}
-
 	id := d.Get("id").(string)
 	routeTableIdentity := d.Get("route_table").(string)
 
-	_, err = client.IaaS().DeleteRouteTableRoute(ctx, routeTableIdentity, id)
-	if err != nil && !tcclient.IsNotFound(err) {
-		return diag.FromErr(fmt.Errorf("error deleting routeTable: %s", err))
+	err = client.IaaS().DeleteRouteTableRoute(ctx, routeTableIdentity, id)
+	if err != nil {
+		if !tcclient.IsNotFound(err) {
+			return diag.FromErr(fmt.Errorf("error deleting routeTable: %s", err))
+		}
 	}
 	d.SetId("")
 	return nil

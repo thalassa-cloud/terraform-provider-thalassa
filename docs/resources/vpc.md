@@ -19,7 +19,7 @@ Create an vpc
 
 - `cidrs` (List of String) List of CIDRs for the Vpc
 - `name` (String) Name of the Vpc
-- `organisation` (String) Organisation of the Vpc
+- `organisation` (String) Reference to the Organisation of the Vpc. If not provided, the organisation of the (Terraform) provider will be used.
 - `region` (String) Region of the Vpc. Provide the identity of the region. Can only be set on creation.
 
 ### Optional

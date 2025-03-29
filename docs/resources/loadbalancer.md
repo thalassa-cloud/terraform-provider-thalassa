@@ -18,7 +18,7 @@ Create an loadbalancer
 ### Required
 
 - `name` (String) Name of the Loadbalancer
-- `organisation` (String) Organisation of the Loadbalancer
+- `organisation` (String) Reference to the Organisation of the Loadbalancer. If not provided, the organisation of the (Terraform) provider will be used.
 - `subnet` (String) Subnet of the Loadbalancer
 
 ### Optional

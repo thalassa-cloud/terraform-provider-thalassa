@@ -6,6 +6,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	validate "github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	tcclient "github.com/thalassa-cloud/client-go/pkg/client"
 
 	iaas "github.com/thalassa-cloud/client-go/pkg/iaas"
@@ -27,7 +28,7 @@ func resourceNatGateway() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Organisation of the NatGateway",
+				Description: "Reference to the Organisation of the NatGateway. If not provided, the organisation of the (Terraform) provider will be used.",
 			},
 			"vpc": {
 				Type:        schema.TypeString,
@@ -42,18 +43,21 @@ func resourceNatGateway() *schema.Resource {
 				Description: "Subnet of the NatGateway",
 			},
 			"name": {
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "Name of the NatGateway",
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validate.StringLenBetween(1, 62),
+				ForceNew:     true,
+				Description:  "Name of the NatGateway",
 			},
 			"slug": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
 			"description": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "A human readable description about the natGateway",
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validate.StringLenBetween(0, 255),
+				Description:  "A human readable description about the natGateway",
 			},
 			"labels": {
 				Type:        schema.TypeMap,

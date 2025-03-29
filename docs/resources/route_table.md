@@ -18,7 +18,7 @@ Create an routeTable
 ### Required
 
 - `name` (String) Name of the RouteTable
-- `organisation` (String) Organisation of the RouteTable
+- `organisation` (String) Reference to the Organisation of the RouteTable. If not provided, the organisation of the (Terraform) provider will be used.
 - `vpc` (String) VPC of the RouteTable
 
 ### Optional
