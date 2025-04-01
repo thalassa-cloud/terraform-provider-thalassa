@@ -100,9 +100,9 @@ func resourceRouteTableRouteRead(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 
-	slug := d.Get("id").(string)
+	id := d.Get("id").(string)
 	routeTable := d.Get("route_table").(string)
-	route, err := client.IaaS().GetRouteTableRoute(ctx, routeTable, slug)
+	route, err := client.IaaS().GetRouteTableRoute(ctx, routeTable, id)
 	if err != nil && !tcclient.IsNotFound(err) {
 		return diag.FromErr(fmt.Errorf("error getting route: %s", err))
 	}

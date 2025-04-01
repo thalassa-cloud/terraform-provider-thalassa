@@ -3,6 +3,7 @@ package thalassa
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -74,6 +75,21 @@ func resourceNatGateway() *schema.Resource {
 				Computed:    true,
 				Description: "Endpoint IP of the NatGateway",
 			},
+			"status": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Status of the NatGateway",
+			},
+			"v4_ip": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "V4 IP of the NatGateway",
+			},
+			"v6_ip": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "V6 IP of the NatGateway",
+			},
 		},
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -104,6 +120,22 @@ func resourceNatGatewayCreate(ctx context.Context, d *schema.ResourceData, m int
 	if natGateway != nil {
 		d.SetId(natGateway.Identity)
 		d.Set("slug", natGateway.Slug)
+
+		// wait until the natGateway is ready and has an endpoint IP
+		for {
+			natGateway, err := client.IaaS().GetNatGateway(ctx, natGateway.Identity)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+			if natGateway.EndpointIP != "" {
+				break
+			}
+			time.Sleep(1 * time.Second)
+		}
+		d.Set("status", natGateway.Status)
+		d.Set("endpoint_ip", natGateway.EndpointIP)
+		d.Set("v4_ip", natGateway.V4IP)
+		d.Set("v6_ip", natGateway.V6IP)
 		return nil
 	}
 	return resourceNatGatewayRead(ctx, d, m)
@@ -115,8 +147,8 @@ func resourceNatGatewayRead(ctx context.Context, d *schema.ResourceData, m inter
 		return diag.FromErr(err)
 	}
 
-	slug := d.Get("slug").(string)
-	natGateway, err := client.IaaS().GetNatGateway(ctx, slug)
+	id := d.Get("id").(string)
+	natGateway, err := client.IaaS().GetNatGateway(ctx, id)
 	if err != nil && !tcclient.IsNotFound(err) {
 		return diag.FromErr(fmt.Errorf("error getting natGateway: %s", err))
 	}
@@ -133,6 +165,9 @@ func resourceNatGatewayRead(ctx context.Context, d *schema.ResourceData, m inter
 	d.Set("subnet", natGateway.Subnet.Identity)
 	d.Set("vpc", natGateway.Vpc.Identity)
 	d.Set("endpoint_ip", natGateway.EndpointIP)
+	d.Set("status", natGateway.Status)
+	d.Set("v4_ip", natGateway.V4IP)
+	d.Set("v6_ip", natGateway.V6IP)
 	return nil
 }
 
