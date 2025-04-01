@@ -41,6 +41,7 @@ func Provider() *schema.Provider {
 			"thalassa_natgateway":           resourceNatGateway(),
 			"thalassa_kubernetes_cluster":   resourceKubernetesCluster(),
 			"thalassa_kubernetes_node_pool": resourceKubernetesNodePool(),
+			"thalassa_block_volume":         resourceBlockVolume(),
 		},
 		DataSourcesMap: map[string]*schema.Resource{
 			"thalassa_organisation":       dataSourceOrganisations(),

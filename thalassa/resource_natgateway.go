@@ -33,8 +33,7 @@ func resourceNatGateway() *schema.Resource {
 			},
 			"vpc": {
 				Type:        schema.TypeString,
-				Required:    true,
-				ForceNew:    true,
+				Computed:    true,
 				Description: "VPC of the NatGateway",
 			},
 			"subnet": {
@@ -108,7 +107,6 @@ func resourceNatGatewayCreate(ctx context.Context, d *schema.ResourceData, m int
 		Description:    d.Get("description").(string),
 		Labels:         convertToMap(d.Get("labels")),
 		Annotations:    convertToMap(d.Get("annotations")),
-		VpcIdentity:    d.Get("vpc").(string),
 		SubnetIdentity: d.Get("subnet").(string),
 	}
 
