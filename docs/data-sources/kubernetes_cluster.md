@@ -18,7 +18,7 @@ Get an Kubernetes cluster
 ### Required
 
 - `name` (String) The name of the Kubernetes version.
-- `organisation` (String) Organisation of the Kubernetes Cluster
+- `organisation_id` (String) Organisation of the Kubernetes Cluster
 
 ### Read-Only
 
@@ -37,4 +37,5 @@ Get an Kubernetes cluster
 - `pod_security_standards_profile` (String) Pod security standards profile of the Kubernetes Cluster
 - `region` (String) Region of the Kubernetes Cluster. Required for hosted-control-plane clusters.
 - `slug` (String) The slug of the Kubernetes version.
-- `subnet` (String) Subnet of the Kubernetes Cluster. Required for managed clusters.
+- `subnet_id` (String) Subnet of the Kubernetes Cluster.
+- `vpc_id` (String) VPC of the Kubernetes Cluster.

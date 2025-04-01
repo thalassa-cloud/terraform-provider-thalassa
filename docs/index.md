@@ -22,4 +22,4 @@ description: |-
 ### Optional
 
 - `api` (String, Sensitive)
-- `organisation` (String)
+- `organisation_id` (String)

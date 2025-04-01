@@ -24,12 +24,12 @@ func resourceRouteTableRoute() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"organisation": {
+			"organisation_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Organisation of the RouteTable",
 			},
-			"route_table": {
+			"route_table_id": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
@@ -82,7 +82,7 @@ func resourceRouteTableRouteCreate(ctx context.Context, d *schema.ResourceData, 
 		TargetNatGatewayIdentity: d.Get("target_natgateway").(string),
 		GatewayAddress:           d.Get("gateway_address").(string),
 	}
-	route, err := client.IaaS().CreateRouteTableRoute(ctx, d.Get("route_table").(string), createRouteTableRoute)
+	route, err := client.IaaS().CreateRouteTableRoute(ctx, d.Get("route_table_id").(string), createRouteTableRoute)
 
 	if err != nil {
 		return diag.FromErr(err)
@@ -101,7 +101,7 @@ func resourceRouteTableRouteRead(ctx context.Context, d *schema.ResourceData, m 
 	}
 
 	id := d.Get("id").(string)
-	routeTable := d.Get("route_table").(string)
+	routeTable := d.Get("route_table_id").(string)
 	route, err := client.IaaS().GetRouteTableRoute(ctx, routeTable, id)
 	if err != nil && !tcclient.IsNotFound(err) {
 		return diag.FromErr(fmt.Errorf("error getting route: %s", err))
@@ -138,7 +138,7 @@ func resourceRouteTableRouteUpdate(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	id := d.Get("id").(string)
-	routeTableIdentity := d.Get("route_table").(string)
+	routeTableIdentity := d.Get("route_table_id").(string)
 
 	// get the route table
 	rt, err := client.IaaS().GetRouteTable(ctx, routeTableIdentity)
@@ -165,7 +165,7 @@ func resourceRouteTableRouteDelete(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 	id := d.Get("id").(string)
-	routeTableIdentity := d.Get("route_table").(string)
+	routeTableIdentity := d.Get("route_table_id").(string)
 
 	err = client.IaaS().DeleteRouteTableRoute(ctx, routeTableIdentity, id)
 	if err != nil {

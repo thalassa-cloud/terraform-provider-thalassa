@@ -16,7 +16,7 @@ func dataSourceRegions() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"organisation": {
+			"organisation_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "The organisation to get the regions for. If not provided, the current organisation will be used.",

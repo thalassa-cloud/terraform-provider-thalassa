@@ -22,7 +22,7 @@ Create an Kubernetes Cluster
 - `networking_cni` (String) CNI of the Kubernetes Cluster
 - `networking_pod_cidr` (String) Pod CIDR of the Kubernetes Cluster
 - `networking_service_cidr` (String) Service CIDR of the Kubernetes Cluster
-- `organisation` (String) Reference to the Organisation of the Kubernetes Cluster. If not provided, the organisation of the (Terraform) provider will be used.
+- `organisation_id` (String) Reference to the Organisation of the Kubernetes Cluster. If not provided, the organisation of the (Terraform) provider will be used.
 
 ### Optional
 
@@ -35,10 +35,11 @@ Create an Kubernetes Cluster
 - `labels` (Map of String) Labels for the Kubernetes Cluster
 - `pod_security_standards_profile` (String) Pod security standards profile of the Kubernetes Cluster
 - `region` (String) Region of the Kubernetes Cluster. Required for hosted-control-plane clusters.
-- `subnet` (String) Subnet of the Kubernetes Cluster. Required for managed clusters.
+- `subnet_id` (String) Subnet of the Kubernetes Cluster. Required for managed clusters.
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
 - `slug` (String)
 - `status` (String) Status of the Kubernetes Cluster
+- `vpc_id` (String) VPC of the Kubernetes Cluster. This is automatically set when a subnet is provided.

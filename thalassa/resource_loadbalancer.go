@@ -24,18 +24,18 @@ func resourceLoadBalancer() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"organisation": {
+			"organisation_id": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 				Description: "Reference to the Organisation of the Loadbalancer. If not provided, the organisation of the (Terraform) provider will be used.",
 			},
-			"vpc": {
+			"vpc_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "VPC of the Loadbalancer",
 			},
-			"subnet": {
+			"subnet_id": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
@@ -86,7 +86,7 @@ func resourceLoadBalancerCreate(ctx context.Context, d *schema.ResourceData, m i
 		Description:          d.Get("description").(string),
 		Labels:               convertToMap(d.Get("labels")),
 		Annotations:          convertToMap(d.Get("annotations")),
-		Subnet:               d.Get("subnet").(string),
+		Subnet:               d.Get("subnet_id").(string),
 		DeleteProtection:     d.Get("delete_protection").(bool),
 		InternalLoadbalancer: d.Get("internal").(bool),
 	}
@@ -125,8 +125,8 @@ func resourceLoadBalancerRead(ctx context.Context, d *schema.ResourceData, m int
 	d.Set("description", loadbalancer.Description)
 	d.Set("labels", loadbalancer.Labels)
 	d.Set("annotations", loadbalancer.Annotations)
-	d.Set("subnet", loadbalancer.Subnet.Identity)
-	d.Set("vpc", loadbalancer.Subnet.Vpc.Identity)
+	d.Set("subnet_id", loadbalancer.Subnet.Identity)
+	d.Set("vpc_id", loadbalancer.Vpc.Identity)
 	// d.Set("delete_protection", loadbalancer.DeleteProtection)
 	// d.Set("internal", loadbalancer.InternalLoadbalancer)
 

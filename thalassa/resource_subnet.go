@@ -25,13 +25,13 @@ func resourceSubnet() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"organisation": {
+			"organisation_id": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 				Description: "Reference to the Organisation of the Subnet. If not provided, the organisation of the (Terraform) provider will be used.",
 			},
-			"vpc": {
+			"vpc_id": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
@@ -78,7 +78,7 @@ func resourceSubnet() *schema.Resource {
 				ForceNew:    true,
 				Description: "Zone of the Subnet",
 			},
-			"route_table": {
+			"route_table_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Route Table of the Subnet",
@@ -101,12 +101,12 @@ func resourceSubnetCreate(ctx context.Context, d *schema.ResourceData, m interfa
 		Description: d.Get("description").(string),
 		Labels:      convertToMap(d.Get("labels")),
 		Annotations: convertToMap(d.Get("annotations")),
-		VpcIdentity: d.Get("vpc").(string),
+		VpcIdentity: d.Get("vpc_id").(string),
 		CloudZone:   d.Get("zone").(string),
 		Cidr:        d.Get("cidr").(string),
 	}
 
-	if routeTable, ok := d.GetOk("route_table"); ok {
+	if routeTable, ok := d.GetOk("route_table_id"); ok {
 		createSubnet.AssociatedRouteTableIdentity = Ptr(routeTable.(string))
 	}
 
@@ -129,8 +129,8 @@ func resourceSubnetRead(ctx context.Context, d *schema.ResourceData, m interface
 		return diag.FromErr(err)
 	}
 
-	slug := d.Get("slug").(string)
-	subnet, err := client.IaaS().GetSubnet(ctx, slug)
+	identity := d.Get("id").(string)
+	subnet, err := client.IaaS().GetSubnet(ctx, identity)
 	if err != nil && !tcclient.IsNotFound(err) {
 		return diag.FromErr(fmt.Errorf("error getting subnet: %s", err))
 	}
@@ -146,7 +146,7 @@ func resourceSubnetRead(ctx context.Context, d *schema.ResourceData, m interface
 	d.Set("annotations", subnet.Annotations)
 	d.Set("zone", subnet.CloudZone)
 	if subnet.RouteTable != nil {
-		d.Set("route_table", subnet.RouteTable.Slug)
+		d.Set("route_table_id", subnet.RouteTable.Identity)
 	}
 
 	return nil
@@ -178,7 +178,7 @@ func resourceSubnetUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 		d.Set("labels", subnet.Labels)
 		d.Set("annotations", subnet.Annotations)
 		if subnet.RouteTable != nil {
-			d.Set("route_table", subnet.RouteTable.Slug)
+			d.Set("route_table_id", subnet.RouteTable.Identity)
 		}
 		return nil
 	}

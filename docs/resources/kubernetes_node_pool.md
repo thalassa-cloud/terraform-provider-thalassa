@@ -17,7 +17,7 @@ Create an Kubernetes Node Pool
 
 ### Required
 
-- `cluster` (String) Kubernetes Cluster of the Kubernetes Node Pool
+- `cluster_id` (String) Kubernetes Cluster of the Kubernetes Node Pool
 - `machine_type` (String) Machine type for the Kubernetes Node Pool
 - `name` (String) Name of the Kubernetes Node Pool
 
@@ -34,9 +34,9 @@ Create an Kubernetes Node Pool
 - `node_annotations` (Map of String) Annotations for the Kubernetes Node Pool
 - `node_labels` (Map of String) Labels for the Kubernetes Node Pool
 - `node_taints` (Block List) Taints for the Kubernetes Node Pool (see [below for nested schema](#nestedblock--node_taints))
-- `organisation` (String) Reference to the Organisation of the Kubernetes Node Pool. If not provided, the organisation of the (Terraform) provider will be used.
+- `organisation_id` (String) Reference to the Organisation of the Kubernetes Node Pool. If not provided, the organisation of the (Terraform) provider will be used.
 - `replicas` (Number) Number of replicas for the Kubernetes Node Pool
-- `subnet` (String) Subnet of the Kubernetes Cluster. Required for managed clusters.
+- `subnet_id` (String) Subnet of the Kubernetes Cluster. Required for managed clusters.
 - `upgrade_strategy` (String) Upgrade strategy for the Kubernetes Node Pool
 
 ### Read-Only

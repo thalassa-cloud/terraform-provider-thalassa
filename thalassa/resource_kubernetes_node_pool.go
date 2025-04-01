@@ -25,7 +25,7 @@ func resourceKubernetesNodePool() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"organisation": {
+			"organisation_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Reference to the Organisation of the Kubernetes Node Pool. If not provided, the organisation of the (Terraform) provider will be used.",
@@ -37,13 +37,13 @@ func resourceKubernetesNodePool() *schema.Resource {
 				ValidateFunc: validate.StringLenBetween(1, 62),
 				Description:  "Name of the Kubernetes Node Pool",
 			},
-			"subnet": {
+			"subnet_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    true,
 				Description: "Subnet of the Kubernetes Cluster. Required for managed clusters.",
 			},
-			"cluster": {
+			"cluster_id": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
@@ -196,8 +196,8 @@ func resourceKubernetesNodePoolCreate(ctx context.Context, d *schema.ResourceDat
 	}
 
 	var subnetIdentity *string
-	if subnet, ok := d.GetOk("subnet"); ok {
-		subnetIdentity = Ptr(subnet.(string))
+	if subnetId, ok := d.GetOk("subnet_id"); ok {
+		subnetIdentity = Ptr(subnetId.(string))
 	}
 
 	var kubernetesVersionIdentity *string
@@ -240,7 +240,7 @@ func resourceKubernetesNodePoolCreate(ctx context.Context, d *schema.ResourceDat
 		KubernetesVersionIdentity: kubernetesVersionIdentity,
 	}
 
-	kubernetesClusterIdentity := d.Get("cluster").(string)
+	kubernetesClusterIdentity := d.Get("cluster_id").(string)
 	kubernetesNodePool, err := client.Kubernetes().CreateKubernetesNodePool(ctx, kubernetesClusterIdentity, createKubernetesNodePool)
 	if err != nil {
 		return diag.FromErr(err)
@@ -272,7 +272,7 @@ func resourceKubernetesNodePoolRead(ctx context.Context, d *schema.ResourceData,
 	}
 
 	identity := d.Get("id").(string)
-	kubernetesClusterIdentity := d.Get("cluster").(string)
+	kubernetesClusterIdentity := d.Get("cluster_id").(string)
 	kubernetesNodePool, err := client.Kubernetes().GetKubernetesNodePool(ctx, kubernetesClusterIdentity, identity)
 	if err != nil && !tcclient.IsNotFound(err) {
 		return diag.FromErr(fmt.Errorf("error getting kubernetesNodePool: %s", err))
@@ -306,7 +306,7 @@ func resourceKubernetesNodePoolRead(ctx context.Context, d *schema.ResourceData,
 	d.Set("node_annotations", convertFromNodeLabels(kubernetesNodePool.NodeSettings.Annotations))
 
 	// if kubernetesNodePool.Subnet != nil {
-	// 	d.Set("subnet", kubernetesNodePool.Subnet.Identity)
+	// 	d.Set("subnet_id", kubernetesNodePool.Subnet.Identity)
 	// }
 
 	return nil
@@ -318,7 +318,7 @@ func resourceKubernetesNodePoolUpdate(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 	nodePoolIdentity := d.Get("id").(string)
-	kubernetesClusterIdentity := d.Get("cluster").(string)
+	kubernetesClusterIdentity := d.Get("cluster_id").(string)
 	if kubernetesClusterIdentity == "" {
 		return diag.FromErr(fmt.Errorf("kubernetes cluster identity is required"))
 	}
@@ -392,7 +392,7 @@ func resourceKubernetesNodePoolDelete(ctx context.Context, d *schema.ResourceDat
 	}
 
 	nodePoolIdentity := d.Get("id").(string)
-	kubernetesClusterIdentity := d.Get("cluster").(string)
+	kubernetesClusterIdentity := d.Get("cluster_id").(string)
 	err = client.Kubernetes().DeleteKubernetesNodePool(ctx, kubernetesClusterIdentity, nodePoolIdentity)
 	if err != nil {
 		if !tcclient.IsNotFound(err) {

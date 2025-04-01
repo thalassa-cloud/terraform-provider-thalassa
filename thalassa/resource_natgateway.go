@@ -25,18 +25,18 @@ func resourceNatGateway() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"organisation": {
+			"organisation_id": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 				Description: "Reference to the Organisation of the NatGateway. If not provided, the organisation of the (Terraform) provider will be used.",
 			},
-			"vpc": {
+			"vpc_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "VPC of the NatGateway",
 			},
-			"subnet": {
+			"subnet_id": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
@@ -107,7 +107,7 @@ func resourceNatGatewayCreate(ctx context.Context, d *schema.ResourceData, m int
 		Description:    d.Get("description").(string),
 		Labels:         convertToMap(d.Get("labels")),
 		Annotations:    convertToMap(d.Get("annotations")),
-		SubnetIdentity: d.Get("subnet").(string),
+		SubnetIdentity: d.Get("subnet_id").(string),
 	}
 
 	natGateway, err := client.IaaS().CreateNatGateway(ctx, createNatGateway)
@@ -160,8 +160,8 @@ func resourceNatGatewayRead(ctx context.Context, d *schema.ResourceData, m inter
 	d.Set("description", natGateway.Description)
 	d.Set("labels", natGateway.Labels)
 	d.Set("annotations", natGateway.Annotations)
-	d.Set("subnet", natGateway.Subnet.Identity)
-	d.Set("vpc", natGateway.Vpc.Identity)
+	d.Set("subnet_id", natGateway.Subnet.Identity)
+	d.Set("vpc_id", natGateway.Vpc.Identity)
 	d.Set("endpoint_ip", natGateway.EndpointIP)
 	d.Set("status", natGateway.Status)
 	d.Set("v4_ip", natGateway.V4IP)

@@ -4,7 +4,7 @@ go 1.24.0
 
 require (
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.36.1
-	github.com/thalassa-cloud/client-go v0.1.8
+	github.com/thalassa-cloud/client-go v0.1.10
 )
 
 require (

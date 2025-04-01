@@ -25,7 +25,7 @@ func resourceKubernetesCluster() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"organisation": {
+			"organisation_id": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
@@ -42,7 +42,12 @@ func resourceKubernetesCluster() *schema.Resource {
 				Computed:    true,
 				Description: "Status of the Kubernetes Cluster",
 			},
-			"subnet": {
+			"vpc_id": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "VPC of the Kubernetes Cluster. This is automatically set when a subnet is provided.",
+			},
+			"subnet_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    true,
@@ -153,7 +158,7 @@ func resourceKubernetesClusterCreate(ctx context.Context, d *schema.ResourceData
 	}
 
 	if d.Get("cluster_type").(string) == "managed" {
-		if d.Get("subnet").(string) == "" {
+		if d.Get("subnet_id").(string) == "" {
 			return diag.FromErr(fmt.Errorf("subnet is required for managed clusters"))
 		}
 	}
@@ -194,7 +199,7 @@ func resourceKubernetesClusterCreate(ctx context.Context, d *schema.ResourceData
 		Description:               d.Get("description").(string),
 		Labels:                    convertToMap(d.Get("labels")),
 		Annotations:               convertToMap(d.Get("annotations")),
-		Subnet:                    d.Get("subnet").(string),
+		Subnet:                    d.Get("subnet_id").(string),
 		RegionIdentity:            region,
 		DeleteProtection:          d.Get("delete_protection").(bool),
 		ClusterType:               kubernetesclient.KubernetesClusterType(d.Get("cluster_type").(string)),
@@ -274,7 +279,7 @@ func resourceKubernetesClusterRead(ctx context.Context, d *schema.ResourceData, 
 		d.Set("vpc", kubernetesCluster.VPC.Identity)
 	}
 	if kubernetesCluster.Subnet != nil {
-		d.Set("subnet", kubernetesCluster.Subnet.Identity)
+		d.Set("subnet_id", kubernetesCluster.Subnet.Identity)
 	}
 	if kubernetesCluster.Region != nil {
 		d.Set("region", kubernetesCluster.Region.Identity)
@@ -328,6 +333,13 @@ func resourceKubernetesClusterUpdate(ctx context.Context, d *schema.ResourceData
 		d.Set("description", kubernetesCluster.Description)
 		d.Set("slug", kubernetesCluster.Slug)
 		d.Set("status", kubernetesCluster.Status)
+		if kubernetesCluster.VPC != nil {
+			d.Set("vpc_id", kubernetesCluster.VPC.Identity)
+		}
+		if kubernetesCluster.Subnet != nil {
+			d.Set("subnet_id", kubernetesCluster.Subnet.Identity)
+		}
+
 		d.Set("labels", kubernetesCluster.Labels)
 		d.Set("annotations", kubernetesCluster.Annotations)
 		d.Set("cluster_version", kubernetesCluster.ClusterVersion.Identity)

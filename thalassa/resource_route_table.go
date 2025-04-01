@@ -25,13 +25,13 @@ func resourceRouteTable() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"organisation": {
+			"organisation_id": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 				Description: "Reference to the Organisation of the RouteTable. If not provided, the organisation of the (Terraform) provider will be used.",
 			},
-			"vpc": {
+			"vpc_id": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
@@ -82,7 +82,7 @@ func resourceRouteTableCreate(ctx context.Context, d *schema.ResourceData, m int
 		Description: Ptr(d.Get("description").(string)),
 		Labels:      convertToMap(d.Get("labels")),
 		Annotations: convertToMap(d.Get("annotations")),
-		VpcIdentity: d.Get("vpc").(string),
+		VpcIdentity: d.Get("vpc_id").(string),
 	}
 
 	routeTable, err := client.IaaS().CreateRouteTable(ctx, createRouteTable)
@@ -119,6 +119,9 @@ func resourceRouteTableRead(ctx context.Context, d *schema.ResourceData, m inter
 	d.Set("description", routeTable.Description)
 	d.Set("labels", routeTable.Labels)
 	d.Set("annotations", routeTable.Annotations)
+	if routeTable.Vpc != nil {
+		d.Set("vpc_id", routeTable.Vpc.Identity)
+	}
 
 	return nil
 }
@@ -148,6 +151,9 @@ func resourceRouteTableUpdate(ctx context.Context, d *schema.ResourceData, m int
 		d.Set("slug", routeTable.Slug)
 		d.Set("labels", routeTable.Labels)
 		d.Set("annotations", routeTable.Annotations)
+		if routeTable.Vpc != nil {
+			d.Set("vpc_id", routeTable.Vpc.Identity)
+		}
 		return nil
 	}
 

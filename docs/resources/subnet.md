@@ -19,8 +19,8 @@ Create an subnet
 
 - `cidr` (String) CIDR of the Subnet
 - `name` (String) Name of the Subnet
-- `organisation` (String) Reference to the Organisation of the Subnet. If not provided, the organisation of the (Terraform) provider will be used.
-- `vpc` (String) VPC of the Subnet
+- `organisation_id` (String) Reference to the Organisation of the Subnet. If not provided, the organisation of the (Terraform) provider will be used.
+- `vpc_id` (String) VPC of the Subnet
 - `zone` (String) Zone of the Subnet
 
 ### Optional
@@ -28,7 +28,7 @@ Create an subnet
 - `annotations` (Map of String) Annotations for the Subnet
 - `description` (String) A human readable description about the subnet
 - `labels` (Map of String) Labels for the Subnet
-- `route_table` (String) Route Table of the Subnet
+- `route_table_id` (String) Route Table of the Subnet
 
 ### Read-Only
 

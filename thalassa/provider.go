@@ -26,7 +26,7 @@ func Provider() *schema.Provider {
 				Sensitive:   true,
 				DefaultFunc: schema.EnvDefaultFunc("THALASSA_API_ENDPOINT", "https://api.thalassa.cloud"),
 			},
-			"organisation": {
+			"organisation_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("THALASSA_ORGANISATION", ""),
@@ -75,13 +75,15 @@ type ConfiguredProvider struct {
 func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
 	token := d.Get("token").(string)
 	apiEndpoint := d.Get("api").(string)
-	organisation := d.Get("organisation").(string)
+	organisation := d.Get("organisation_id").(string)
 
 	internalClient, err := thalassa.NewClient(
 		client.WithBaseURL(apiEndpoint),
 		client.WithOrganisation(organisation),
 		client.WithAuthPersonalToken(token),
+		client.WithUserAgent("thalassa-cloud/terraform-provider-thalassa"),
 	)
+
 	if err != nil {
 		return nil, diag.FromErr(err)
 	}
@@ -111,7 +113,7 @@ func getClient(provider ConfiguredProvider, d *schema.ResourceData) (thalassa.Cl
 }
 
 func getOrganisation(provider ConfiguredProvider, d *schema.ResourceData) (string, error) {
-	organisation := d.Get("organisation").(string)
+	organisation := d.Get("organisation_id").(string)
 	if organisation != "" {
 		return organisation, nil
 	}

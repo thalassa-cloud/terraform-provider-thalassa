@@ -19,7 +19,7 @@ Get an vpc
 
 - `description` (String) A human readable description about the vpc
 - `name` (String) Name of the Vpc
-- `organisation` (String) Reference to the Organisation of the Vpc. If not provided, the organisation of the (Terraform) provider will be used.
+- `organisation_id` (String) Reference to the Organisation of the Vpc. If not provided, the organisation of the (Terraform) provider will be used.
 - `region` (String) Region of the Vpc. Provide the identity of the region. Can only be set on creation.
 - `slug` (String) Slug of the Vpc
 

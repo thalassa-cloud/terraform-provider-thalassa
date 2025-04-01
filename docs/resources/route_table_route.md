@@ -18,13 +18,13 @@ Create an route table route with a destination cidr block, target gateway, targe
 ### Required
 
 - `destination_cidr` (String) Destination CIDR of the Route
-- `route_table` (String) RouteTable of the Route
+- `route_table_id` (String) RouteTable of the Route
 
 ### Optional
 
 - `gateway_address` (String) Gateway Address of the Route
 - `notes` (String) Notes for the Route
-- `organisation` (String) Organisation of the RouteTable
+- `organisation_id` (String) Organisation of the RouteTable
 - `target_gateway` (String) Target Gateway of the Route
 - `target_natgateway` (String) Target NAT Gateway of the Route
 

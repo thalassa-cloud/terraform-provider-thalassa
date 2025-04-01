@@ -15,7 +15,10 @@ import (
 
 func resourceBlockVolume() *schema.Resource {
 	return &schema.Resource{
-		Description:   "Create an Block Volume",
+		Description: `
+		Provides a Thalassa Cloud Block Volume resource. This can be used to create, manage, and attach a detachable storage device to a virtual machine instance. 
+		`,
+
 		CreateContext: resourceBlockVolumeCreate,
 		ReadContext:   resourceBlockVolumeRead,
 		UpdateContext: resourceBlockVolumeUpdate,
@@ -25,7 +28,7 @@ func resourceBlockVolume() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"organisation": {
+			"organisation_id": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,

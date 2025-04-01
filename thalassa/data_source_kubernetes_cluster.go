@@ -27,7 +27,7 @@ func dataSourceKubernetesCluster() *schema.Resource {
 				Computed:    true,
 				Description: "The slug of the Kubernetes version.",
 			},
-			"organisation": {
+			"organisation_id": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
@@ -38,10 +38,15 @@ func dataSourceKubernetesCluster() *schema.Resource {
 				Computed:    true,
 				Description: "Region of the Kubernetes Cluster. Required for hosted-control-plane clusters.",
 			},
-			"subnet": {
+			"subnet_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Subnet of the Kubernetes Cluster. Required for managed clusters.",
+				Description: "Subnet of the Kubernetes Cluster.",
+			},
+			"vpc_id": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "VPC of the Kubernetes Cluster.",
 			},
 			"description": {
 				Type:        schema.TypeString,
@@ -136,7 +141,10 @@ func dataSourceKubernetesClusterRead(ctx context.Context, d *schema.ResourceData
 				d.Set("region", cluster.Region.Identity)
 			}
 			if cluster.Subnet != nil {
-				d.Set("subnet", cluster.Subnet.Identity)
+				d.Set("subnet_id", cluster.Subnet.Identity)
+			}
+			if cluster.VPC != nil {
+				d.Set("vpc_id", cluster.VPC.Identity)
 			}
 
 			// Set labels and annotations directly

@@ -17,7 +17,7 @@ Get a list of regions
 
 ### Optional
 
-- `organisation` (String) The organisation to get the regions for. If not provided, the current organisation will be used.
+- `organisation_id` (String) The organisation to get the regions for. If not provided, the current organisation will be used.
 
 ### Read-Only
 
