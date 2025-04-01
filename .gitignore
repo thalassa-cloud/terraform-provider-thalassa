@@ -70,3 +70,4 @@ terraform.rc
 terraform
 
 dist/
+keys/

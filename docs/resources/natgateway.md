@@ -33,3 +33,6 @@ Create an natGateway
 - `endpoint_ip` (String) Endpoint IP of the NatGateway
 - `id` (String) The ID of this resource.
 - `slug` (String)
+- `status` (String) Status of the NatGateway
+- `v4_ip` (String) V4 IP of the NatGateway
+- `v6_ip` (String) V6 IP of the NatGateway

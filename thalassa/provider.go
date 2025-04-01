@@ -48,6 +48,9 @@ func Provider() *schema.Provider {
 			"thalassa_regions":            dataSourceRegions(),
 			"thalassa_kubernetes_version": dataSourceKubernetesVersion(),
 			"thalassa_kubernetes_cluster": dataSourceKubernetesCluster(),
+			"thalassa_machine_image":      dataSourceMachineImage(),
+			"thalassa_machine_type":       dataSourceMachineType(),
+			"thalassa_vpc":                dataSourceVpc(),
 		},
 		ConfigureContextFunc: providerConfigure,
 	}
