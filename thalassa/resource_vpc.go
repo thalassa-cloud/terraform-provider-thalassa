@@ -38,8 +38,9 @@ func resourceVpc() *schema.Resource {
 				Description:  "Name of the Vpc",
 			},
 			"slug": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Slug of the Vpc",
 			},
 			"cidrs": {
 				Type:        schema.TypeList,
@@ -118,8 +119,8 @@ func resourceVpcRead(ctx context.Context, d *schema.ResourceData, m interface{})
 		return diag.FromErr(err)
 	}
 
-	slug := d.Get("slug").(string)
-	vpc, err := client.IaaS().GetVpc(ctx, slug)
+	identity := d.Get("id").(string)
+	vpc, err := client.IaaS().GetVpc(ctx, identity)
 	if err != nil && !tcclient.IsNotFound(err) {
 		return diag.FromErr(fmt.Errorf("error getting vpc: %s", err))
 	}
@@ -153,9 +154,9 @@ func resourceVpcUpdate(ctx context.Context, d *schema.ResourceData, m interface{
 		VpcCidrs:    convertToStringSlice(d.Get("cidrs")),
 	}
 
-	id := d.Get("id").(string)
+	identity := d.Get("id").(string)
 
-	vpc, err := client.IaaS().UpdateVpc(ctx, id, updateVpc)
+	vpc, err := client.IaaS().UpdateVpc(ctx, identity, updateVpc)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -179,8 +180,8 @@ func resourceVpcDelete(ctx context.Context, d *schema.ResourceData, m interface{
 		return diag.FromErr(err)
 	}
 
-	id := d.Get("id").(string)
-	error := client.IaaS().DeleteVpc(ctx, id)
+	identity := d.Get("id").(string)
+	error := client.IaaS().DeleteVpc(ctx, identity)
 	if error != nil {
 		return diag.FromErr(error)
 	}
