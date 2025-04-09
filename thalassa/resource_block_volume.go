@@ -183,17 +183,17 @@ func resourceBlockVolumeRead(ctx context.Context, d *schema.ResourceData, m inte
 		d.Set("volume_type", blockVolume.VolumeType.Identity)
 	}
 
-	if blockVolume.CloudRegion != nil {
+	if blockVolume.Region != nil {
 		currentRegion := d.Get("region").(string)
 		if currentRegion == "" {
-			d.Set("region", blockVolume.CloudRegion.Slug)
+			d.Set("region", blockVolume.Region.Slug)
 		}
-		if currentRegion == blockVolume.CloudRegion.Slug {
-			d.Set("region", blockVolume.CloudRegion.Slug)
-		} else if currentRegion == blockVolume.CloudRegion.Identity {
-			d.Set("region", blockVolume.CloudRegion.Identity)
+		if currentRegion == blockVolume.Region.Slug {
+			d.Set("region", blockVolume.Region.Slug)
+		} else if currentRegion == blockVolume.Region.Identity {
+			d.Set("region", blockVolume.Region.Identity)
 		} else {
-			d.Set("region", blockVolume.CloudRegion.Slug)
+			d.Set("region", blockVolume.Region.Slug)
 		}
 	}
 

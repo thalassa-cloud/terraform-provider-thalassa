@@ -19,7 +19,6 @@ Create an subnet
 - `name` (String) Name of the Subnet
 - `organisation_id` (String) Reference to the Organisation of the Subnet. If not provided, the organisation of the (Terraform) provider will be used.
 - `vpc_id` (String) VPC of the Subnet
-- `zone` (String) Zone of the Subnet
 
 ### Optional
 

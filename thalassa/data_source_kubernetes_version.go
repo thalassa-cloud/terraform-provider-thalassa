@@ -68,11 +68,6 @@ func dataSourceKubernetesVersion() *schema.Resource {
 				Computed:    true,
 				Description: "The istio version.",
 			},
-			"labels": {
-				Type:        schema.TypeMap,
-				Computed:    true,
-				Description: "The labels of the Kubernetes version.",
-			},
 			"annotations": {
 				Type:        schema.TypeMap,
 				Computed:    true,
@@ -120,11 +115,6 @@ func dataSourceKubernetesVersionRead(ctx context.Context, d *schema.ResourceData
 	d.Set("cilium_version", version.CiliumVersion)
 	d.Set("cloud_controller_manager_version", version.CloudControllerManagerVersion)
 	d.Set("istio_version", version.IstioVersion)
-
-	// Set labels and annotations directly
-	if err := d.Set("labels", version.Labels); err != nil {
-		return diag.FromErr(fmt.Errorf("error setting labels: %s", err))
-	}
 
 	if err := d.Set("annotations", version.Annotations); err != nil {
 		return diag.FromErr(fmt.Errorf("error setting annotations: %s", err))

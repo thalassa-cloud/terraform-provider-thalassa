@@ -72,12 +72,6 @@ func resourceSubnet() *schema.Resource {
 				Optional:    true,
 				Description: "Annotations for the Subnet",
 			},
-			"zone": {
-				Type:        schema.TypeString,
-				Required:    true,
-				ForceNew:    true,
-				Description: "Zone of the Subnet",
-			},
 			"route_table_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
@@ -102,7 +96,6 @@ func resourceSubnetCreate(ctx context.Context, d *schema.ResourceData, m interfa
 		Labels:      convertToMap(d.Get("labels")),
 		Annotations: convertToMap(d.Get("annotations")),
 		VpcIdentity: d.Get("vpc_id").(string),
-		CloudZone:   d.Get("zone").(string),
 		Cidr:        d.Get("cidr").(string),
 	}
 
@@ -144,7 +137,6 @@ func resourceSubnetRead(ctx context.Context, d *schema.ResourceData, m interface
 	d.Set("description", subnet.Description)
 	d.Set("labels", subnet.Labels)
 	d.Set("annotations", subnet.Annotations)
-	d.Set("zone", subnet.CloudZone)
 	if subnet.RouteTable != nil {
 		d.Set("route_table_id", subnet.RouteTable.Identity)
 	}

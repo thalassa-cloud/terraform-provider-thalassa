@@ -30,5 +30,4 @@ Get an Kubernetes version
 - `id` (String) The ID of this resource.
 - `istio_version` (String) The istio version.
 - `kubernetes_version` (String) The Kubernetes version
-- `labels` (Map of String) The labels of the Kubernetes version.
 - `runc_version` (String) The runc version.
