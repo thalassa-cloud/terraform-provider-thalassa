@@ -116,5 +116,5 @@ func dataSourceVpcRead(ctx context.Context, d *schema.ResourceData, m interface{
 		return diag.Diagnostics{}
 	}
 
-	return diag.FromErr(fmt.Errorf("not found"))
+	return diag.FromErr(fmt.Errorf("vpc %s not found", name))
 }

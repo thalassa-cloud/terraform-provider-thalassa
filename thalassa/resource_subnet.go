@@ -15,7 +15,7 @@ import (
 
 func resourceSubnet() *schema.Resource {
 	return &schema.Resource{
-		Description:   "Create an subnet",
+		Description:   "Create an subnet in a VPC. Subnets are used to create a network for your resources. A VPC can have multiple subnets, and each subnet must have a different CIDR block. IPv4, IPv6 and Dual-stack subnets are supported. After creationg the CIDR cannot be changed.",
 		CreateContext: resourceSubnetCreate,
 		ReadContext:   resourceSubnetRead,
 		UpdateContext: resourceSubnetUpdate,
@@ -82,6 +82,31 @@ func resourceSubnet() *schema.Resource {
 				Computed:    true,
 				Description: "Status of the Subnet",
 			},
+			"type": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Type of the Subnet",
+			},
+			"ipv4_addresses_used": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Number of IPv4 addresses used in the Subnet",
+			},
+			"ipv4_addresses_available": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Number of IPv4 addresses available in the Subnet",
+			},
+			"ipv6_addresses_used": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Number of IPv6 addresses used in the Subnet",
+			},
+			"ipv6_addresses_available": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Number of IPv6 addresses available in the Subnet",
+			},
 		},
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -132,13 +157,18 @@ func resourceSubnetCreate(ctx context.Context, d *schema.ResourceData, m interfa
 				subnet, err := client.IaaS().GetSubnet(ctx, subnet.Identity)
 				if err != nil {
 					if tcclient.IsNotFound(err) {
-						return diag.FromErr(fmt.Errorf("subnet was not found after creation"))
+						return diag.FromErr(fmt.Errorf("subnet %s was not found after creation", subnet.Identity))
 					}
 					return diag.FromErr(err)
 				}
 
 				if subnet.Status == iaas.SubnetStatusReady {
 					d.Set("status", subnet.Status)
+					d.Set("ipv4_addresses_used", subnet.V4usingIPs)
+					d.Set("ipv4_addresses_available", subnet.V4availableIPs)
+					d.Set("ipv6_addresses_used", subnet.V6usingIPs)
+					d.Set("ipv6_addresses_available", subnet.V6availableIPs)
+
 					return nil
 				}
 				d.Set("status", subnet.Status)
@@ -160,7 +190,7 @@ func resourceSubnetRead(ctx context.Context, d *schema.ResourceData, m interface
 		return diag.FromErr(fmt.Errorf("error getting subnet: %s", err))
 	}
 	if subnet == nil {
-		return diag.FromErr(fmt.Errorf("subnet was not found"))
+		return diag.FromErr(fmt.Errorf("subnet %s not found", identity))
 	}
 
 	d.SetId(subnet.Identity)
@@ -174,6 +204,12 @@ func resourceSubnetRead(ctx context.Context, d *schema.ResourceData, m interface
 	}
 	d.Set("status", subnet.Status)
 	d.Set("type", subnet.Type)
+
+	d.Set("ipv4_addresses_used", subnet.V4usingIPs)
+	d.Set("ipv4_addresses_available", subnet.V4availableIPs)
+	d.Set("ipv6_addresses_used", subnet.V6usingIPs)
+	d.Set("ipv6_addresses_available", subnet.V6availableIPs)
+
 	return nil
 }
 
@@ -190,9 +226,13 @@ func resourceSubnetUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 		Annotations: convertToMap(d.Get("annotations")),
 	}
 
-	slug := d.Get("slug").(string)
+	if routeTable, ok := d.GetOk("route_table_id"); ok {
+		updateSubnet.AssociatedRouteTableIdentity = Ptr(routeTable.(string))
+	}
 
-	subnet, err := client.IaaS().UpdateSubnet(ctx, slug, updateSubnet)
+	identity := d.Get("id").(string)
+
+	subnet, err := client.IaaS().UpdateSubnet(ctx, identity, updateSubnet)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -202,6 +242,11 @@ func resourceSubnetUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 		d.Set("slug", subnet.Slug)
 		d.Set("labels", subnet.Labels)
 		d.Set("annotations", subnet.Annotations)
+		d.Set("ipv4_addresses_used", subnet.V4usingIPs)
+		d.Set("ipv4_addresses_available", subnet.V4availableIPs)
+		d.Set("ipv6_addresses_used", subnet.V6usingIPs)
+		d.Set("ipv6_addresses_available", subnet.V6availableIPs)
+
 		if subnet.RouteTable != nil {
 			d.Set("route_table_id", subnet.RouteTable.Identity)
 		}
@@ -243,13 +288,16 @@ func resourceSubnetDelete(ctx context.Context, d *schema.ResourceData, m interfa
 
 	// wait until the subnet is deleted
 	for {
-		_, err := client.IaaS().GetSubnet(ctx, id)
-		if err != nil && tcclient.IsNotFound(err) {
-			break
+		select {
+		case <-ctx.Done():
+			return diag.FromErr(fmt.Errorf("timeout while waiting for subnet to be deleted"))
+		case <-time.After(1 * time.Second):
+			// continue
+			_, err := client.IaaS().GetSubnet(ctx, id)
+			if err != nil && tcclient.IsNotFound(err) {
+				d.SetId("")
+				return nil
+			}
 		}
-		time.Sleep(1 * time.Second)
 	}
-
-	d.SetId("")
-	return nil
 }
