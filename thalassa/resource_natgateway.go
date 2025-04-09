@@ -3,6 +3,7 @@ package thalassa
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -121,20 +122,24 @@ func resourceNatGatewayCreate(ctx context.Context, d *schema.ResourceData, m int
 
 		// wait until the natGateway is ready and has an endpoint IP
 		for {
-			natGateway, err := client.IaaS().GetNatGateway(ctx, natGateway.Identity)
-			if err != nil {
-				return diag.FromErr(err)
+			select {
+			case <-ctx.Done():
+				return diag.FromErr(fmt.Errorf("timeout while waiting for natGateway to be ready"))
+			case <-time.After(1 * time.Second):
+				// continue
+				natGateway, err := client.IaaS().GetNatGateway(ctx, natGateway.Identity)
+				if err != nil {
+					return diag.FromErr(err)
+				}
+				if strings.TrimSpace(natGateway.EndpointIP) != "" {
+					d.Set("status", natGateway.Status)
+					d.Set("endpoint_ip", natGateway.EndpointIP)
+					d.Set("v4_ip", natGateway.V4IP)
+					d.Set("v6_ip", natGateway.V6IP)
+					return nil
+				}
 			}
-			if natGateway.EndpointIP != "" {
-				break
-			}
-			time.Sleep(1 * time.Second)
 		}
-		d.Set("status", natGateway.Status)
-		d.Set("endpoint_ip", natGateway.EndpointIP)
-		d.Set("v4_ip", natGateway.V4IP)
-		d.Set("v6_ip", natGateway.V6IP)
-		return nil
 	}
 	return resourceNatGatewayRead(ctx, d, m)
 }

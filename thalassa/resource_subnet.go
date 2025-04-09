@@ -77,6 +77,11 @@ func resourceSubnet() *schema.Resource {
 				Optional:    true,
 				Description: "Route Table of the Subnet",
 			},
+			"status": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Status of the Subnet",
+			},
 		},
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -111,7 +116,34 @@ func resourceSubnetCreate(ctx context.Context, d *schema.ResourceData, m interfa
 	if subnet != nil {
 		d.SetId(subnet.Identity)
 		d.Set("slug", subnet.Slug)
-		return nil
+		d.Set("type", subnet.Type)
+		d.Set("status", subnet.Status)
+
+		// wait until the subnet is ready
+		for {
+			select {
+			case <-ctx.Done():
+				if subnet != nil {
+					return diag.FromErr(fmt.Errorf("timeout while waiting for subnet to be ready. Current status: %s", subnet.Status))
+				}
+				return diag.FromErr(fmt.Errorf("timeout while waiting for subnet to be ready"))
+			case <-time.After(1 * time.Second):
+				// continue
+				subnet, err := client.IaaS().GetSubnet(ctx, subnet.Identity)
+				if err != nil {
+					if tcclient.IsNotFound(err) {
+						return diag.FromErr(fmt.Errorf("subnet was not found after creation"))
+					}
+					return diag.FromErr(err)
+				}
+
+				if subnet.Status == iaas.SubnetStatusReady {
+					d.Set("status", subnet.Status)
+					return nil
+				}
+				d.Set("status", subnet.Status)
+			}
+		}
 	}
 	return resourceSubnetRead(ctx, d, m)
 }
@@ -140,7 +172,8 @@ func resourceSubnetRead(ctx context.Context, d *schema.ResourceData, m interface
 	if subnet.RouteTable != nil {
 		d.Set("route_table_id", subnet.RouteTable.Identity)
 	}
-
+	d.Set("status", subnet.Status)
+	d.Set("type", subnet.Type)
 	return nil
 }
 
@@ -172,7 +205,24 @@ func resourceSubnetUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 		if subnet.RouteTable != nil {
 			d.Set("route_table_id", subnet.RouteTable.Identity)
 		}
-		return nil
+
+		// wait until the subnet is ready
+		for {
+			select {
+			case <-ctx.Done():
+				return diag.FromErr(fmt.Errorf("timeout while waiting for subnet to be ready"))
+			case <-time.After(1 * time.Second):
+				// continue
+				subnet, err := client.IaaS().GetSubnet(ctx, subnet.Identity)
+				if err != nil {
+					return diag.FromErr(err)
+				}
+				if subnet.Status == iaas.SubnetStatusReady {
+					d.Set("status", subnet.Status)
+					return nil
+				}
+			}
+		}
 	}
 
 	return resourceSubnetRead(ctx, d, m)

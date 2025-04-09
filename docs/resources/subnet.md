@@ -31,5 +31,6 @@ Create an subnet
 
 - `id` (String) The ID of this resource.
 - `slug` (String) Slug of the Subnet
+- `status` (String) Status of the Subnet
 
 
