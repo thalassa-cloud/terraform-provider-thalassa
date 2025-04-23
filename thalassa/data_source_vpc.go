@@ -7,7 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	validate "github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	iaas "github.com/thalassa-cloud/client-go/pkg/iaas"
+	iaas "github.com/thalassa-cloud/client-go/iaas"
 )
 
 func dataSourceVpc() *schema.Resource {

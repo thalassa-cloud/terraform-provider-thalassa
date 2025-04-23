@@ -9,8 +9,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	validate "github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	kubernetesclient "github.com/thalassa-cloud/client-go/kubernetesclient"
 	tcclient "github.com/thalassa-cloud/client-go/pkg/client"
-	kubernetesclient "github.com/thalassa-cloud/client-go/pkg/kubernetesclient"
 )
 
 func resourceKubernetesNodePool() *schema.Resource {

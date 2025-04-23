@@ -8,7 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/thalassa-cloud/client-go/pkg/client"
-	"github.com/thalassa-cloud/client-go/pkg/thalassa"
+	"github.com/thalassa-cloud/client-go/thalassa"
 )
 
 func Provider() *schema.Provider {

@@ -10,7 +10,7 @@ import (
 	validate "github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	tcclient "github.com/thalassa-cloud/client-go/pkg/client"
 
-	iaas "github.com/thalassa-cloud/client-go/pkg/iaas"
+	iaas "github.com/thalassa-cloud/client-go/iaas"
 )
 
 func resourceRouteTable() *schema.Resource {
