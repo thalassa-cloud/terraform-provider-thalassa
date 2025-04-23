@@ -143,6 +143,9 @@ func resourceRouteTableUpdate(ctx context.Context, d *schema.ResourceData, m int
 
 	routeTable, err := client.IaaS().UpdateRouteTable(ctx, id, updateRouteTable)
 	if err != nil {
+		if tcclient.IsNotFound(err) {
+			return diag.FromErr(fmt.Errorf("route table %q was not found", id))
+		}
 		return diag.FromErr(err)
 	}
 	if routeTable != nil {
@@ -175,14 +178,15 @@ func resourceRouteTableDelete(ctx context.Context, d *schema.ResourceData, m int
 
 	// wait until the route table is deleted
 	for {
-		_, err := client.IaaS().GetRouteTable(ctx, id)
-		if err != nil && tcclient.IsNotFound(err) {
-			break
+		select {
+		case <-ctx.Done():
+			return diag.FromErr(fmt.Errorf("timeout while waiting for route table to be deleted"))
+		case <-time.After(1 * time.Second):
+			_, err := client.IaaS().GetRouteTable(ctx, id)
+			if err != nil && tcclient.IsNotFound(err) {
+				d.SetId("")
+				return nil
+			}
 		}
-		time.Sleep(1 * time.Second)
 	}
-
-	d.SetId("")
-
-	return nil
 }
