@@ -3,6 +3,7 @@ package thalassa
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -16,9 +17,21 @@ func Provider() *schema.Provider {
 		Schema: map[string]*schema.Schema{
 			"token": {
 				Type:        schema.TypeString,
-				Required:    true,
+				Required:    false,
 				Sensitive:   true,
 				DefaultFunc: schema.EnvDefaultFunc("THALASSA_API_TOKEN", nil),
+			},
+			"client_id": {
+				Type:        schema.TypeString,
+				Required:    false,
+				Sensitive:   true,
+				DefaultFunc: schema.EnvDefaultFunc("THALASSA_CLIENT_ID", nil),
+			},
+			"client_secret": {
+				Type:        schema.TypeString,
+				Required:    false,
+				Sensitive:   true,
+				DefaultFunc: schema.EnvDefaultFunc("THALASSA_CLIENT_SECRET", nil),
 			},
 			"api": {
 				Type:        schema.TypeString,
@@ -77,14 +90,31 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 	token := d.Get("token").(string)
 	apiEndpoint := d.Get("api").(string)
 	organisation := d.Get("organisation_id").(string)
+	clientID := d.Get("client_id").(string)
+	clientSecret := d.Get("client_secret").(string)
 
-	internalClient, err := thalassa.NewClient(
+	opts := []client.Option{
 		client.WithBaseURL(apiEndpoint),
 		client.WithOrganisation(organisation),
-		client.WithAuthPersonalToken(token),
 		client.WithUserAgent("thalassa-cloud/terraform-provider-thalassa"),
-	)
+	}
 
+	hasAuth := false
+	if token != "" {
+		opts = append(opts, client.WithAuthPersonalToken(token))
+		hasAuth = true
+	}
+
+	if clientID != "" && clientSecret != "" {
+		opts = append(opts, client.WithAuthOIDC(clientID, clientSecret, fmt.Sprintf("%s/oidc/token", apiEndpoint)))
+		hasAuth = true
+	}
+
+	if !hasAuth {
+		return nil, diag.FromErr(errors.New("no authentication method provided"))
+	}
+
+	internalClient, err := thalassa.NewClient(opts...)
 	if err != nil {
 		return nil, diag.FromErr(err)
 	}
