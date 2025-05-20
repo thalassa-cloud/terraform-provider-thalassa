@@ -6,6 +6,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	iaas "github.com/thalassa-cloud/client-go/iaas"
 )
 
 func dataSourceMachineType() *schema.Resource {
@@ -45,7 +46,7 @@ func dataSourceMachineTypeRead(ctx context.Context, d *schema.ResourceData, m in
 	provider := getProvider(m)
 	slug := d.Get("slug").(string)
 
-	machineTypes, err := provider.Client.IaaS().ListMachineTypes(ctx)
+	machineTypes, err := provider.Client.IaaS().ListMachineTypes(ctx, &iaas.ListMachineTypesRequest{})
 	if err != nil {
 		return diag.FromErr(err)
 	}

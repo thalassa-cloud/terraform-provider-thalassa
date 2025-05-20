@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	validate "github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	iaas "github.com/thalassa-cloud/client-go/iaas"
 	kubernetesclient "github.com/thalassa-cloud/client-go/kubernetesclient"
 	tcclient "github.com/thalassa-cloud/client-go/pkg/client"
 )
@@ -183,7 +184,7 @@ func resourceKubernetesClusterCreate(ctx context.Context, d *schema.ResourceData
 	}
 
 	region := d.Get("region").(string)
-	regions, err := client.IaaS().ListRegions(ctx)
+	regions, err := client.IaaS().ListRegions(ctx, &iaas.ListRegionsRequest{})
 	if err != nil {
 		return diag.FromErr(err)
 	}
