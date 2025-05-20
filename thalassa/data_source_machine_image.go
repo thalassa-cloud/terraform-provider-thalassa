@@ -6,6 +6,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	iaas "github.com/thalassa-cloud/client-go/iaas"
 )
 
 func dataSourceMachineImage() *schema.Resource {
@@ -45,7 +46,7 @@ func dataSourceMachineImageRead(ctx context.Context, d *schema.ResourceData, m i
 	provider := getProvider(m)
 	slug := d.Get("slug").(string)
 
-	machineImages, err := provider.Client.IaaS().ListMachineImages(ctx)
+	machineImages, err := provider.Client.IaaS().ListMachineImages(ctx, &iaas.ListMachineImagesRequest{})
 	if err != nil {
 		return diag.FromErr(err)
 	}

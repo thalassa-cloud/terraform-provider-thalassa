@@ -5,6 +5,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	iaas "github.com/thalassa-cloud/client-go/iaas"
 )
 
 func dataSourceRegions() *schema.Resource {
@@ -66,7 +67,7 @@ func dataSourceRegions() *schema.Resource {
 func dataSourceRegionsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	provider := getProvider(m)
 
-	regions, err := provider.Client.IaaS().ListRegions(ctx)
+	regions, err := provider.Client.IaaS().ListRegions(ctx, &iaas.ListRegionsRequest{})
 	if err != nil {
 		return diag.FromErr(err)
 	}

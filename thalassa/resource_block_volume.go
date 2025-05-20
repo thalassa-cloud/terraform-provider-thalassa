@@ -106,7 +106,7 @@ func resourceBlockVolumeCreate(ctx context.Context, d *schema.ResourceData, m in
 	}
 
 	region := d.Get("region").(string)
-	regions, err := client.IaaS().ListRegions(ctx)
+	regions, err := client.IaaS().ListRegions(ctx, &iaas.ListRegionsRequest{})
 	if err != nil {
 		return diag.FromErr(err)
 	}
