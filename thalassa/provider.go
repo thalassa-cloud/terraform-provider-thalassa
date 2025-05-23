@@ -55,6 +55,7 @@ func Provider() *schema.Provider {
 			"thalassa_natgateway":               resourceNatGateway(),
 			"thalassa_route_table_route":        resourceRouteTableRoute(),
 			"thalassa_route_table":              resourceRouteTable(),
+			"thalassa_security_group":           resourceSecurityGroup(),
 			"thalassa_subnet":                   resourceSubnet(),
 			"thalassa_target_group_attachment":  resourceTargetGroupAttachment(),
 			"thalassa_target_group":             resourceTargetGroup(),
@@ -70,6 +71,7 @@ func Provider() *schema.Provider {
 			"thalassa_machine_image":      dataSourceMachineImage(),
 			"thalassa_machine_type":       dataSourceMachineType(),
 			"thalassa_vpc":                dataSourceVpc(),
+			"thalassa_security_group":     dataSourceSecurityGroup(),
 		},
 		ConfigureContextFunc: providerConfigure,
 	}
