@@ -14,7 +14,7 @@ import (
 
 func resourceLoadBalancer() *schema.Resource {
 	return &schema.Resource{
-		Description:   "Create an loadbalancer",
+		Description:   "Create an loadbalancer within a VPC",
 		CreateContext: resourceLoadBalancerCreate,
 		ReadContext:   resourceLoadBalancerRead,
 		UpdateContext: resourceLoadBalancerUpdate,
@@ -173,12 +173,9 @@ func resourceLoadBalancerDelete(ctx context.Context, d *schema.ResourceData, m i
 	}
 
 	id := d.Get("id").(string)
-
-	error := client.IaaS().DeleteLoadbalancer(ctx, id)
-	if error != nil {
-		return diag.FromErr(error)
+	if err := client.IaaS().DeleteLoadbalancer(ctx, id); err != nil {
+		return diag.FromErr(err)
 	}
-
 	d.SetId("")
 
 	return nil
