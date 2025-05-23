@@ -2,12 +2,12 @@
 page_title: "thalassa_natgateway Resource - terraform-provider-thalassa"
 subcategory: "Networking"
 description: |-
-  Create an natGateway
+  Create an NAT Gateway within a VPC
 ---
 
 # thalassa_natgateway (Resource)
 
-Create an natGateway
+Create an NAT Gateway within a VPC
 
 ## Example Usage
 

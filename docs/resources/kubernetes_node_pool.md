@@ -15,6 +15,7 @@ Create an Kubernetes Node Pool
 
 ### Required
 
+- `availability_zone` (String) Availability zone for the Kubernetes Node Pool
 - `cluster_id` (String) Kubernetes Cluster of the Kubernetes Node Pool
 - `machine_type` (String) Machine type for the Kubernetes Node Pool
 - `name` (String) Name of the Kubernetes Node Pool
