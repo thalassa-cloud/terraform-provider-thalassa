@@ -6,6 +6,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/thalassa-cloud/client-go/kubernetes"
 )
 
 func dataSourceKubernetesCluster() *schema.Resource {
@@ -116,7 +117,7 @@ func dataSourceKubernetesClusterRead(ctx context.Context, d *schema.ResourceData
 	provider := getProvider(m)
 	slug := d.Get("slug").(string)
 
-	clusters, err := provider.Client.Kubernetes().ListKubernetesClusters(ctx)
+	clusters, err := provider.Client.Kubernetes().ListKubernetesClusters(ctx, &kubernetes.ListKubernetesClustersRequest{})
 	if err != nil {
 		return diag.FromErr(err)
 	}

@@ -9,7 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	validate "github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	kubernetesclient "github.com/thalassa-cloud/client-go/kubernetesclient"
+	kubernetes "github.com/thalassa-cloud/client-go/kubernetes"
 	tcclient "github.com/thalassa-cloud/client-go/pkg/client"
 )
 
@@ -83,12 +83,12 @@ func resourceKubernetesNodePool() *schema.Resource {
 			"upgrade_strategy": {
 				Type:     schema.TypeString,
 				Optional: true,
-				Default:  string(kubernetesclient.KubernetesNodePoolUpgradeStrategyAlways),
+				Default:  string(kubernetes.KubernetesNodePoolUpgradeStrategyAlways),
 				ValidateFunc: validate.StringInSlice([]string{
-					string(kubernetesclient.KubernetesNodePoolUpgradeStrategyAlways),
-					string(kubernetesclient.KubernetesNodePoolUpgradeStrategyOnDelete),
-					string(kubernetesclient.KubernetesNodePoolUpgradeStrategyInplace),
-					string(kubernetesclient.KubernetesNodePoolUpgradeStrategyNever),
+					string(kubernetes.KubernetesNodePoolUpgradeStrategyAlways),
+					string(kubernetes.KubernetesNodePoolUpgradeStrategyOnDelete),
+					string(kubernetes.KubernetesNodePoolUpgradeStrategyInplace),
+					string(kubernetes.KubernetesNodePoolUpgradeStrategyNever),
 				}, false),
 				Description: "Upgrade strategy for the Kubernetes Node Pool",
 			},
@@ -103,6 +103,11 @@ func resourceKubernetesNodePool() *schema.Resource {
 				Optional:    true,
 				Default:     false,
 				Description: "Enable autohealing for the Kubernetes Node Pool",
+			},
+			"availability_zone": {
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Availability zone for the Kubernetes Node Pool",
 			},
 			"replicas": {
 				Type:        schema.TypeInt,
@@ -222,20 +227,21 @@ func resourceKubernetesNodePoolCreate(ctx context.Context, d *schema.ResourceDat
 		}
 	}
 
-	createKubernetesNodePool := kubernetesclient.CreateKubernetesNodePool{
+	createKubernetesNodePool := kubernetes.CreateKubernetesNodePool{
 		Name:              d.Get("name").(string),
 		MachineType:       d.Get("machine_type").(string), // TODO: check if machine type is valid
 		Replicas:          d.Get("replicas").(int),
 		EnableAutoscaling: d.Get("enable_autoscaling").(bool),
+		AvailabilityZone:  d.Get("availability_zone").(string),
 		MinReplicas:       d.Get("min_replicas").(int),
 		MaxReplicas:       d.Get("max_replicas").(int),
-		NodeSettings: kubernetesclient.KubernetesNodeSettings{
+		NodeSettings: kubernetes.KubernetesNodeSettings{
 			Annotations: convertToMap(d.Get("node_annotations")),
 			Labels:      convertToMap(d.Get("node_labels")),
 			Taints:      convertToNodeTaints(d.Get("node_taints").([]interface{})),
 		},
 		EnableAutoHealing:         d.Get("enable_autohealing").(bool),
-		UpgradeStrategy:           Ptr(kubernetesclient.KubernetesNodePoolUpgradeStrategy(d.Get("upgrade_strategy").(string))),
+		UpgradeStrategy:           Ptr(kubernetes.KubernetesNodePoolUpgradeStrategy(d.Get("upgrade_strategy").(string))),
 		SubnetIdentity:            subnetIdentity,
 		KubernetesVersionIdentity: kubernetesVersionIdentity,
 	}
@@ -255,7 +261,7 @@ func resourceKubernetesNodePoolCreate(ctx context.Context, d *schema.ResourceDat
 			if err != nil {
 				return diag.FromErr(err)
 			}
-			if kubernetesNodePool.Status == kubernetesclient.KubernetesNodePoolStatusReady {
+			if kubernetesNodePool.Status == kubernetes.KubernetesNodePoolStatusReady {
 				break
 			}
 			time.Sleep(1 * time.Second)
@@ -296,6 +302,7 @@ func resourceKubernetesNodePoolRead(ctx context.Context, d *schema.ResourceData,
 	d.Set("annotations", kubernetesNodePool.Annotations)
 	d.Set("status", kubernetesNodePool.Status)
 	d.Set("replicas", kubernetesNodePool.Replicas)
+	d.Set("availability_zone", kubernetesNodePool.AvailabilityZone)
 	d.Set("min_replicas", kubernetesNodePool.MinReplicas)
 	d.Set("max_replicas", kubernetesNodePool.MaxReplicas)
 	d.Set("machine_type", kubernetesNodePool.MachineType)
@@ -345,17 +352,18 @@ func resourceKubernetesNodePoolUpdate(ctx context.Context, d *schema.ResourceDat
 		}
 	}
 
-	updateKubernetesNodePool := kubernetesclient.UpdateKubernetesNodePool{
+	updateKubernetesNodePool := kubernetes.UpdateKubernetesNodePool{
 		Description:               d.Get("description").(string),
 		MachineType:               d.Get("machine_type").(string),
 		Replicas:                  Ptr(d.Get("replicas").(int)),
+		AvailabilityZone:          d.Get("availability_zone").(string),
 		EnableAutoscaling:         Ptr(d.Get("enable_autoscaling").(bool)),
 		MinReplicas:               Ptr(d.Get("min_replicas").(int)),
 		MaxReplicas:               Ptr(d.Get("max_replicas").(int)),
 		EnableAutoHealing:         Ptr(d.Get("enable_autohealing").(bool)),
-		UpgradeStrategy:           Ptr(kubernetesclient.KubernetesNodePoolUpgradeStrategy(d.Get("upgrade_strategy").(string))),
+		UpgradeStrategy:           Ptr(kubernetes.KubernetesNodePoolUpgradeStrategy(d.Get("upgrade_strategy").(string))),
 		KubernetesVersionIdentity: kubernetesVersionIdentity,
-		NodeSettings: &kubernetesclient.KubernetesNodeSettings{
+		NodeSettings: &kubernetes.KubernetesNodeSettings{
 			Annotations: convertToNodeLabels(d.Get("node_annotations").(map[string]interface{})),
 			Labels:      convertToNodeLabels(d.Get("node_labels").(map[string]interface{})),
 			Taints:      convertToNodeTaints(d.Get("node_taints").([]interface{})),
@@ -375,7 +383,7 @@ func resourceKubernetesNodePoolUpdate(ctx context.Context, d *schema.ResourceDat
 			if err != nil {
 				return diag.FromErr(err)
 			}
-			if kubernetesNodePool.Status == kubernetesclient.KubernetesNodePoolStatusReady {
+			if kubernetesNodePool.Status == kubernetes.KubernetesNodePoolStatusReady {
 				break
 			}
 			time.Sleep(1 * time.Second)
@@ -408,7 +416,7 @@ func resourceKubernetesNodePoolDelete(ctx context.Context, d *schema.ResourceDat
 		if kubernetesNodePool == nil {
 			break
 		}
-		if kubernetesNodePool.Status == kubernetesclient.KubernetesNodePoolStatusDeleted {
+		if kubernetesNodePool.Status == kubernetes.KubernetesNodePoolStatusDeleted {
 			break
 		}
 		time.Sleep(1 * time.Second)
@@ -418,11 +426,11 @@ func resourceKubernetesNodePoolDelete(ctx context.Context, d *schema.ResourceDat
 	return nil
 }
 
-func convertToNodeTaints(taints []interface{}) []kubernetesclient.NodeTaint {
-	nodeTaints := make([]kubernetesclient.NodeTaint, len(taints))
+func convertToNodeTaints(taints []interface{}) []kubernetes.NodeTaint {
+	nodeTaints := make([]kubernetes.NodeTaint, len(taints))
 	for i, taint := range taints {
 		taintMap := taint.(map[string]interface{})
-		nodeTaints[i] = kubernetesclient.NodeTaint{
+		nodeTaints[i] = kubernetes.NodeTaint{
 			Key:    taintMap["key"].(string),
 			Value:  taintMap["value"].(string),
 			Effect: taintMap["effect"].(string),
@@ -431,7 +439,7 @@ func convertToNodeTaints(taints []interface{}) []kubernetesclient.NodeTaint {
 	return nodeTaints
 }
 
-func convertFromNodeTaints(taints []kubernetesclient.NodeTaint) []interface{} {
+func convertFromNodeTaints(taints []kubernetes.NodeTaint) []interface{} {
 	nodeTaints := make([]interface{}, len(taints))
 	for i, taint := range taints {
 		nodeTaints[i] = map[string]interface{}{

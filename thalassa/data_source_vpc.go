@@ -81,7 +81,7 @@ func dataSourceVpcRead(ctx context.Context, d *schema.ResourceData, m interface{
 	name := d.Get("name").(string)
 	region := d.Get("region").(string)
 
-	vpcs, err := provider.Client.IaaS().ListVpcs(ctx)
+	vpcs, err := provider.Client.IaaS().ListVpcs(ctx, &iaas.ListVpcsRequest{})
 	if err != nil {
 		return diag.FromErr(err)
 	}

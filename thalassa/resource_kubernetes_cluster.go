@@ -10,7 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	validate "github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	iaas "github.com/thalassa-cloud/client-go/iaas"
-	kubernetesclient "github.com/thalassa-cloud/client-go/kubernetesclient"
+	kubernetes "github.com/thalassa-cloud/client-go/kubernetes"
 	tcclient "github.com/thalassa-cloud/client-go/pkg/client"
 )
 
@@ -195,7 +195,7 @@ func resourceKubernetesClusterCreate(ctx context.Context, d *schema.ResourceData
 		}
 	}
 
-	createKubernetesCluster := kubernetesclient.CreateKubernetesCluster{
+	createKubernetesCluster := kubernetes.CreateKubernetesCluster{
 		Name:                      d.Get("name").(string),
 		Description:               d.Get("description").(string),
 		Labels:                    convertToMap(d.Get("labels")),
@@ -203,16 +203,16 @@ func resourceKubernetesClusterCreate(ctx context.Context, d *schema.ResourceData
 		Subnet:                    d.Get("subnet_id").(string),
 		RegionIdentity:            region,
 		DeleteProtection:          d.Get("delete_protection").(bool),
-		ClusterType:               kubernetesclient.KubernetesClusterType(d.Get("cluster_type").(string)),
+		ClusterType:               kubernetes.KubernetesClusterType(d.Get("cluster_type").(string)),
 		KubernetesVersionIdentity: version,
-		Networking: kubernetesclient.KubernetesClusterNetworking{
+		Networking: kubernetes.KubernetesClusterNetworking{
 			CNI:         d.Get("networking_cni").(string),
 			ServiceCIDR: d.Get("networking_service_cidr").(string),
 			PodCIDR:     d.Get("networking_pod_cidr").(string),
 		},
-		PodSecurityStandardsProfile: kubernetesclient.KubernetesClusterPodSecurityStandards(d.Get("pod_security_standards_profile").(string)),
-		AuditLogProfile:             kubernetesclient.KubernetesClusterAuditLoggingProfile(d.Get("audit_log_profile").(string)),
-		DefaultNetworkPolicy:        kubernetesclient.KubernetesDefaultNetworkPolicies(d.Get("default_network_policy").(string)),
+		PodSecurityStandardsProfile: kubernetes.KubernetesClusterPodSecurityStandards(d.Get("pod_security_standards_profile").(string)),
+		AuditLogProfile:             kubernetes.KubernetesClusterAuditLoggingProfile(d.Get("audit_log_profile").(string)),
+		DefaultNetworkPolicy:        kubernetes.KubernetesDefaultNetworkPolicies(d.Get("default_network_policy").(string)),
 	}
 
 	kubernetesCluster, err := client.Kubernetes().CreateKubernetesCluster(ctx, createKubernetesCluster)
@@ -313,16 +313,16 @@ func resourceKubernetesClusterUpdate(ctx context.Context, d *schema.ResourceData
 		}
 	}
 
-	updateKubernetesCluster := kubernetesclient.UpdateKubernetesCluster{
+	updateKubernetesCluster := kubernetes.UpdateKubernetesCluster{
 		Name:                        Ptr(d.Get("name").(string)),
 		Description:                 Ptr(d.Get("description").(string)),
 		Labels:                      convertToMap(d.Get("labels")),
 		Annotations:                 convertToMap(d.Get("annotations")),
 		DeleteProtection:            Ptr(d.Get("delete_protection").(bool)),
 		KubernetesVersionIdentity:   Ptr(version),
-		PodSecurityStandardsProfile: Ptr(kubernetesclient.KubernetesClusterPodSecurityStandards(d.Get("pod_security_standards_profile").(string))),
-		AuditLogProfile:             Ptr(kubernetesclient.KubernetesClusterAuditLoggingProfile(d.Get("audit_log_profile").(string))),
-		DefaultNetworkPolicy:        Ptr(kubernetesclient.KubernetesDefaultNetworkPolicies(d.Get("default_network_policy").(string))),
+		PodSecurityStandardsProfile: Ptr(kubernetes.KubernetesClusterPodSecurityStandards(d.Get("pod_security_standards_profile").(string))),
+		AuditLogProfile:             Ptr(kubernetes.KubernetesClusterAuditLoggingProfile(d.Get("audit_log_profile").(string))),
+		DefaultNetworkPolicy:        Ptr(kubernetes.KubernetesDefaultNetworkPolicies(d.Get("default_network_policy").(string))),
 	}
 	identity := d.Get("id").(string)
 	kubernetesCluster, err := client.Kubernetes().UpdateKubernetesCluster(ctx, identity, updateKubernetesCluster)

@@ -6,7 +6,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/thalassa-cloud/client-go/kubernetesclient"
+	"github.com/thalassa-cloud/client-go/kubernetes"
 )
 
 func dataSourceKubernetesVersion() *schema.Resource {
@@ -88,7 +88,7 @@ func dataSourceKubernetesVersionRead(ctx context.Context, d *schema.ResourceData
 		return diag.FromErr(err)
 	}
 
-	var version *kubernetesclient.KubernetesVersion
+	var version *kubernetes.KubernetesVersion
 	for _, v := range versions {
 		if name != "" && v.Name == name {
 			version = &v
