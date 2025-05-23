@@ -91,6 +91,28 @@ func resourceVpcCreate(ctx context.Context, d *schema.ResourceData, m interface{
 		return diag.FromErr(err)
 	}
 
+	// ensure the region exists
+	region, err := client.IaaS().GetRegion(ctx, d.Get("region").(string))
+	if err != nil {
+		if !tcclient.IsNotFound(err) {
+			return diag.FromErr(err)
+		}
+		// check if we can find the region using list
+		regions, err := client.IaaS().ListRegions(ctx, &iaas.ListRegionsRequest{})
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		for _, r := range regions {
+			if r.Identity == d.Get("region").(string) || r.Slug == d.Get("region").(string) {
+				region = &r
+				break
+			}
+		}
+	}
+	if region == nil {
+		return diag.FromErr(fmt.Errorf("region not found"))
+	}
+
 	createVpc := iaas.CreateVpc{
 		Name:                d.Get("name").(string),
 		Description:         d.Get("description").(string),
