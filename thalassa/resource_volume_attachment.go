@@ -46,10 +46,9 @@ func resourceBlockVolumeAttachment() *schema.Resource {
 				Description: "The ID of the virtual machine to attach the volume to",
 			},
 			"serial": {
-				Type:         schema.TypeString,
-				Computed:     true,
-				ValidateFunc: validate.StringLenBetween(1, 255),
-				Description:  "The device name to use for the volume attachment (e.g., /dev/sdb)",
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The device name to use for the volume attachment (e.g., /dev/sdb)",
 			},
 			"description": {
 				Type:         schema.TypeString,
