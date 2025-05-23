@@ -17,31 +17,35 @@ func Provider() *schema.Provider {
 		Schema: map[string]*schema.Schema{
 			"token": {
 				Type:        schema.TypeString,
-				Required:    false,
+				Optional:    true,
 				Sensitive:   true,
+				Description: "The API token for authentication. Can be set via the THALASSA_API_TOKEN environment variable.",
 				DefaultFunc: schema.EnvDefaultFunc("THALASSA_API_TOKEN", nil),
 			},
 			"client_id": {
 				Type:        schema.TypeString,
-				Required:    false,
+				Optional:    true,
 				Sensitive:   true,
+				Description: "The OIDC client ID for authentication. Can be set via the THALASSA_CLIENT_ID environment variable.",
 				DefaultFunc: schema.EnvDefaultFunc("THALASSA_CLIENT_ID", nil),
 			},
 			"client_secret": {
 				Type:        schema.TypeString,
-				Required:    false,
+				Optional:    true,
 				Sensitive:   true,
+				Description: "The OIDC client secret for authentication. Can be set via the THALASSA_CLIENT_SECRET environment variable.",
 				DefaultFunc: schema.EnvDefaultFunc("THALASSA_CLIENT_SECRET", nil),
 			},
 			"api": {
 				Type:        schema.TypeString,
-				Required:    true,
-				Sensitive:   true,
+				Optional:    true,
+				Description: "The API endpoint URL. Can be set via the THALASSA_API_ENDPOINT environment variable.",
 				DefaultFunc: schema.EnvDefaultFunc("THALASSA_API_ENDPOINT", "https://api.thalassa.cloud"),
 			},
 			"organisation_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
+				Description: "The organisation ID to use. Can be set via the THALASSA_ORGANISATION environment variable.",
 				DefaultFunc: schema.EnvDefaultFunc("THALASSA_ORGANISATION", ""),
 			},
 		},
@@ -90,6 +94,8 @@ type ConfiguredProvider struct {
 	Organisation string
 	token        string
 	apiEndpoint  string
+	clientID     string
+	clientSecret string
 }
 
 func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
@@ -130,6 +136,8 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 		Organisation: organisation,
 		token:        token,
 		apiEndpoint:  apiEndpoint,
+		clientID:     clientID,
+		clientSecret: clientSecret,
 	}, nil
 }
 
@@ -138,11 +146,29 @@ func getClient(provider ConfiguredProvider, d *schema.ResourceData) (thalassa.Cl
 	if err != nil {
 		return nil, err
 	}
-	client, err := thalassa.NewClient(
+
+	opts := []client.Option{
 		client.WithBaseURL(provider.apiEndpoint),
 		client.WithOrganisation(organisation),
-		client.WithAuthPersonalToken(provider.token),
-	)
+		client.WithUserAgent("thalassa-cloud/terraform-provider-thalassa"),
+	}
+
+	hasAuth := false
+	if provider.token != "" {
+		opts = append(opts, client.WithAuthPersonalToken(provider.token))
+		hasAuth = true
+	}
+
+	if provider.clientID != "" && provider.clientSecret != "" {
+		opts = append(opts, client.WithAuthOIDC(provider.clientID, provider.clientSecret, fmt.Sprintf("%s/oidc/token", provider.apiEndpoint)))
+		hasAuth = true
+	}
+
+	if !hasAuth {
+		return nil, errors.New("no authentication method provided")
+	}
+
+	client, err := thalassa.NewClient(opts...)
 	if err != nil {
 		return nil, err
 	}
