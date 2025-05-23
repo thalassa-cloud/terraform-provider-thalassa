@@ -16,7 +16,7 @@ import (
 
 func resourceNatGateway() *schema.Resource {
 	return &schema.Resource{
-		Description:   "Create an natGateway",
+		Description:   "Create an NAT Gateway within a VPC",
 		CreateContext: resourceNatGatewayCreate,
 		ReadContext:   resourceNatGatewayRead,
 		UpdateContext: resourceNatGatewayUpdate,
