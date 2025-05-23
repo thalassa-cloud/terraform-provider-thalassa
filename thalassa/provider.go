@@ -47,6 +47,7 @@ func Provider() *schema.Provider {
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"thalassa_block_volume":             resourceBlockVolume(),
+			"thalassa_block_volume_attachment":  resourceBlockVolumeAttachment(),
 			"thalassa_kubernetes_cluster":       resourceKubernetesCluster(),
 			"thalassa_kubernetes_node_pool":     resourceKubernetesNodePool(),
 			"thalassa_loadbalancer_listener":    resourceLoadBalancerListener(),

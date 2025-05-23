@@ -417,7 +417,7 @@ func getVolumeAttachments(virtualMachineInstance *iaas.Machine) []map[string]int
 	volumeAttachments := []map[string]interface{}{}
 	for _, volumeAttachment := range virtualMachineInstance.VolumeAttachments {
 		v := map[string]interface{}{
-			"device": volumeAttachment.DeviceName,
+			"serial": volumeAttachment.Serial,
 		}
 		if volumeAttachment.PersistentVolume != nil {
 			v["size_gb"] = volumeAttachment.PersistentVolume.Size
