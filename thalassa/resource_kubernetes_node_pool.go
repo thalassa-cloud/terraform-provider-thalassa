@@ -280,11 +280,16 @@ func resourceKubernetesNodePoolRead(ctx context.Context, d *schema.ResourceData,
 	identity := d.Get("id").(string)
 	kubernetesClusterIdentity := d.Get("cluster_id").(string)
 	kubernetesNodePool, err := client.Kubernetes().GetKubernetesNodePool(ctx, kubernetesClusterIdentity, identity)
-	if err != nil && !tcclient.IsNotFound(err) {
+	if err != nil {
+		if tcclient.IsNotFound(err) {
+			d.SetId("")
+			return nil
+		}
 		return diag.FromErr(fmt.Errorf("error getting kubernetesNodePool: %s", err))
 	}
 	if kubernetesNodePool == nil {
-		return diag.FromErr(fmt.Errorf("kubernetesNodePool was not found"))
+		d.SetId("")
+		return nil
 	}
 
 	currentlyConfiguredVersion, ok := d.GetOk("kubernetes_version")

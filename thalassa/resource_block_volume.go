@@ -163,11 +163,16 @@ func resourceBlockVolumeRead(ctx context.Context, d *schema.ResourceData, m inte
 
 	identity := d.Get("id").(string)
 	blockVolume, err := client.IaaS().GetVolume(ctx, identity)
-	if err != nil && !tcclient.IsNotFound(err) {
+	if err != nil {
+		if tcclient.IsNotFound(err) {
+			d.SetId("")
+			return nil
+		}
 		return diag.FromErr(fmt.Errorf("error getting blockVolume: %s", err))
 	}
 	if blockVolume == nil {
-		return diag.FromErr(fmt.Errorf("blockVolume was not found"))
+		d.SetId("")
+		return nil
 	}
 
 	d.SetId(blockVolume.Identity)

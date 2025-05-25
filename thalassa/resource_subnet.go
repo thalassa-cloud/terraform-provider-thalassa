@@ -186,11 +186,16 @@ func resourceSubnetRead(ctx context.Context, d *schema.ResourceData, m interface
 
 	identity := d.Get("id").(string)
 	subnet, err := client.IaaS().GetSubnet(ctx, identity)
-	if err != nil && !tcclient.IsNotFound(err) {
+	if err != nil {
+		if tcclient.IsNotFound(err) {
+			d.SetId("")
+			return nil
+		}
 		return diag.FromErr(fmt.Errorf("error getting subnet: %s", err))
 	}
 	if subnet == nil {
-		return diag.FromErr(fmt.Errorf("subnet %s not found", identity))
+		d.SetId("")
+		return nil
 	}
 
 	d.SetId(subnet.Identity)

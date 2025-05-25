@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	validate "github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	iaas "github.com/thalassa-cloud/client-go/iaas"
+	tcclient "github.com/thalassa-cloud/client-go/pkg/client"
 )
 
 func resourceSecurityGroup() *schema.Resource {
@@ -238,6 +239,10 @@ func resourceSecurityGroupRead(ctx context.Context, d *schema.ResourceData, meta
 
 	securityGroup, err := client.IaaS().GetSecurityGroup(ctx, d.Id())
 	if err != nil {
+		if tcclient.IsNotFound(err) {
+			d.SetId("")
+			return nil
+		}
 		return diag.FromErr(err)
 	}
 

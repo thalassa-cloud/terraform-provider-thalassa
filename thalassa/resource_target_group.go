@@ -207,11 +207,16 @@ func resourceTargetGroupRead(ctx context.Context, d *schema.ResourceData, m inte
 
 	id := d.Get("id").(string)
 	tg, err := client.IaaS().GetTargetGroup(ctx, iaas.GetTargetGroupRequest{Identity: id})
-	if err != nil && !tcclient.IsNotFound(err) {
+	if err != nil {
+		if tcclient.IsNotFound(err) {
+			d.SetId("")
+			return nil
+		}
 		return diag.FromErr(fmt.Errorf("error getting target group: %s", err))
 	}
 	if tg == nil {
-		return diag.FromErr(fmt.Errorf("target group was not found"))
+		d.SetId("")
+		return nil
 	}
 
 	d.SetId(tg.Identity)

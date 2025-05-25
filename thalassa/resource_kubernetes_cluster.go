@@ -248,7 +248,11 @@ func resourceKubernetesClusterRead(ctx context.Context, d *schema.ResourceData, 
 
 	slug := d.Get("id").(string)
 	kubernetesCluster, err := client.Kubernetes().GetKubernetesCluster(ctx, slug)
-	if err != nil && !tcclient.IsNotFound(err) {
+	if err != nil {
+		if tcclient.IsNotFound(err) {
+			d.SetId("")
+			return nil
+		}
 		return diag.FromErr(fmt.Errorf("error getting kubernetesCluster: %s", err))
 	}
 	if kubernetesCluster == nil {

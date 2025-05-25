@@ -143,11 +143,16 @@ func resourceVpcRead(ctx context.Context, d *schema.ResourceData, m interface{})
 
 	identity := d.Get("id").(string)
 	vpc, err := client.IaaS().GetVpc(ctx, identity)
-	if err != nil && !tcclient.IsNotFound(err) {
+	if err != nil {
+		if tcclient.IsNotFound(err) {
+			d.SetId("")
+			return nil
+		}
 		return diag.FromErr(fmt.Errorf("error getting vpc: %s", err))
 	}
 	if vpc == nil {
-		return diag.FromErr(fmt.Errorf("vpc was not found"))
+		d.SetId("")
+		return nil
 	}
 
 	d.SetId(vpc.Identity)

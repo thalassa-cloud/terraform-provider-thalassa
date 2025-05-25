@@ -112,11 +112,16 @@ func resourceLoadBalancerRead(ctx context.Context, d *schema.ResourceData, m int
 
 	slug := d.Get("slug").(string)
 	loadbalancer, err := client.IaaS().GetLoadbalancer(ctx, slug)
-	if err != nil && !tcclient.IsNotFound(err) {
+	if err != nil {
+		if tcclient.IsNotFound(err) {
+			d.SetId("")
+			return nil
+		}
 		return diag.FromErr(fmt.Errorf("error getting loadbalancer: %s", err))
 	}
 	if loadbalancer == nil {
-		return diag.FromErr(fmt.Errorf("loadbalancer was not found"))
+		d.SetId("")
+		return nil
 	}
 
 	d.SetId(loadbalancer.Identity)

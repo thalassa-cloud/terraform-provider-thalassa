@@ -106,11 +106,16 @@ func resourceRouteTableRead(ctx context.Context, d *schema.ResourceData, m inter
 
 	id := d.Get("id").(string)
 	routeTable, err := client.IaaS().GetRouteTable(ctx, id)
-	if err != nil && !tcclient.IsNotFound(err) {
+	if err != nil {
+		if tcclient.IsNotFound(err) {
+			d.SetId("")
+			return nil
+		}
 		return diag.FromErr(fmt.Errorf("error getting route table %q: %s", id, err))
 	}
 	if routeTable == nil {
-		return diag.FromErr(fmt.Errorf("route table %q was not found", id))
+		d.SetId("")
+		return nil
 	}
 
 	d.SetId(routeTable.Identity)

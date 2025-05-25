@@ -249,11 +249,16 @@ func resourceVirtualMachineInstanceRead(ctx context.Context, d *schema.ResourceD
 
 	identity := d.Get("id").(string)
 	virtualMachineInstance, err := client.IaaS().GetMachine(ctx, identity)
-	if err != nil && !tcclient.IsNotFound(err) {
+	if err != nil {
+		if tcclient.IsNotFound(err) {
+			d.SetId("")
+			return nil
+		}
 		return diag.FromErr(fmt.Errorf("error getting virtual machine instance: %s", err))
 	}
 	if virtualMachineInstance == nil {
-		return diag.FromErr(fmt.Errorf("virtual machine instance was not found"))
+		d.SetId("")
+		return nil
 	}
 
 	d.SetId(virtualMachineInstance.Identity)
