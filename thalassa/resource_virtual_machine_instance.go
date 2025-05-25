@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	validate "github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -100,7 +101,7 @@ func resourceVirtualMachineInstance() *schema.Resource {
 			},
 			"root_volume_id": {
 				Type:        schema.TypeString,
-				Computed:    true,
+				Optional:    true,
 				Description: "Root volume id of the virtual machine instance. Must be provided if root_volume_type is not set.",
 			},
 			"root_volume_size_gb": {
@@ -152,13 +153,33 @@ func resourceVirtualMachineInstance() *schema.Resource {
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 		CustomizeDiff: func(ctx context.Context, diff *schema.ResourceDiff, meta interface{}) error {
-			if diff.HasChange("root_volume_id") || diff.HasChange("root_volume_size_gb") || diff.HasChange("root_volume_type") {
-				tempData := &schema.ResourceData{}
-				tempData.Set("root_volume_id", diff.Get("root_volume_id"))
-				tempData.Set("root_volume_size_gb", diff.Get("root_volume_size_gb"))
-				tempData.Set("root_volume_type", diff.Get("root_volume_type"))
-				return validateRootVolumeCombination(tempData)
+			// Get all values from the diff
+			rootVolumeID := diff.Get("root_volume_id")
+			rootVolumeSize := diff.Get("root_volume_size_gb")
+			rootVolumeType := diff.Get("root_volume_type")
+
+			tflog.Debug(ctx, "Validating root volume combination",
+				map[string]interface{}{
+					"root_volume_id":      rootVolumeID,
+					"root_volume_size_gb": rootVolumeSize,
+					"root_volume_type":    rootVolumeType,
+				})
+
+			// If root_volume_id is set, we're good
+			if rootVolumeID != nil && rootVolumeID.(string) != "" {
+				return nil
 			}
+
+			// If root_volume_id is not set, both root_volume_size_gb and root_volume_type must be set
+			if rootVolumeSize == nil || rootVolumeType == nil {
+				return fmt.Errorf("either root_volume_id must be provided, or both root_volume_size_gb and root_volume_type must be provided")
+			}
+
+			// Additional validation for root_volume_size_gb if needed
+			if rootVolumeSize.(int) <= 0 {
+				return fmt.Errorf("root_volume_size_gb must be greater than 0")
+			}
+
 			return nil
 		},
 	}
@@ -443,31 +464,4 @@ func convertToStrList(v interface{}) []string {
 		values = append(values, v.(string))
 	}
 	return values
-}
-
-// validateRootVolumeCombination is a resource-level validation function
-func validateRootVolumeCombination(d *schema.ResourceData) error {
-	// Check if root_volume_id is set
-	rootVolumeID, rootVolumeIDSet := d.GetOk("root_volume_id")
-
-	// Check if root_volume_size_gb and root_volume_type are set
-	rootVolumeSize, rootVolumeSizeSet := d.GetOk("root_volume_size_gb")
-	_, rootVolumeTypeSet := d.GetOk("root_volume_type")
-
-	// If root_volume_id is set, we're good
-	if rootVolumeIDSet && rootVolumeID.(string) != "" {
-		return nil
-	}
-
-	// If root_volume_id is not set, both root_volume_size_gb and root_volume_type must be set
-	if !rootVolumeSizeSet || !rootVolumeTypeSet {
-		return fmt.Errorf("either root_volume_id must be provided, or both root_volume_size_gb and root_volume_type must be provided")
-	}
-
-	// Additional validation for root_volume_size_gb if needed
-	if rootVolumeSize.(int) <= 0 {
-		return fmt.Errorf("root_volume_size_gb must be greater than 0")
-	}
-
-	return nil
 }
