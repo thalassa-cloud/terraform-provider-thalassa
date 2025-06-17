@@ -109,6 +109,16 @@ func dataSourceKubernetesCluster() *schema.Resource {
 				Computed:    true,
 				Description: "Default network policy of the Kubernetes Cluster",
 			},
+			"kubernetes_api_server_endpoint": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Kubernetes API server endpoint of the Kubernetes Cluster",
+			},
+			"kubernetes_api_server_ca_certificate": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Kubernetes API server CA certificate of the Kubernetes Cluster",
+			},
 		},
 	}
 }
@@ -147,6 +157,8 @@ func dataSourceKubernetesClusterRead(ctx context.Context, d *schema.ResourceData
 			if cluster.VPC != nil {
 				d.Set("vpc_id", cluster.VPC.Identity)
 			}
+			d.Set("kubernetes_api_server_endpoint", cluster.APIServerURL)
+			d.Set("kubernetes_api_server_ca_certificate", cluster.APIServerCA)
 
 			// Set labels and annotations directly
 			if err := d.Set("labels", cluster.Labels); err != nil {
