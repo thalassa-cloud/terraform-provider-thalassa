@@ -26,7 +26,7 @@ Create an Kubernetes Cluster
 
 - `annotations` (Map of String) Annotations for the Kubernetes Cluster
 - `audit_log_profile` (String) Audit log profile of the Kubernetes Cluster
-- `cluster_type` (String) Cluster type of the Kubernetes Cluster
+- `cluster_type` (String) Cluster type of the Kubernetes Cluster. Must be one of: managed, hosted-control-plane. Default: managed.
 - `default_network_policy` (String) Default network policy of the Kubernetes Cluster
 - `delete_protection` (Boolean) Delete protection of the Kubernetes Cluster
 - `description` (String) A human readable description about the Kubernetes Cluster
