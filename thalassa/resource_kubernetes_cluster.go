@@ -141,6 +141,16 @@ func resourceKubernetesCluster() *schema.Resource {
 				ValidateFunc: validate.StringInSlice([]string{"", "allow-all", "deny-all"}, false),
 				Description:  "Default network policy of the Kubernetes Cluster",
 			},
+			"kubernetes_api_server_endpoint": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Kubernetes API server endpoint of the Kubernetes Cluster",
+			},
+			"kubernetes_api_server_ca_certificate": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Kubernetes API server CA certificate of the Kubernetes Cluster",
+			},
 		},
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -227,13 +237,26 @@ func resourceKubernetesClusterCreate(ctx context.Context, d *schema.ResourceData
 		d.Set("status", kubernetesCluster.Status)
 	}
 
+	ctxWithTimeout, cancel := context.WithTimeout(ctx, 20*time.Minute)
+	defer cancel()
+
 	// wait until the cluster is ready
 	for {
-		kubernetesCluster, err := client.Kubernetes().GetKubernetesCluster(ctx, kubernetesCluster.Identity)
+		select {
+		case <-ctxWithTimeout.Done():
+			return diag.FromErr(fmt.Errorf("timeout waiting for cluster to be ready"))
+		default:
+		}
+		kubernetesCluster, err := client.Kubernetes().GetKubernetesCluster(ctxWithTimeout, kubernetesCluster.Identity)
 		if err != nil {
 			return diag.FromErr(err)
 		}
+		if strings.EqualFold(kubernetesCluster.Status, "error") {
+			return diag.FromErr(fmt.Errorf("cluster is in error state: %s", kubernetesCluster.StatusMessage))
+		}
 		if strings.EqualFold(kubernetesCluster.Status, "ready") {
+			d.Set("kubernetes_api_server_endpoint", kubernetesCluster.APIServerURL)
+			d.Set("kubernetes_api_server_ca_certificate", kubernetesCluster.APIServerCA)
 			break
 		}
 		time.Sleep(1 * time.Second)
@@ -281,6 +304,8 @@ func resourceKubernetesClusterRead(ctx context.Context, d *schema.ResourceData, 
 	d.Set("audit_log_profile", kubernetesCluster.AuditLogProfile)
 	d.Set("default_network_policy", kubernetesCluster.DefaultNetworkPolicy)
 	d.Set("status", kubernetesCluster.Status)
+	d.Set("kubernetes_api_server_endpoint", kubernetesCluster.APIServerURL)
+	d.Set("kubernetes_api_server_ca_certificate", kubernetesCluster.APIServerCA)
 
 	if kubernetesCluster.VPC != nil {
 		d.Set("vpc", kubernetesCluster.VPC.Identity)
@@ -381,8 +406,15 @@ func resourceKubernetesClusterDelete(ctx context.Context, d *schema.ResourceData
 	}
 
 	// wait until the cluster is deleted
+	ctxWithTimeout, cancel := context.WithTimeout(ctx, 20*time.Minute)
+	defer cancel()
 	for {
-		kubernetesCluster, err := client.Kubernetes().GetKubernetesCluster(ctx, identity)
+		select {
+		case <-ctxWithTimeout.Done():
+			return diag.FromErr(fmt.Errorf("timeout waiting for cluster to be deleted"))
+		default:
+		}
+		kubernetesCluster, err := client.Kubernetes().GetKubernetesCluster(ctxWithTimeout, identity)
 		if err != nil {
 			if tcclient.IsNotFound(err) {
 				break
