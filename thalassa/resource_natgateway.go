@@ -121,15 +121,23 @@ func resourceNatGatewayCreate(ctx context.Context, d *schema.ResourceData, m int
 		d.Set("slug", natGateway.Slug)
 
 		// wait until the natGateway is ready and has an endpoint IP
+		ctxWithTimeout, cancel := context.WithTimeout(ctx, 20*time.Minute)
+		defer cancel()
 		for {
 			select {
-			case <-ctx.Done():
+			case <-ctxWithTimeout.Done():
 				return diag.FromErr(fmt.Errorf("timeout while waiting for natGateway to be ready"))
 			case <-time.After(1 * time.Second):
 				// continue
-				natGateway, err := client.IaaS().GetNatGateway(ctx, natGateway.Identity)
+				natGateway, err = client.IaaS().GetNatGateway(ctxWithTimeout, natGateway.Identity)
 				if err != nil {
+					if tcclient.IsNotFound(err) {
+						return diag.FromErr(fmt.Errorf("natGateway %s was not found after creation", natGateway.Identity))
+					}
 					return diag.FromErr(err)
+				}
+				if natGateway == nil {
+					return diag.FromErr(fmt.Errorf("natGateway %s was not found after creation", natGateway.Identity))
 				}
 				if strings.TrimSpace(natGateway.EndpointIP) != "" {
 					d.Set("status", natGateway.Status)
