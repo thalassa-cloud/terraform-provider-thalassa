@@ -1,4 +1,4 @@
-TEST?=$$(go list ./... | grep -v 'vendor')
+TEST?=$$(go list ./...)
 HOSTNAME=thalassa.cloud
 NAMESPACE=thalassa
 NAME=thalassa
@@ -30,11 +30,11 @@ install: build
 	mv ${BINARY} ~/.terraform.d/plugins/${HOSTNAME}/${NAMESPACE}/${NAME}/${VERSION}/${OS_ARCH}
 
 test: 
-	go test -i $(TEST) || exit 1                                                   
-	echo $(TEST) | xargs -t -n4 go test $(TESTARGS) -timeout=30s -parallel=4                    
+	go test -mod=vendor -i $(TEST) || exit 1                                                   
+	echo $(TEST) | xargs -t -n4 go test -mod=vendor $(TESTARGS) -timeout=30s -parallel=4                    
 
 testacc: 
-	TF_ACC=1 go test $(TEST) -v $(TESTARGS) -timeout 120m
+	TF_ACC=1 go test -mod=vendor $(TEST) -v $(TESTARGS) -timeout 120m
 
 docs:
 	go run github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs@latest

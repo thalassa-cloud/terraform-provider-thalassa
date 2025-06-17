@@ -64,3 +64,6 @@ terraform
 
 dist/
 keys/
+
+!vendor/
+!vendor/**/zz_generated.*
