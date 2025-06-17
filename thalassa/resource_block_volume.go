@@ -255,9 +255,17 @@ func resourceBlockVolumeDelete(ctx context.Context, d *schema.ResourceData, m in
 		}
 	}
 
-	// wait until the cluster is deleted
+	ctxWithTimeout, cancel := context.WithTimeout(ctx, 10*time.Minute)
+	defer cancel()
 	for {
-		blockVolume, err := client.IaaS().GetVolume(ctx, identity)
+		select {
+		case <-ctxWithTimeout.Done():
+			return diag.FromErr(fmt.Errorf("timeout waiting for block volume to be deleted"))
+		case <-time.After(1 * time.Second):
+		default:
+		}
+
+		blockVolume, err := client.IaaS().GetVolume(ctxWithTimeout, identity)
 		if err != nil {
 			if tcclient.IsNotFound(err) {
 				break
@@ -270,7 +278,6 @@ func resourceBlockVolumeDelete(ctx context.Context, d *schema.ResourceData, m in
 		if strings.EqualFold(blockVolume.Status, "deleted") {
 			break
 		}
-		time.Sleep(1 * time.Second)
 	}
 
 	d.SetId("")
