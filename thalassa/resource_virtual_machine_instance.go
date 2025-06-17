@@ -228,19 +228,28 @@ func resourceVirtualMachineInstanceCreate(ctx context.Context, d *schema.Resourc
 		return diag.FromErr(err)
 	}
 	if virtualMachineInstance != nil {
-		d.SetId(virtualMachineInstance.Identity)
+		identity := virtualMachineInstance.Identity
+		d.SetId(identity)
 		d.Set("slug", virtualMachineInstance.Slug)
 
 		// wait until the virtual machine instance is ready
+		ctxWithTimeout, cancel := context.WithTimeout(ctx, 20*time.Minute)
+		defer cancel()
 		for {
 			select {
-			case <-ctx.Done():
+			case <-ctxWithTimeout.Done():
 				return diag.FromErr(fmt.Errorf("timeout while waiting for virtual machine instance to be ready"))
 			case <-time.After(1 * time.Second):
 				// continue
-				virtualMachineInstance, err := client.IaaS().GetMachine(ctx, virtualMachineInstance.Identity)
+				virtualMachineInstance, err = client.IaaS().GetMachine(ctxWithTimeout, identity)
 				if err != nil {
+					if tcclient.IsNotFound(err) {
+						return diag.FromErr(fmt.Errorf("virtual machine instance %s was not found after creation", identity))
+					}
 					return diag.FromErr(err)
+				}
+				if virtualMachineInstance == nil {
+					return diag.FromErr(fmt.Errorf("virtual machine instance %s was not found after creation", identity))
 				}
 
 				if strings.EqualFold(virtualMachineInstance.Status.Status, "ready") || strings.EqualFold(virtualMachineInstance.Status.Status, "running") {
@@ -255,6 +264,8 @@ func resourceVirtualMachineInstanceCreate(ctx context.Context, d *schema.Resourc
 						d.Set("availability_zone", "")
 					}
 					return nil
+				} else if strings.EqualFold(virtualMachineInstance.Status.Status, "error") || strings.EqualFold(virtualMachineInstance.Status.Status, "failed") {
+					return diag.FromErr(fmt.Errorf("virtual machine instance is in error state: %s", virtualMachineInstance.Status.StatusMessage))
 				}
 			}
 		}
@@ -389,12 +400,14 @@ func resourceVirtualMachineInstanceDelete(ctx context.Context, d *schema.Resourc
 	}
 
 	// wait until the virtual machine instance is deleted
+	ctxWithTimeout, cancel := context.WithTimeout(ctx, 20*time.Minute)
+	defer cancel()
 	for {
 		select {
-		case <-ctx.Done():
+		case <-ctxWithTimeout.Done():
 			return diag.FromErr(fmt.Errorf("timeout while waiting for virtual machine instance to be deleted"))
 		case <-time.After(2 * time.Second):
-			m, err := client.IaaS().GetMachine(ctx, id)
+			m, err := client.IaaS().GetMachine(ctxWithTimeout, id)
 			if err != nil {
 				if tcclient.IsNotFound(err) {
 					d.SetId("")
