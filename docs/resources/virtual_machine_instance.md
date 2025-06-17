@@ -30,6 +30,7 @@ Create an virtual machine instance within a subnet on the Thalassa Cloud platfor
 - `delete_protection` (Boolean) Delete protection of the virtual machine instance
 - `description` (String) A human readable description about the virtual machine instance
 - `labels` (Map of String) Labels for the virtual machine instance
+- `root_volume_id` (String) Root volume id of the virtual machine instance. Must be provided if root_volume_type is not set.
 - `root_volume_size_gb` (Number) Root volume size of the virtual machine instance. Must be provided if root_volume_id is not set.
 - `root_volume_type` (String) Root volume type of the virtual machine instance. Must be provided if root_volume_id is not set.
 - `security_group_attachments` (List of String) Security group attached to the virtual machine instance
@@ -39,7 +40,6 @@ Create an virtual machine instance within a subnet on the Thalassa Cloud platfor
 - `attached_volume_ids` (List of String) Attached volume ids of the virtual machine instance
 - `id` (String) The ID of this resource.
 - `ip_addresses` (List of String) IP addresses of the virtual machine instance
-- `root_volume_id` (String) Root volume id of the virtual machine instance. Must be provided if root_volume_type is not set.
 - `slug` (String) Slug of the Virtual Machine Instance
 - `state` (String) Desired state of the virtual machine instance. Can be 'running', 'stopped', 'deleted'
 - `status` (String) Status of the virtual machine instance
