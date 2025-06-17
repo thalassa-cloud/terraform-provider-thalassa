@@ -145,16 +145,18 @@ func resourceSubnetCreate(ctx context.Context, d *schema.ResourceData, m interfa
 		d.Set("status", subnet.Status)
 
 		// wait until the subnet is ready
+		ctxWithTimeout, cancel := context.WithTimeout(ctx, 20*time.Minute)
+		defer cancel()
 		for {
 			select {
-			case <-ctx.Done():
+			case <-ctxWithTimeout.Done():
 				if subnet != nil {
 					return diag.FromErr(fmt.Errorf("timeout while waiting for subnet to be ready. Current status: %s", subnet.Status))
 				}
 				return diag.FromErr(fmt.Errorf("timeout while waiting for subnet to be ready"))
 			case <-time.After(1 * time.Second):
 				// continue
-				subnet, err := client.IaaS().GetSubnet(ctx, subnet.Identity)
+				subnet, err = client.IaaS().GetSubnet(ctxWithTimeout, subnet.Identity)
 				if err != nil {
 					if tcclient.IsNotFound(err) {
 						return diag.FromErr(fmt.Errorf("subnet %s was not found after creation", subnet.Identity))
@@ -170,6 +172,8 @@ func resourceSubnetCreate(ctx context.Context, d *schema.ResourceData, m interfa
 					d.Set("ipv6_addresses_available", subnet.V6availableIPs)
 
 					return nil
+				} else if subnet.Status == iaas.SubnetStatusFailed {
+					return diag.FromErr(fmt.Errorf("subnet is in failed state: %s", subnet.Status))
 				}
 				d.Set("status", subnet.Status)
 			}
@@ -256,20 +260,27 @@ func resourceSubnetUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 			d.Set("route_table_id", subnet.RouteTable.Identity)
 		}
 
+		ctxWithTimeout, cancel := context.WithTimeout(ctx, 20*time.Minute)
+		defer cancel()
 		// wait until the subnet is ready
 		for {
 			select {
-			case <-ctx.Done():
-				return diag.FromErr(fmt.Errorf("timeout while waiting for subnet to be ready"))
+			case <-ctxWithTimeout.Done():
+				return diag.FromErr(fmt.Errorf("timeout while waiting for subnet to be ready. Current status: %s", subnet.Status))
 			case <-time.After(1 * time.Second):
 				// continue
-				subnet, err := client.IaaS().GetSubnet(ctx, subnet.Identity)
+				subnet, err = client.IaaS().GetSubnet(ctxWithTimeout, subnet.Identity)
 				if err != nil {
+					if tcclient.IsNotFound(err) {
+						return diag.FromErr(fmt.Errorf("subnet %s was not found after update", subnet.Identity))
+					}
 					return diag.FromErr(err)
 				}
 				if subnet.Status == iaas.SubnetStatusReady {
 					d.Set("status", subnet.Status)
 					return nil
+				} else if subnet.Status == iaas.SubnetStatusFailed {
+					return diag.FromErr(fmt.Errorf("subnet is in failed state: %s", subnet.Status))
 				}
 			}
 		}
@@ -292,16 +303,21 @@ func resourceSubnetDelete(ctx context.Context, d *schema.ResourceData, m interfa
 	}
 
 	// wait until the subnet is deleted
+	ctxWithTimeout, cancel := context.WithTimeout(ctx, 20*time.Minute)
+	defer cancel()
 	for {
 		select {
-		case <-ctx.Done():
+		case <-ctxWithTimeout.Done():
 			return diag.FromErr(fmt.Errorf("timeout while waiting for subnet to be deleted"))
 		case <-time.After(1 * time.Second):
 			// continue
-			_, err := client.IaaS().GetSubnet(ctx, id)
+			_, err := client.IaaS().GetSubnet(ctxWithTimeout, id)
 			if err != nil && tcclient.IsNotFound(err) {
 				d.SetId("")
 				return nil
+			}
+			if err != nil {
+				return diag.FromErr(err)
 			}
 		}
 	}
