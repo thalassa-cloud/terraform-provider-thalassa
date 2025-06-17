@@ -14,7 +14,7 @@ provider "thalassa" {
 resource "thalassa_kubernetes_cluster" "example" {
   name        = "example-cluster"
   description = "Example Kubernetes cluster for documentation"
-  region      = "eu-west-1"  # Replace with your desired region
+  region      = "nl-01"  # Replace with your desired region
   subnet_id   = "subnet-123" # Replace with your subnet ID
   cluster_version = "1.28.0" # Replace with your desired Kubernetes version
   cluster_type    = "managed"
@@ -28,10 +28,6 @@ resource "thalassa_kubernetes_node_pool" "example" {
   name              = "example-node-pool"
   description       = "Example node pool for documentation"
   cluster_id        = thalassa_kubernetes_cluster.example.id
-  machine_type      = "standard-2"  # Replace with your desired machine type
-  machine_image     = "ubuntu-22.04" # Replace with your desired machine image
-  min_nodes         = 1
-  max_nodes         = 3
   region            = thalassa_kubernetes_cluster.example.region
 }
 
