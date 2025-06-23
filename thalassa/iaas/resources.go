@@ -27,5 +27,6 @@ var (
 		"thalassa_machine_type":   DataSourceMachineType(),
 		"thalassa_vpc":            DataSourceVpc(),
 		"thalassa_security_group": DataSourceSecurityGroup(),
+		"thalassa_volume_type":    DataSourceVolumeType(),
 	}
 )
