@@ -29,6 +29,8 @@ Get an Kubernetes cluster
 - `delete_protection` (Boolean) Delete protection of the Kubernetes Cluster
 - `description` (String) A human readable description about the Kubernetes Cluster
 - `id` (String) The ID of this resource.
+- `kubernetes_api_server_ca_certificate` (String) Kubernetes API server CA certificate of the Kubernetes Cluster
+- `kubernetes_api_server_endpoint` (String) Kubernetes API server endpoint of the Kubernetes Cluster
 - `labels` (Map of String) Labels for the Kubernetes Cluster
 - `networking_cni` (String) CNI of the Kubernetes Cluster
 - `networking_pod_cidr` (String) Pod CIDR of the Kubernetes Cluster

@@ -18,26 +18,28 @@ Create an Kubernetes Cluster
 - `cluster_version` (String) Cluster version of the Kubernetes Cluster
 - `name` (String) Name of the Kubernetes Cluster
 - `networking_cni` (String) CNI of the Kubernetes Cluster
-- `networking_pod_cidr` (String) Pod CIDR of the Kubernetes Cluster
-- `networking_service_cidr` (String) Service CIDR of the Kubernetes Cluster
 - `organisation_id` (String) Reference to the Organisation of the Kubernetes Cluster. If not provided, the organisation of the (Terraform) provider will be used.
 
 ### Optional
 
 - `annotations` (Map of String) Annotations for the Kubernetes Cluster
-- `audit_log_profile` (String) Audit log profile of the Kubernetes Cluster
+- `audit_log_profile` (String) Audit log profile of the Kubernetes Cluster. Must be one of: none, basic, advanced. Default: none.
 - `cluster_type` (String) Cluster type of the Kubernetes Cluster. Must be one of: managed, hosted-control-plane. Default: managed.
 - `default_network_policy` (String) Default network policy of the Kubernetes Cluster
 - `delete_protection` (Boolean) Delete protection of the Kubernetes Cluster
 - `description` (String) A human readable description about the Kubernetes Cluster
 - `labels` (Map of String) Labels for the Kubernetes Cluster
-- `pod_security_standards_profile` (String) Pod security standards profile of the Kubernetes Cluster
+- `networking_pod_cidr` (String) Pod CIDR of the Kubernetes Cluster. Must be a valid CIDR block.
+- `networking_service_cidr` (String) Service CIDR of the Kubernetes Cluster. Must be a valid CIDR block.
+- `pod_security_standards_profile` (String) Pod security standards profile of the Kubernetes Cluster. Must be one of: restricted, baseline, privileged. Default: baseline.
 - `region` (String) Region of the Kubernetes Cluster. Required for hosted-control-plane clusters.
 - `subnet_id` (String) Subnet of the Kubernetes Cluster. Required for managed clusters.
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
+- `kubernetes_api_server_ca_certificate` (String) Kubernetes API server CA certificate of the Kubernetes Cluster
+- `kubernetes_api_server_endpoint` (String) Kubernetes API server endpoint of the Kubernetes Cluster
 - `slug` (String)
 - `status` (String) Status of the Kubernetes Cluster
 - `vpc_id` (String) VPC of the Kubernetes Cluster. This is automatically set when a subnet is provided.

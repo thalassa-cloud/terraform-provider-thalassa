@@ -28,7 +28,7 @@ provider "thalassa" {
 resource "thalassa_vpc" "example" {
   name        = "example-vpc"
   description = "Example VPC for documentation"
-  region      = "eu-west-1"  # Replace with your desired region
+  region      = "nl-01"
   cidrs       = ["10.0.0.0/16", "10.2.0.0/16", "10.3.0.0/16"]
 }
 
@@ -38,7 +38,6 @@ resource "thalassa_subnet" "example" {
   description = "Example subnet for documentation"
   vpc_id      = thalassa_vpc.example.id
   cidr        = ["10.0.1.0/24", "10.2.1.0/24", "10.3.1.0/24"]
-  zone        = "nl-01"  # Replace with your desired zone
 }
 
 # Output the VPC and subnet IDs
