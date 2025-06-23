@@ -107,7 +107,13 @@ func GetClient(provider ConfiguredProvider, d *schema.ResourceData) (thalassa.Cl
 }
 
 func getOrganisation(provider ConfiguredProvider, d *schema.ResourceData) (string, error) {
-	organisation := d.Get("organisation_id").(string)
+	organisation := provider.Organisation
+	orgFromState := d.Get("organisation_id")
+	if orgFromState != nil {
+		if o, ok := orgFromState.(string); ok {
+			organisation = o
+		}
+	}
 	if organisation != "" {
 		return organisation, nil
 	}
