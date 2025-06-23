@@ -1,4 +1,4 @@
-package thalassa
+package iaas
 
 import (
 	"context"
@@ -8,9 +8,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	validate "github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	iaas "github.com/thalassa-cloud/client-go/iaas"
+	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/provider"
 )
 
-func dataSourceVpc() *schema.Resource {
+func DataSourceVpc() *schema.Resource {
 	return &schema.Resource{
 		Description: "Get an vpc",
 		ReadContext: dataSourceVpcRead,
@@ -76,7 +77,7 @@ func dataSourceVpc() *schema.Resource {
 }
 
 func dataSourceVpcRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	provider := getProvider(m)
+	provider := provider.GetProvider(m)
 	slug := d.Get("slug").(string)
 	name := d.Get("name").(string)
 	region := d.Get("region").(string)

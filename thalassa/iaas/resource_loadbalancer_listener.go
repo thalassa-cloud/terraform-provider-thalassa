@@ -1,4 +1,4 @@
-package thalassa
+package iaas
 
 import (
 	"context"
@@ -10,6 +10,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	validate "github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	tcclient "github.com/thalassa-cloud/client-go/pkg/client"
+	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/convert"
+	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/provider"
 
 	iaas "github.com/thalassa-cloud/client-go/iaas"
 )
@@ -133,7 +135,7 @@ func resourceLoadBalancerListener() *schema.Resource {
 }
 
 func resourceLoadBalancerListenerCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client, err := getClient(getProvider(m), d)
+	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -142,8 +144,8 @@ func resourceLoadBalancerListenerCreate(ctx context.Context, d *schema.ResourceD
 	createListener := iaas.CreateListener{
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
-		Labels:      convertToMap(d.Get("labels")),
-		Annotations: convertToMap(d.Get("annotations")),
+		Labels:      convert.ConvertToMap(d.Get("labels")),
+		Annotations: convert.ConvertToMap(d.Get("annotations")),
 		Port:        d.Get("port").(int),
 		Protocol:    iaas.LoadbalancerProtocol(d.Get("protocol").(string)),
 		TargetGroup: d.Get("target_group_id").(string),
@@ -182,7 +184,7 @@ func resourceLoadBalancerListenerCreate(ctx context.Context, d *schema.ResourceD
 }
 
 func resourceLoadBalancerListenerRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client, err := getClient(getProvider(m), d)
+	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -230,7 +232,7 @@ func resourceLoadBalancerListenerRead(ctx context.Context, d *schema.ResourceDat
 }
 
 func resourceLoadBalancerListenerUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client, err := getClient(getProvider(m), d)
+	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -241,8 +243,8 @@ func resourceLoadBalancerListenerUpdate(ctx context.Context, d *schema.ResourceD
 	updateListener := iaas.UpdateListener{
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
-		Labels:      convertToMap(d.Get("labels")),
-		Annotations: convertToMap(d.Get("annotations")),
+		Labels:      convert.ConvertToMap(d.Get("labels")),
+		Annotations: convert.ConvertToMap(d.Get("annotations")),
 		Port:        d.Get("port").(int),
 		Protocol:    iaas.LoadbalancerProtocol(d.Get("protocol").(string)),
 		TargetGroup: d.Get("target_group_id").(string),
@@ -295,7 +297,7 @@ func resourceLoadBalancerListenerUpdate(ctx context.Context, d *schema.ResourceD
 }
 
 func resourceLoadBalancerListenerDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client, err := getClient(getProvider(m), d)
+	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
 	}

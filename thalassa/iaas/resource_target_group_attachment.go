@@ -1,4 +1,4 @@
-package thalassa
+package iaas
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	tcclient "github.com/thalassa-cloud/client-go/pkg/client"
+	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/provider"
 
 	iaas "github.com/thalassa-cloud/client-go/iaas"
 )
@@ -48,7 +49,7 @@ func resourceTargetGroupAttachment() *schema.Resource {
 }
 
 func resourceTargetGroupAttachmentCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client, err := getClient(getProvider(m), d)
+	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -75,7 +76,7 @@ func resourceTargetGroupAttachmentCreate(ctx context.Context, d *schema.Resource
 }
 
 func resourceTargetGroupAttachmentRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client, err := getClient(getProvider(m), d)
+	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -113,7 +114,7 @@ func resourceTargetGroupAttachmentRead(ctx context.Context, d *schema.ResourceDa
 }
 
 func resourceTargetGroupAttachmentDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client, err := getClient(getProvider(m), d)
+	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
 	}

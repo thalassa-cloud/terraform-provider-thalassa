@@ -1,4 +1,4 @@
-package thalassa
+package iaas
 
 import (
 	"context"
@@ -10,6 +10,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	validate "github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	tcclient "github.com/thalassa-cloud/client-go/pkg/client"
+	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/convert"
+	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/provider"
 
 	iaas "github.com/thalassa-cloud/client-go/iaas"
 )
@@ -98,7 +100,7 @@ func resourceNatGateway() *schema.Resource {
 }
 
 func resourceNatGatewayCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client, err := getClient(getProvider(m), d)
+	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -106,8 +108,8 @@ func resourceNatGatewayCreate(ctx context.Context, d *schema.ResourceData, m int
 	createNatGateway := iaas.CreateVpcNatGateway{
 		Name:           d.Get("name").(string),
 		Description:    d.Get("description").(string),
-		Labels:         convertToMap(d.Get("labels")),
-		Annotations:    convertToMap(d.Get("annotations")),
+		Labels:         convert.ConvertToMap(d.Get("labels")),
+		Annotations:    convert.ConvertToMap(d.Get("annotations")),
 		SubnetIdentity: d.Get("subnet_id").(string),
 	}
 
@@ -153,7 +155,7 @@ func resourceNatGatewayCreate(ctx context.Context, d *schema.ResourceData, m int
 }
 
 func resourceNatGatewayRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client, err := getClient(getProvider(m), d)
+	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -183,7 +185,7 @@ func resourceNatGatewayRead(ctx context.Context, d *schema.ResourceData, m inter
 }
 
 func resourceNatGatewayUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client, err := getClient(getProvider(m), d)
+	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -191,8 +193,8 @@ func resourceNatGatewayUpdate(ctx context.Context, d *schema.ResourceData, m int
 	updateNatGateway := iaas.UpdateVpcNatGateway{
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
-		Labels:      convertToMap(d.Get("labels")),
-		Annotations: convertToMap(d.Get("annotations")),
+		Labels:      convert.ConvertToMap(d.Get("labels")),
+		Annotations: convert.ConvertToMap(d.Get("annotations")),
 	}
 
 	slug := d.Get("slug").(string)
@@ -214,7 +216,7 @@ func resourceNatGatewayUpdate(ctx context.Context, d *schema.ResourceData, m int
 }
 
 func resourceNatGatewayDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client, err := getClient(getProvider(m), d)
+	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
 	}

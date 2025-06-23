@@ -1,4 +1,4 @@
-package thalassa
+package iaas
 
 import (
 	"context"
@@ -11,6 +11,8 @@ import (
 	validate "github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	iaas "github.com/thalassa-cloud/client-go/iaas"
 	tcclient "github.com/thalassa-cloud/client-go/pkg/client"
+	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/convert"
+	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/provider"
 )
 
 func resourceBlockVolume() *schema.Resource {
@@ -100,7 +102,7 @@ func resourceBlockVolume() *schema.Resource {
 }
 
 func resourceBlockVolumeCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client, err := getClient(getProvider(m), d)
+	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -120,8 +122,8 @@ func resourceBlockVolumeCreate(ctx context.Context, d *schema.ResourceData, m in
 	createBlockVolume := iaas.CreateVolume{
 		Name:                d.Get("name").(string),
 		Description:         d.Get("description").(string),
-		Labels:              convertToMap(d.Get("labels")),
-		Annotations:         convertToMap(d.Get("annotations")),
+		Labels:              convert.ConvertToMap(d.Get("labels")),
+		Annotations:         convert.ConvertToMap(d.Get("annotations")),
 		CloudRegionIdentity: region,
 		VolumeTypeIdentity:  d.Get("volume_type").(string),
 		Size:                d.Get("size_gb").(int),
@@ -156,7 +158,7 @@ func resourceBlockVolumeCreate(ctx context.Context, d *schema.ResourceData, m in
 }
 
 func resourceBlockVolumeRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client, err := getClient(getProvider(m), d)
+	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -206,7 +208,7 @@ func resourceBlockVolumeRead(ctx context.Context, d *schema.ResourceData, m inte
 }
 
 func resourceBlockVolumeUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client, err := getClient(getProvider(m), d)
+	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -214,8 +216,8 @@ func resourceBlockVolumeUpdate(ctx context.Context, d *schema.ResourceData, m in
 	updateBlockVolume := iaas.UpdateVolume{
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
-		Labels:      convertToMap(d.Get("labels")),
-		Annotations: convertToMap(d.Get("annotations")),
+		Labels:      convert.ConvertToMap(d.Get("labels")),
+		Annotations: convert.ConvertToMap(d.Get("annotations")),
 		Size:        d.Get("size_gb").(int),
 	}
 	identity := d.Get("id").(string)
@@ -241,7 +243,7 @@ func resourceBlockVolumeUpdate(ctx context.Context, d *schema.ResourceData, m in
 }
 
 func resourceBlockVolumeDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client, err := getClient(getProvider(m), d)
+	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
 	}

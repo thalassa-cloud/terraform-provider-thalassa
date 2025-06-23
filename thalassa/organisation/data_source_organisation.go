@@ -1,4 +1,4 @@
-package thalassa
+package organisation
 
 import (
 	"context"
@@ -6,13 +6,14 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	iaas "github.com/thalassa-cloud/client-go/iaas"
+
+	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/provider"
 )
 
-func dataSourceMachineImage() *schema.Resource {
+func DataSourceOrganisations() *schema.Resource {
 	return &schema.Resource{
-		Description: "Get an machine image",
-		ReadContext: dataSourceMachineImageRead,
+		Description: "Get an organisation",
+		ReadContext: dataSourceOrganisationsRead,
 		Schema: map[string]*schema.Schema{
 			"id": {
 				Type:     schema.TypeString,
@@ -42,27 +43,32 @@ func dataSourceMachineImage() *schema.Resource {
 	}
 }
 
-func dataSourceMachineImageRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	provider := getProvider(m)
+func dataSourceOrganisationsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	provider := provider.GetProvider(m)
 	slug := d.Get("slug").(string)
 
-	machineImages, err := provider.Client.IaaS().ListMachineImages(ctx, &iaas.ListMachineImagesRequest{})
+	organisations, err := provider.Client.Me().ListMyOrganisations(ctx)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	for _, machineImage := range machineImages {
-		if slug != "" && machineImage.Slug == slug {
-			d.SetId(machineImage.Identity)
-			d.Set("id", machineImage.Identity)
-			d.Set("name", machineImage.Name)
-			d.Set("slug", machineImage.Slug)
-			d.Set("description", machineImage.Description)
+	for _, org := range organisations {
+		if slug != "" && org.Slug == slug {
+			d.SetId(org.Identity)
+			d.Set("id", org.Identity)
+			d.Set("name", org.Name)
+			d.Set("slug", org.Slug)
+			d.Set("description", org.Description)
 
 			// Set labels and annotations directly
-			if err := d.Set("labels", machineImage.Labels); err != nil {
+			if err := d.Set("labels", org.Labels); err != nil {
 				return diag.FromErr(fmt.Errorf("error setting labels: %s", err))
 			}
+
+			if err := d.Set("annotations", org.Annotations); err != nil {
+				return diag.FromErr(fmt.Errorf("error setting annotations: %s", err))
+			}
+
 			return diag.Diagnostics{}
 		}
 	}

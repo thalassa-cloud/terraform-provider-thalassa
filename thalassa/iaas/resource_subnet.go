@@ -1,4 +1,4 @@
-package thalassa
+package iaas
 
 import (
 	"context"
@@ -9,6 +9,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	validate "github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	tcclient "github.com/thalassa-cloud/client-go/pkg/client"
+	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/convert"
+	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/provider"
 
 	iaas "github.com/thalassa-cloud/client-go/iaas"
 )
@@ -115,7 +117,7 @@ func resourceSubnet() *schema.Resource {
 }
 
 func resourceSubnetCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client, err := getClient(getProvider(m), d)
+	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -123,14 +125,14 @@ func resourceSubnetCreate(ctx context.Context, d *schema.ResourceData, m interfa
 	createSubnet := iaas.CreateSubnet{
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
-		Labels:      convertToMap(d.Get("labels")),
-		Annotations: convertToMap(d.Get("annotations")),
+		Labels:      convert.ConvertToMap(d.Get("labels")),
+		Annotations: convert.ConvertToMap(d.Get("annotations")),
 		VpcIdentity: d.Get("vpc_id").(string),
 		Cidr:        d.Get("cidr").(string),
 	}
 
 	if routeTable, ok := d.GetOk("route_table_id"); ok {
-		createSubnet.AssociatedRouteTableIdentity = Ptr(routeTable.(string))
+		createSubnet.AssociatedRouteTableIdentity = convert.Ptr(routeTable.(string))
 	}
 
 	subnet, err := client.IaaS().CreateSubnet(ctx, createSubnet)
@@ -183,7 +185,7 @@ func resourceSubnetCreate(ctx context.Context, d *schema.ResourceData, m interfa
 }
 
 func resourceSubnetRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client, err := getClient(getProvider(m), d)
+	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -223,7 +225,7 @@ func resourceSubnetRead(ctx context.Context, d *schema.ResourceData, m interface
 }
 
 func resourceSubnetUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client, err := getClient(getProvider(m), d)
+	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -231,12 +233,12 @@ func resourceSubnetUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 	updateSubnet := iaas.UpdateSubnet{
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
-		Labels:      convertToMap(d.Get("labels")),
-		Annotations: convertToMap(d.Get("annotations")),
+		Labels:      convert.ConvertToMap(d.Get("labels")),
+		Annotations: convert.ConvertToMap(d.Get("annotations")),
 	}
 
 	if routeTable, ok := d.GetOk("route_table_id"); ok {
-		updateSubnet.AssociatedRouteTableIdentity = Ptr(routeTable.(string))
+		updateSubnet.AssociatedRouteTableIdentity = convert.Ptr(routeTable.(string))
 	}
 
 	identity := d.Get("id").(string)
@@ -290,7 +292,7 @@ func resourceSubnetUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 }
 
 func resourceSubnetDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client, err := getClient(getProvider(m), d)
+	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
 	}

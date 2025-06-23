@@ -1,4 +1,4 @@
-package thalassa
+package iaas
 
 import (
 	"context"
@@ -9,9 +9,10 @@ import (
 	validate "github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	iaas "github.com/thalassa-cloud/client-go/iaas"
 	tcclient "github.com/thalassa-cloud/client-go/pkg/client"
+	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/provider"
 )
 
-func resourceSecurityGroup() *schema.Resource {
+func ResourceSecurityGroup() *schema.Resource {
 	return &schema.Resource{
 		Description:   "A security group is a collection of rules that control the traffic to and from a virtual machine instance or other cloud resource within a VPC.",
 		CreateContext: resourceSecurityGroupCreate,
@@ -202,7 +203,7 @@ func resourceSecurityGroup() *schema.Resource {
 }
 
 func resourceSecurityGroupCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client, err := getClient(getProvider(meta), d)
+	client, err := provider.GetClient(provider.GetProvider(meta), d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -232,7 +233,7 @@ func resourceSecurityGroupCreate(ctx context.Context, d *schema.ResourceData, me
 }
 
 func resourceSecurityGroupRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client, err := getClient(getProvider(meta), d)
+	client, err := provider.GetClient(provider.GetProvider(meta), d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -281,7 +282,7 @@ func resourceSecurityGroupRead(ctx context.Context, d *schema.ResourceData, meta
 }
 
 func resourceSecurityGroupUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client, err := getClient(getProvider(meta), d)
+	client, err := provider.GetClient(provider.GetProvider(meta), d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -310,7 +311,7 @@ func resourceSecurityGroupUpdate(ctx context.Context, d *schema.ResourceData, me
 }
 
 func resourceSecurityGroupDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client, err := getClient(getProvider(meta), d)
+	client, err := provider.GetClient(provider.GetProvider(meta), d)
 	if err != nil {
 		return diag.FromErr(err)
 	}

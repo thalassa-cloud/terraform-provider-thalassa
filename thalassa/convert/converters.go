@@ -1,10 +1,10 @@
-package thalassa
+package convert
 
 func Ptr[T any](v T) *T {
 	return &v
 }
 
-func convertToStringSlice(v interface{}) []string {
+func ConvertToStringSlice(v interface{}) []string {
 	if v == nil {
 		return []string{}
 	}
@@ -17,7 +17,7 @@ func convertToStringSlice(v interface{}) []string {
 	return result
 }
 
-func convertToMap(v interface{}) map[string]string {
+func ConvertToMap(v interface{}) map[string]string {
 	if v == nil {
 		return map[string]string{}
 	}

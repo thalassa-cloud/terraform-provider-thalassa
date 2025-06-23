@@ -1,15 +1,12 @@
 package thalassa
 
 import (
-	"context"
-	"errors"
-	"fmt"
-
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	"github.com/thalassa-cloud/client-go/pkg/client"
-	"github.com/thalassa-cloud/client-go/thalassa"
+	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/iaas"
+	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/kubernetes"
+	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/organisation"
+	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/provider"
 )
 
 func Provider() *schema.Provider {
@@ -49,139 +46,26 @@ func Provider() *schema.Provider {
 				DefaultFunc: schema.EnvDefaultFunc("THALASSA_ORGANISATION", ""),
 			},
 		},
-		ResourcesMap: map[string]*schema.Resource{
-			"thalassa_block_volume":             resourceBlockVolume(),
-			"thalassa_block_volume_attachment":  resourceBlockVolumeAttachment(),
-			"thalassa_kubernetes_cluster":       resourceKubernetesCluster(),
-			"thalassa_kubernetes_node_pool":     resourceKubernetesNodePool(),
-			"thalassa_loadbalancer_listener":    resourceLoadBalancerListener(),
-			"thalassa_loadbalancer":             resourceLoadBalancer(),
-			"thalassa_natgateway":               resourceNatGateway(),
-			"thalassa_route_table_route":        resourceRouteTableRoute(),
-			"thalassa_route_table":              resourceRouteTable(),
-			"thalassa_security_group":           resourceSecurityGroup(),
-			"thalassa_subnet":                   resourceSubnet(),
-			"thalassa_target_group_attachment":  resourceTargetGroupAttachment(),
-			"thalassa_target_group":             resourceTargetGroup(),
-			"thalassa_virtual_machine_instance": resourceVirtualMachineInstance(),
-			"thalassa_vpc":                      resourceVpc(),
-		},
-		DataSourcesMap: map[string]*schema.Resource{
-			"thalassa_organisation":       dataSourceOrganisations(),
-			"thalassa_region":             dataSourceRegion(),
-			"thalassa_regions":            dataSourceRegions(),
-			"thalassa_kubernetes_version": dataSourceKubernetesVersion(),
-			"thalassa_kubernetes_cluster": dataSourceKubernetesCluster(),
-			"thalassa_machine_image":      dataSourceMachineImage(),
-			"thalassa_machine_type":       dataSourceMachineType(),
-			"thalassa_vpc":                dataSourceVpc(),
-			"thalassa_security_group":     dataSourceSecurityGroup(),
-		},
-		ConfigureContextFunc: providerConfigure,
+		ResourcesMap: JoinMaps(
+			iaas.ResourcesMap,
+			kubernetes.ResourcesMap,
+			organisation.ResourcesMap,
+		),
+		DataSourcesMap: JoinMaps(
+			iaas.DataSourcesMap,
+			kubernetes.DataSourcesMap,
+			organisation.DataSourcesMap,
+		),
+		ConfigureContextFunc: provider.ProviderConfigure,
 	}
 }
 
-func getProvider(m interface{}) ConfiguredProvider {
-	p, ok := m.(ConfiguredProvider)
-	if !ok {
-		panic("invalid configured provider")
+func JoinMaps(maps ...map[string]*schema.Resource) map[string]*schema.Resource {
+	result := make(map[string]*schema.Resource)
+	for _, m := range maps {
+		for k, v := range m {
+			result[k] = v
+		}
 	}
-	return p
-}
-
-type ConfiguredProvider struct {
-	Client       thalassa.Client
-	Organisation string
-	token        string
-	apiEndpoint  string
-	clientID     string
-	clientSecret string
-}
-
-func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
-	token := d.Get("token").(string)
-	apiEndpoint := d.Get("api").(string)
-	organisation := d.Get("organisation_id").(string)
-	clientID := d.Get("client_id").(string)
-	clientSecret := d.Get("client_secret").(string)
-
-	opts := []client.Option{
-		client.WithBaseURL(apiEndpoint),
-		client.WithOrganisation(organisation),
-		client.WithUserAgent("thalassa-cloud/terraform-provider-thalassa"),
-	}
-
-	hasAuth := false
-	if token != "" {
-		opts = append(opts, client.WithAuthPersonalToken(token))
-		hasAuth = true
-	}
-
-	if clientID != "" && clientSecret != "" {
-		opts = append(opts, client.WithAuthOIDC(clientID, clientSecret, fmt.Sprintf("%s/oidc/token", apiEndpoint)))
-		hasAuth = true
-	}
-
-	if !hasAuth {
-		return nil, diag.FromErr(errors.New("no authentication method provided"))
-	}
-
-	internalClient, err := thalassa.NewClient(opts...)
-	if err != nil {
-		return nil, diag.FromErr(err)
-	}
-
-	return ConfiguredProvider{
-		Client:       internalClient,
-		Organisation: organisation,
-		token:        token,
-		apiEndpoint:  apiEndpoint,
-		clientID:     clientID,
-		clientSecret: clientSecret,
-	}, nil
-}
-
-func getClient(provider ConfiguredProvider, d *schema.ResourceData) (thalassa.Client, error) {
-	organisation, err := getOrganisation(provider, d)
-	if err != nil {
-		return nil, err
-	}
-
-	opts := []client.Option{
-		client.WithBaseURL(provider.apiEndpoint),
-		client.WithOrganisation(organisation),
-		client.WithUserAgent("thalassa-cloud/terraform-provider-thalassa"),
-	}
-
-	hasAuth := false
-	if provider.token != "" {
-		opts = append(opts, client.WithAuthPersonalToken(provider.token))
-		hasAuth = true
-	}
-
-	if provider.clientID != "" && provider.clientSecret != "" {
-		opts = append(opts, client.WithAuthOIDC(provider.clientID, provider.clientSecret, fmt.Sprintf("%s/oidc/token", provider.apiEndpoint)))
-		hasAuth = true
-	}
-
-	if !hasAuth {
-		return nil, errors.New("no authentication method provided")
-	}
-
-	client, err := thalassa.NewClient(opts...)
-	if err != nil {
-		return nil, err
-	}
-	return client, nil
-}
-
-func getOrganisation(provider ConfiguredProvider, d *schema.ResourceData) (string, error) {
-	organisation := d.Get("organisation_id").(string)
-	if organisation != "" {
-		return organisation, nil
-	}
-	if provider.Organisation != "" {
-		return provider.Organisation, nil
-	}
-	return "", errors.New("organisation is not set")
+	return result
 }

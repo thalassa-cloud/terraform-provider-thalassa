@@ -1,4 +1,4 @@
-package thalassa
+package kubernetes
 
 import (
 	"context"
@@ -7,9 +7,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/thalassa-cloud/client-go/kubernetes"
+
+	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/provider"
 )
 
-func dataSourceKubernetesVersion() *schema.Resource {
+func DataSourceKubernetesVersion() *schema.Resource {
 	return &schema.Resource{
 		Description: "Get an Kubernetes version",
 		ReadContext: dataSourceKubernetesVersionRead,
@@ -78,7 +80,7 @@ func dataSourceKubernetesVersion() *schema.Resource {
 }
 
 func dataSourceKubernetesVersionRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	provider := getProvider(m)
+	provider := provider.GetProvider(m)
 	name := d.Get("name").(string)
 	slug := d.Get("slug").(string)
 	id := d.Get("id").(string)

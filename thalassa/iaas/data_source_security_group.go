@@ -1,4 +1,4 @@
-package thalassa
+package iaas
 
 import (
 	"context"
@@ -8,9 +8,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/thalassa-cloud/client-go/filters"
 	iaas "github.com/thalassa-cloud/client-go/iaas"
+	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/provider"
 )
 
-func dataSourceSecurityGroup() *schema.Resource {
+func DataSourceSecurityGroup() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataSourceSecurityGroupRead,
 		Description: "A security group is a collection of rules that control the traffic to and from a virtual machine instance or other cloud resource within a VPC.",
@@ -180,11 +181,10 @@ func dataSourceSecurityGroup() *schema.Resource {
 }
 
 func dataSourceSecurityGroupRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client, err := getClient(getProvider(meta), d)
+	client, err := provider.GetClient(provider.GetProvider(meta), d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-
 	var securityGroup *iaas.SecurityGroup
 
 	if v, ok := d.GetOk("identity"); ok {

@@ -1,4 +1,4 @@
-package thalassa
+package iaas
 
 import (
 	"context"
@@ -8,6 +8,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	validate "github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	tcclient "github.com/thalassa-cloud/client-go/pkg/client"
+	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/convert"
+	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/provider"
 
 	iaas "github.com/thalassa-cloud/client-go/iaas"
 )
@@ -76,7 +78,7 @@ func resourceLoadBalancer() *schema.Resource {
 }
 
 func resourceLoadBalancerCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client, err := getClient(getProvider(m), d)
+	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -84,8 +86,8 @@ func resourceLoadBalancerCreate(ctx context.Context, d *schema.ResourceData, m i
 	createLoadbalancer := iaas.CreateLoadbalancer{
 		Name:                 d.Get("name").(string),
 		Description:          d.Get("description").(string),
-		Labels:               convertToMap(d.Get("labels")),
-		Annotations:          convertToMap(d.Get("annotations")),
+		Labels:               convert.ConvertToMap(d.Get("labels")),
+		Annotations:          convert.ConvertToMap(d.Get("annotations")),
 		Subnet:               d.Get("subnet_id").(string),
 		DeleteProtection:     d.Get("delete_protection").(bool),
 		InternalLoadbalancer: d.Get("internal").(bool),
@@ -105,7 +107,7 @@ func resourceLoadBalancerCreate(ctx context.Context, d *schema.ResourceData, m i
 }
 
 func resourceLoadBalancerRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client, err := getClient(getProvider(m), d)
+	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -139,7 +141,7 @@ func resourceLoadBalancerRead(ctx context.Context, d *schema.ResourceData, m int
 }
 
 func resourceLoadBalancerUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client, err := getClient(getProvider(m), d)
+	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -147,8 +149,8 @@ func resourceLoadBalancerUpdate(ctx context.Context, d *schema.ResourceData, m i
 	updateLoadbalancer := iaas.UpdateLoadbalancer{
 		Name:             d.Get("name").(string),
 		Description:      d.Get("description").(string),
-		Labels:           convertToMap(d.Get("labels")),
-		Annotations:      convertToMap(d.Get("annotations")),
+		Labels:           convert.ConvertToMap(d.Get("labels")),
+		Annotations:      convert.ConvertToMap(d.Get("annotations")),
 		DeleteProtection: d.Get("delete_protection").(bool),
 	}
 
@@ -172,7 +174,7 @@ func resourceLoadBalancerUpdate(ctx context.Context, d *schema.ResourceData, m i
 }
 
 func resourceLoadBalancerDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client, err := getClient(getProvider(m), d)
+	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
 	}

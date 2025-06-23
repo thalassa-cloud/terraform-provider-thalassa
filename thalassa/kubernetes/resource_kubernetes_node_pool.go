@@ -1,4 +1,4 @@
-package thalassa
+package kubernetes
 
 import (
 	"context"
@@ -11,6 +11,8 @@ import (
 	validate "github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	kubernetes "github.com/thalassa-cloud/client-go/kubernetes"
 	tcclient "github.com/thalassa-cloud/client-go/pkg/client"
+	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/convert"
+	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/provider"
 )
 
 func resourceKubernetesNodePool() *schema.Resource {
@@ -195,14 +197,14 @@ func resourceKubernetesNodePool() *schema.Resource {
 }
 
 func resourceKubernetesNodePoolCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client, err := getClient(getProvider(m), d)
+	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	var subnetIdentity *string
 	if subnetId, ok := d.GetOk("subnet_id"); ok {
-		subnetIdentity = Ptr(subnetId.(string))
+		subnetIdentity = convert.Ptr(subnetId.(string))
 	}
 
 	var kubernetesVersionIdentity *string
@@ -218,7 +220,7 @@ func resourceKubernetesNodePoolCreate(ctx context.Context, d *schema.ResourceDat
 			}
 
 			if kv.Identity == kubernetesVersion || kv.Slug == kubernetesVersion || kv.Name == kubernetesVersion {
-				kubernetesVersionIdentity = Ptr(kv.Identity)
+				kubernetesVersionIdentity = convert.Ptr(kv.Identity)
 				break
 			}
 		}
@@ -236,12 +238,12 @@ func resourceKubernetesNodePoolCreate(ctx context.Context, d *schema.ResourceDat
 		MinReplicas:       d.Get("min_replicas").(int),
 		MaxReplicas:       d.Get("max_replicas").(int),
 		NodeSettings: kubernetes.KubernetesNodeSettings{
-			Annotations: convertToMap(d.Get("node_annotations")),
-			Labels:      convertToMap(d.Get("node_labels")),
+			Annotations: convert.ConvertToMap(d.Get("node_annotations")),
+			Labels:      convert.ConvertToMap(d.Get("node_labels")),
 			Taints:      convertToNodeTaints(d.Get("node_taints").([]interface{})),
 		},
 		EnableAutoHealing:         d.Get("enable_autohealing").(bool),
-		UpgradeStrategy:           Ptr(kubernetes.KubernetesNodePoolUpgradeStrategy(d.Get("upgrade_strategy").(string))),
+		UpgradeStrategy:           convert.Ptr(kubernetes.KubernetesNodePoolUpgradeStrategy(d.Get("upgrade_strategy").(string))),
 		SubnetIdentity:            subnetIdentity,
 		KubernetesVersionIdentity: kubernetesVersionIdentity,
 	}
@@ -272,7 +274,7 @@ func resourceKubernetesNodePoolCreate(ctx context.Context, d *schema.ResourceDat
 }
 
 func resourceKubernetesNodePoolRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client, err := getClient(getProvider(m), d)
+	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -325,7 +327,7 @@ func resourceKubernetesNodePoolRead(ctx context.Context, d *schema.ResourceData,
 }
 
 func resourceKubernetesNodePoolUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client, err := getClient(getProvider(m), d)
+	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -348,7 +350,7 @@ func resourceKubernetesNodePoolUpdate(ctx context.Context, d *schema.ResourceDat
 			}
 
 			if kv.Identity == kubernetesVersion || kv.Slug == kubernetesVersion || kv.Name == kubernetesVersion {
-				kubernetesVersionIdentity = Ptr(kv.Identity)
+				kubernetesVersionIdentity = convert.Ptr(kv.Identity)
 				break
 			}
 		}
@@ -360,13 +362,13 @@ func resourceKubernetesNodePoolUpdate(ctx context.Context, d *schema.ResourceDat
 	updateKubernetesNodePool := kubernetes.UpdateKubernetesNodePool{
 		Description:               d.Get("description").(string),
 		MachineType:               d.Get("machine_type").(string),
-		Replicas:                  Ptr(d.Get("replicas").(int)),
+		Replicas:                  convert.Ptr(d.Get("replicas").(int)),
 		AvailabilityZone:          d.Get("availability_zone").(string),
-		EnableAutoscaling:         Ptr(d.Get("enable_autoscaling").(bool)),
-		MinReplicas:               Ptr(d.Get("min_replicas").(int)),
-		MaxReplicas:               Ptr(d.Get("max_replicas").(int)),
-		EnableAutoHealing:         Ptr(d.Get("enable_autohealing").(bool)),
-		UpgradeStrategy:           Ptr(kubernetes.KubernetesNodePoolUpgradeStrategy(d.Get("upgrade_strategy").(string))),
+		EnableAutoscaling:         convert.Ptr(d.Get("enable_autoscaling").(bool)),
+		MinReplicas:               convert.Ptr(d.Get("min_replicas").(int)),
+		MaxReplicas:               convert.Ptr(d.Get("max_replicas").(int)),
+		EnableAutoHealing:         convert.Ptr(d.Get("enable_autohealing").(bool)),
+		UpgradeStrategy:           convert.Ptr(kubernetes.KubernetesNodePoolUpgradeStrategy(d.Get("upgrade_strategy").(string))),
 		KubernetesVersionIdentity: kubernetesVersionIdentity,
 		NodeSettings: &kubernetes.KubernetesNodeSettings{
 			Annotations: convertToNodeLabels(d.Get("node_annotations").(map[string]interface{})),
@@ -399,7 +401,7 @@ func resourceKubernetesNodePoolUpdate(ctx context.Context, d *schema.ResourceDat
 }
 
 func resourceKubernetesNodePoolDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client, err := getClient(getProvider(m), d)
+	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
 	}

@@ -1,4 +1,4 @@
-package thalassa
+package kubernetes
 
 import (
 	"context"
@@ -12,6 +12,8 @@ import (
 	iaas "github.com/thalassa-cloud/client-go/iaas"
 	kubernetes "github.com/thalassa-cloud/client-go/kubernetes"
 	tcclient "github.com/thalassa-cloud/client-go/pkg/client"
+	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/convert"
+	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/provider"
 )
 
 func resourceKubernetesCluster() *schema.Resource {
@@ -159,7 +161,7 @@ func resourceKubernetesCluster() *schema.Resource {
 }
 
 func resourceKubernetesClusterCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client, err := getClient(getProvider(m), d)
+	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -210,8 +212,8 @@ func resourceKubernetesClusterCreate(ctx context.Context, d *schema.ResourceData
 	createKubernetesCluster := kubernetes.CreateKubernetesCluster{
 		Name:                      d.Get("name").(string),
 		Description:               d.Get("description").(string),
-		Labels:                    convertToMap(d.Get("labels")),
-		Annotations:               convertToMap(d.Get("annotations")),
+		Labels:                    convert.ConvertToMap(d.Get("labels")),
+		Annotations:               convert.ConvertToMap(d.Get("annotations")),
 		Subnet:                    d.Get("subnet_id").(string),
 		RegionIdentity:            region,
 		DeleteProtection:          d.Get("delete_protection").(bool),
@@ -266,7 +268,7 @@ func resourceKubernetesClusterCreate(ctx context.Context, d *schema.ResourceData
 }
 
 func resourceKubernetesClusterRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client, err := getClient(getProvider(m), d)
+	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -321,7 +323,7 @@ func resourceKubernetesClusterRead(ctx context.Context, d *schema.ResourceData, 
 }
 
 func resourceKubernetesClusterUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client, err := getClient(getProvider(m), d)
+	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -345,15 +347,15 @@ func resourceKubernetesClusterUpdate(ctx context.Context, d *schema.ResourceData
 	}
 
 	updateKubernetesCluster := kubernetes.UpdateKubernetesCluster{
-		Name:                        Ptr(d.Get("name").(string)),
-		Description:                 Ptr(d.Get("description").(string)),
-		Labels:                      convertToMap(d.Get("labels")),
-		Annotations:                 convertToMap(d.Get("annotations")),
-		DeleteProtection:            Ptr(d.Get("delete_protection").(bool)),
-		KubernetesVersionIdentity:   Ptr(version),
-		PodSecurityStandardsProfile: Ptr(kubernetes.KubernetesClusterPodSecurityStandards(d.Get("pod_security_standards_profile").(string))),
-		AuditLogProfile:             Ptr(kubernetes.KubernetesClusterAuditLoggingProfile(d.Get("audit_log_profile").(string))),
-		DefaultNetworkPolicy:        Ptr(kubernetes.KubernetesDefaultNetworkPolicies(d.Get("default_network_policy").(string))),
+		Name:                        convert.Ptr(d.Get("name").(string)),
+		Description:                 convert.Ptr(d.Get("description").(string)),
+		Labels:                      convert.ConvertToMap(d.Get("labels")),
+		Annotations:                 convert.ConvertToMap(d.Get("annotations")),
+		DeleteProtection:            convert.Ptr(d.Get("delete_protection").(bool)),
+		KubernetesVersionIdentity:   convert.Ptr(version),
+		PodSecurityStandardsProfile: convert.Ptr(kubernetes.KubernetesClusterPodSecurityStandards(d.Get("pod_security_standards_profile").(string))),
+		AuditLogProfile:             convert.Ptr(kubernetes.KubernetesClusterAuditLoggingProfile(d.Get("audit_log_profile").(string))),
+		DefaultNetworkPolicy:        convert.Ptr(kubernetes.KubernetesDefaultNetworkPolicies(d.Get("default_network_policy").(string))),
 	}
 	identity := d.Get("id").(string)
 	kubernetesCluster, err := client.Kubernetes().UpdateKubernetesCluster(ctx, identity, updateKubernetesCluster)
@@ -391,7 +393,7 @@ func resourceKubernetesClusterUpdate(ctx context.Context, d *schema.ResourceData
 }
 
 func resourceKubernetesClusterDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client, err := getClient(getProvider(m), d)
+	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
 	}

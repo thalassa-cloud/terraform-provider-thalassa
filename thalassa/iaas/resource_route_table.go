@@ -1,4 +1,4 @@
-package thalassa
+package iaas
 
 import (
 	"context"
@@ -9,6 +9,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	validate "github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	tcclient "github.com/thalassa-cloud/client-go/pkg/client"
+	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/convert"
+	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/provider"
 
 	iaas "github.com/thalassa-cloud/client-go/iaas"
 )
@@ -72,16 +74,16 @@ func resourceRouteTable() *schema.Resource {
 }
 
 func resourceRouteTableCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client, err := getClient(getProvider(m), d)
+	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	createRouteTable := iaas.CreateRouteTable{
 		Name:        d.Get("name").(string),
-		Description: Ptr(d.Get("description").(string)),
-		Labels:      convertToMap(d.Get("labels")),
-		Annotations: convertToMap(d.Get("annotations")),
+		Description: convert.Ptr(d.Get("description").(string)),
+		Labels:      convert.ConvertToMap(d.Get("labels")),
+		Annotations: convert.ConvertToMap(d.Get("annotations")),
 		VpcIdentity: d.Get("vpc_id").(string),
 	}
 
@@ -99,7 +101,7 @@ func resourceRouteTableCreate(ctx context.Context, d *schema.ResourceData, m int
 }
 
 func resourceRouteTableRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client, err := getClient(getProvider(m), d)
+	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -132,16 +134,16 @@ func resourceRouteTableRead(ctx context.Context, d *schema.ResourceData, m inter
 }
 
 func resourceRouteTableUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client, err := getClient(getProvider(m), d)
+	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	updateRouteTable := iaas.UpdateRouteTable{
-		Name:        Ptr(d.Get("name").(string)),
-		Description: Ptr(d.Get("description").(string)),
-		Labels:      convertToMap(d.Get("labels")),
-		Annotations: convertToMap(d.Get("annotations")),
+		Name:        convert.Ptr(d.Get("name").(string)),
+		Description: convert.Ptr(d.Get("description").(string)),
+		Labels:      convert.ConvertToMap(d.Get("labels")),
+		Annotations: convert.ConvertToMap(d.Get("annotations")),
 	}
 
 	id := d.Get("id").(string)
@@ -169,7 +171,7 @@ func resourceRouteTableUpdate(ctx context.Context, d *schema.ResourceData, m int
 }
 
 func resourceRouteTableDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client, err := getClient(getProvider(m), d)
+	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
 	}

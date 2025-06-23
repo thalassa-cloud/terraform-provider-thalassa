@@ -1,4 +1,4 @@
-package thalassa
+package kubernetes
 
 import (
 	"context"
@@ -7,9 +7,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/thalassa-cloud/client-go/kubernetes"
+
+	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/provider"
 )
 
-func dataSourceKubernetesCluster() *schema.Resource {
+func DataSourceKubernetesCluster() *schema.Resource {
 	return &schema.Resource{
 		Description: "Get an Kubernetes cluster",
 		ReadContext: dataSourceKubernetesClusterRead,
@@ -124,7 +126,7 @@ func dataSourceKubernetesCluster() *schema.Resource {
 }
 
 func dataSourceKubernetesClusterRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	provider := getProvider(m)
+	provider := provider.GetProvider(m)
 	slug := d.Get("slug").(string)
 
 	clusters, err := provider.Client.Kubernetes().ListKubernetesClusters(ctx, &kubernetes.ListKubernetesClustersRequest{})

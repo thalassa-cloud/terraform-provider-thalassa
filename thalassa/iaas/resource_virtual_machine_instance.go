@@ -1,4 +1,4 @@
-package thalassa
+package iaas
 
 import (
 	"context"
@@ -11,6 +11,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	validate "github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	tcclient "github.com/thalassa-cloud/client-go/pkg/client"
+	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/convert"
+	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/provider"
 
 	iaas "github.com/thalassa-cloud/client-go/iaas"
 )
@@ -186,13 +188,13 @@ func resourceVirtualMachineInstance() *schema.Resource {
 }
 
 func resourceVirtualMachineInstanceCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client, err := getClient(getProvider(m), d)
+	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	rootVolume := iaas.CreateMachineVolume{
-		Name: Ptr(d.Get("name").(string)),
+		Name: convert.Ptr(d.Get("name").(string)),
 	}
 
 	if rootVolumeSize, ok := d.GetOk("root_volume_size_gb"); ok {
@@ -206,8 +208,8 @@ func resourceVirtualMachineInstanceCreate(ctx context.Context, d *schema.Resourc
 	createVirtualMachineInstance := iaas.CreateMachine{
 		Name:                     d.Get("name").(string),
 		Description:              d.Get("description").(string),
-		Labels:                   convertToMap(d.Get("labels")),
-		Annotations:              convertToMap(d.Get("annotations")),
+		Labels:                   convert.ConvertToMap(d.Get("labels")),
+		Annotations:              convert.ConvertToMap(d.Get("annotations")),
 		Subnet:                   d.Get("subnet_id").(string),
 		MachineType:              d.Get("machine_type").(string),
 		MachineImage:             d.Get("machine_image").(string),
@@ -219,7 +221,7 @@ func resourceVirtualMachineInstanceCreate(ctx context.Context, d *schema.Resourc
 	}
 
 	if availabilityZone, ok := d.GetOk("availability_zone"); ok {
-		createVirtualMachineInstance.AvailabilityZone = Ptr(availabilityZone.(string))
+		createVirtualMachineInstance.AvailabilityZone = convert.Ptr(availabilityZone.(string))
 	}
 
 	virtualMachineInstance, err := client.IaaS().CreateMachine(ctx, createVirtualMachineInstance)
@@ -274,7 +276,7 @@ func resourceVirtualMachineInstanceCreate(ctx context.Context, d *schema.Resourc
 }
 
 func resourceVirtualMachineInstanceRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client, err := getClient(getProvider(m), d)
+	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -329,7 +331,7 @@ func resourceVirtualMachineInstanceRead(ctx context.Context, d *schema.ResourceD
 }
 
 func resourceVirtualMachineInstanceUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client, err := getClient(getProvider(m), d)
+	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -337,8 +339,8 @@ func resourceVirtualMachineInstanceUpdate(ctx context.Context, d *schema.Resourc
 	updateVirtualMachineInstance := iaas.UpdateMachine{
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
-		Labels:      convertToMap(d.Get("labels")),
-		Annotations: convertToMap(d.Get("annotations")),
+		Labels:      convert.ConvertToMap(d.Get("labels")),
+		Annotations: convert.ConvertToMap(d.Get("annotations")),
 	}
 
 	identity := d.Get("id").(string)
@@ -387,7 +389,7 @@ func resourceVirtualMachineInstanceUpdate(ctx context.Context, d *schema.Resourc
 }
 
 func resourceVirtualMachineInstanceDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client, err := getClient(getProvider(m), d)
+	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
 	}

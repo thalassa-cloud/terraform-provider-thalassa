@@ -1,4 +1,4 @@
-package thalassa
+package iaas
 
 import (
 	"context"
@@ -8,6 +8,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	validate "github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	tcclient "github.com/thalassa-cloud/client-go/pkg/client"
+	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/convert"
+	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/provider"
 
 	iaas "github.com/thalassa-cloud/client-go/iaas"
 )
@@ -86,7 +88,7 @@ func resourceVpc() *schema.Resource {
 }
 
 func resourceVpcCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client, err := getClient(getProvider(m), d)
+	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -116,10 +118,10 @@ func resourceVpcCreate(ctx context.Context, d *schema.ResourceData, m interface{
 	createVpc := iaas.CreateVpc{
 		Name:                d.Get("name").(string),
 		Description:         d.Get("description").(string),
-		Labels:              convertToMap(d.Get("labels")),
-		Annotations:         convertToMap(d.Get("annotations")),
+		Labels:              convert.ConvertToMap(d.Get("labels")),
+		Annotations:         convert.ConvertToMap(d.Get("annotations")),
 		CloudRegionIdentity: d.Get("region").(string),
-		VpcCidrs:            convertToStringSlice(d.Get("cidrs")),
+		VpcCidrs:            convert.ConvertToStringSlice(d.Get("cidrs")),
 	}
 
 	vpc, err := client.IaaS().CreateVpc(ctx, createVpc)
@@ -136,7 +138,7 @@ func resourceVpcCreate(ctx context.Context, d *schema.ResourceData, m interface{
 }
 
 func resourceVpcRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client, err := getClient(getProvider(m), d)
+	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -168,7 +170,7 @@ func resourceVpcRead(ctx context.Context, d *schema.ResourceData, m interface{})
 }
 
 func resourceVpcUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client, err := getClient(getProvider(m), d)
+	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -176,9 +178,9 @@ func resourceVpcUpdate(ctx context.Context, d *schema.ResourceData, m interface{
 	updateVpc := iaas.UpdateVpc{
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
-		Labels:      convertToMap(d.Get("labels")),
-		Annotations: convertToMap(d.Get("annotations")),
-		VpcCidrs:    convertToStringSlice(d.Get("cidrs")),
+		Labels:      convert.ConvertToMap(d.Get("labels")),
+		Annotations: convert.ConvertToMap(d.Get("annotations")),
+		VpcCidrs:    convert.ConvertToStringSlice(d.Get("cidrs")),
 	}
 
 	identity := d.Get("id").(string)
@@ -202,7 +204,7 @@ func resourceVpcUpdate(ctx context.Context, d *schema.ResourceData, m interface{
 }
 
 func resourceVpcDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client, err := getClient(getProvider(m), d)
+	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
 	}

@@ -1,4 +1,4 @@
-package thalassa
+package iaas
 
 import (
 	"context"
@@ -7,9 +7,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	iaas "github.com/thalassa-cloud/client-go/iaas"
+	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/provider"
 )
 
-func dataSourceRegion() *schema.Resource {
+func DataSourceRegion() *schema.Resource {
 	return &schema.Resource{
 		Description: "Get an region",
 		ReadContext: dataSourceRegionRead,
@@ -43,10 +44,13 @@ func dataSourceRegion() *schema.Resource {
 }
 
 func dataSourceRegionRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	provider := getProvider(m)
+	client, err := provider.GetClient(provider.GetProvider(m), d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	slug := d.Get("slug").(string)
 
-	regions, err := provider.Client.IaaS().ListRegions(ctx, &iaas.ListRegionsRequest{})
+	regions, err := client.IaaS().ListRegions(ctx, &iaas.ListRegionsRequest{})
 	if err != nil {
 		return diag.FromErr(err)
 	}
