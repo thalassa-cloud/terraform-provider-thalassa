@@ -3,7 +3,7 @@ package kubernetes
 import (
 	"context"
 	"fmt"
-	"strings"
+	"log"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -67,16 +67,6 @@ func resourceKubernetesNodePool() *schema.Resource {
 				ValidateFunc: validate.StringLenBetween(0, 255),
 				Description:  "A human readable description about the Kubernetes Node Pool",
 			},
-			"labels": {
-				Type:        schema.TypeMap,
-				Optional:    true,
-				Description: "Labels for the Kubernetes Node Pool",
-			},
-			"annotations": {
-				Type:        schema.TypeMap,
-				Optional:    true,
-				Description: "Annotations for the Kubernetes Node Pool",
-			},
 			"kubernetes_version": {
 				Type:        schema.TypeString,
 				Optional:    true,
@@ -94,18 +84,19 @@ func resourceKubernetesNodePool() *schema.Resource {
 				}, false),
 				Description: "Upgrade strategy for the Kubernetes Node Pool",
 			},
-			"enable_autoscaling": {
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Default:     false,
-				Description: "Enable autoscaling for the Kubernetes Node Pool",
-			},
-			"enable_autohealing": {
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Default:     false,
-				Description: "Enable autohealing for the Kubernetes Node Pool",
-			},
+			// TODO: add these back in when the API is updated
+			// "enable_autoscaling": {
+			// 	Type:        schema.TypeBool,
+			// 	Optional:    true,
+			// 	Default:     false,
+			// 	Description: "Enable autoscaling for the Kubernetes Node Pool",
+			// },
+			// "enable_autohealing": {
+			// 	Type:        schema.TypeBool,
+			// 	Optional:    true,
+			// 	Default:     false,
+			// 	Description: "Enable autohealing for the Kubernetes Node Pool",
+			// },
 			"availability_zone": {
 				Type:        schema.TypeString,
 				Required:    true,
@@ -134,45 +125,46 @@ func resourceKubernetesNodePool() *schema.Resource {
 				Required:    true,
 				Description: "Machine type for the Kubernetes Node Pool",
 			},
-			"node_taints": {
-				Type:        schema.TypeList,
-				Optional:    true,
-				Description: "Taints for the Kubernetes Node Pool",
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"effect": {
-							Type:        schema.TypeString,
-							Optional:    true,
-							Description: "Effect of the taint",
-							ValidateFunc: validate.StringInSlice([]string{
-								"NoSchedule",
-								"NoExecute",
-								"PreferNoSchedule",
-							}, false),
-						},
-						"key": {
-							Type:        schema.TypeString,
-							Optional:    true,
-							Description: "Key of the taint",
-							ValidateFunc: func(v interface{}, k string) (ws []string, errors []error) {
-								if _, ok := v.(string); !ok {
-									errors = append(errors, fmt.Errorf("expected key to be a string"))
-								}
-								// may not contain whitespace
-								if strings.Contains(v.(string), " ") || strings.Contains(v.(string), ".") {
-									errors = append(errors, fmt.Errorf("key may not contain whitespace or dots"))
-								}
-								return
-							},
-						},
-						"value": {
-							Type:        schema.TypeString,
-							Optional:    true,
-							Description: "Value of the taint",
-						},
-					},
-				},
-			},
+			// TODO: add these back in when the API is updated
+			// "node_taints": {
+			// 	Type:        schema.TypeList,
+			// 	Optional:    true,
+			// 	Description: "Taints for the Kubernetes Node Pool",
+			// 	Elem: &schema.Resource{
+			// 		Schema: map[string]*schema.Schema{
+			// 			"effect": {
+			// 				Type:        schema.TypeString,
+			// 				Optional:    true,
+			// 				Description: "Effect of the taint",
+			// 				ValidateFunc: validate.StringInSlice([]string{
+			// 					"NoSchedule",
+			// 					"NoExecute",
+			// 					"PreferNoSchedule",
+			// 				}, false),
+			// 			},
+			// 			"key": {
+			// 				Type:        schema.TypeString,
+			// 				Optional:    true,
+			// 				Description: "Key of the taint",
+			// 				ValidateFunc: func(v interface{}, k string) (ws []string, errors []error) {
+			// 					if _, ok := v.(string); !ok {
+			// 						errors = append(errors, fmt.Errorf("expected key to be a string"))
+			// 					}
+			// 					// may not contain whitespace
+			// 					if strings.Contains(v.(string), " ") || strings.Contains(v.(string), ".") {
+			// 						errors = append(errors, fmt.Errorf("key may not contain whitespace or dots"))
+			// 					}
+			// 					return
+			// 				},
+			// 			},
+			// 			"value": {
+			// 				Type:        schema.TypeString,
+			// 				Optional:    true,
+			// 				Description: "Value of the taint",
+			// 			},
+			// 		},
+			// 	},
+			// },
 			"node_labels": {
 				Type:        schema.TypeMap,
 				Optional:    true,
@@ -230,17 +222,17 @@ func resourceKubernetesNodePoolCreate(ctx context.Context, d *schema.ResourceDat
 	}
 
 	createKubernetesNodePool := kubernetes.CreateKubernetesNodePool{
-		Name:              d.Get("name").(string),
-		MachineType:       d.Get("machine_type").(string), // TODO: check if machine type is valid
-		Replicas:          d.Get("replicas").(int),
-		EnableAutoscaling: d.Get("enable_autoscaling").(bool),
-		AvailabilityZone:  d.Get("availability_zone").(string),
-		MinReplicas:       d.Get("min_replicas").(int),
-		MaxReplicas:       d.Get("max_replicas").(int),
+		Name:        d.Get("name").(string),
+		MachineType: d.Get("machine_type").(string), // TODO: check if machine type is valid
+		Replicas:    d.Get("replicas").(int),
+		// EnableAutoscaling: d.Get("enable_autoscaling").(bool),
+		AvailabilityZone: d.Get("availability_zone").(string),
+		MinReplicas:      d.Get("min_replicas").(int),
+		MaxReplicas:      d.Get("max_replicas").(int),
 		NodeSettings: kubernetes.KubernetesNodeSettings{
 			Annotations: convert.ConvertToMap(d.Get("node_annotations")),
 			Labels:      convert.ConvertToMap(d.Get("node_labels")),
-			Taints:      convertToNodeTaints(d.Get("node_taints").([]interface{})),
+			// Taints:      convertToNodeTaints(d.Get("node_taints").([]interface{})),
 		},
 		EnableAutoHealing:         d.Get("enable_autohealing").(bool),
 		UpgradeStrategy:           convert.Ptr(kubernetes.KubernetesNodePoolUpgradeStrategy(d.Get("upgrade_strategy").(string))),
@@ -289,6 +281,7 @@ func resourceKubernetesNodePoolRead(ctx context.Context, d *schema.ResourceData,
 		}
 		return diag.FromErr(fmt.Errorf("error getting kubernetesNodePool: %s", err))
 	}
+
 	if kubernetesNodePool == nil {
 		d.SetId("")
 		return nil
@@ -305,17 +298,15 @@ func resourceKubernetesNodePoolRead(ctx context.Context, d *schema.ResourceData,
 	d.Set("name", kubernetesNodePool.Name)
 	d.Set("slug", kubernetesNodePool.Slug)
 	d.Set("description", kubernetesNodePool.Description)
-	d.Set("labels", kubernetesNodePool.Labels)
-	d.Set("annotations", kubernetesNodePool.Annotations)
 	d.Set("status", kubernetesNodePool.Status)
 	d.Set("replicas", kubernetesNodePool.Replicas)
 	d.Set("availability_zone", kubernetesNodePool.AvailabilityZone)
 	d.Set("min_replicas", kubernetesNodePool.MinReplicas)
 	d.Set("max_replicas", kubernetesNodePool.MaxReplicas)
 	d.Set("machine_type", kubernetesNodePool.MachineType)
-	d.Set("enable_autoscaling", kubernetesNodePool.EnableAutoscaling)
-	d.Set("enable_autohealing", kubernetesNodePool.EnableAutoHealing)
-	d.Set("node_taints", convertFromNodeTaints(kubernetesNodePool.NodeSettings.Taints))
+	// d.Set("enable_autoscaling", kubernetesNodePool.EnableAutoscaling)
+	// d.Set("enable_autohealing", kubernetesNodePool.EnableAutoHealing)
+	// d.Set("node_taints", convertFromNodeTaints(kubernetesNodePool.NodeSettings.Taints))
 	d.Set("node_labels", convertFromNodeLabels(kubernetesNodePool.NodeSettings.Labels))
 	d.Set("node_annotations", convertFromNodeLabels(kubernetesNodePool.NodeSettings.Annotations))
 
@@ -360,20 +351,20 @@ func resourceKubernetesNodePoolUpdate(ctx context.Context, d *schema.ResourceDat
 	}
 
 	updateKubernetesNodePool := kubernetes.UpdateKubernetesNodePool{
-		Description:               d.Get("description").(string),
-		MachineType:               d.Get("machine_type").(string),
-		Replicas:                  convert.Ptr(d.Get("replicas").(int)),
-		AvailabilityZone:          d.Get("availability_zone").(string),
-		EnableAutoscaling:         convert.Ptr(d.Get("enable_autoscaling").(bool)),
-		MinReplicas:               convert.Ptr(d.Get("min_replicas").(int)),
-		MaxReplicas:               convert.Ptr(d.Get("max_replicas").(int)),
-		EnableAutoHealing:         convert.Ptr(d.Get("enable_autohealing").(bool)),
+		Description:      d.Get("description").(string),
+		MachineType:      d.Get("machine_type").(string),
+		Replicas:         convert.Ptr(d.Get("replicas").(int)),
+		AvailabilityZone: d.Get("availability_zone").(string),
+		// EnableAutoscaling:         convert.Ptr(d.Get("enable_autoscaling").(bool)),
+		MinReplicas: convert.Ptr(d.Get("min_replicas").(int)),
+		MaxReplicas: convert.Ptr(d.Get("max_replicas").(int)),
+		// EnableAutoHealing:         convert.Ptr(d.Get("enable_autohealing").(bool)),
 		UpgradeStrategy:           convert.Ptr(kubernetes.KubernetesNodePoolUpgradeStrategy(d.Get("upgrade_strategy").(string))),
 		KubernetesVersionIdentity: kubernetesVersionIdentity,
 		NodeSettings: &kubernetes.KubernetesNodeSettings{
-			Annotations: convertToNodeLabels(d.Get("node_annotations").(map[string]interface{})),
-			Labels:      convertToNodeLabels(d.Get("node_labels").(map[string]interface{})),
-			Taints:      convertToNodeTaints(d.Get("node_taints").([]interface{})),
+			Annotations: convert.ConvertToMap(d.Get("node_annotations")),
+			Labels:      convert.ConvertToMap(d.Get("node_labels")),
+			// Taints:      convertToNodeTaints(d.Get("node_taints").([]interface{})),
 		},
 	}
 
@@ -381,6 +372,7 @@ func resourceKubernetesNodePoolUpdate(ctx context.Context, d *schema.ResourceDat
 	if err != nil {
 		return diag.FromErr(err)
 	}
+	log.Println("kubernetesNodePool after update", kubernetesNodePool)
 	if kubernetesNodePool != nil {
 		d.Set("slug", kubernetesNodePool.Slug)
 		d.Set("status", kubernetesNodePool.Status)
@@ -395,6 +387,15 @@ func resourceKubernetesNodePoolUpdate(ctx context.Context, d *schema.ResourceDat
 			}
 			time.Sleep(1 * time.Second)
 		}
+		d.Set("replicas", kubernetesNodePool.Replicas)
+		d.Set("min_replicas", kubernetesNodePool.MinReplicas)
+		d.Set("max_replicas", kubernetesNodePool.MaxReplicas)
+		d.Set("machine_type", kubernetesNodePool.MachineType)
+		// d.Set("enable_autoscaling", kubernetesNodePool.EnableAutoscaling)
+		// d.Set("enable_autohealing", kubernetesNodePool.EnableAutoHealing)
+		// d.Set("node_taints", convertFromNodeTaints(kubernetesNodePool.NodeSettings.Taints))
+		d.Set("node_labels", convertFromNodeLabels(kubernetesNodePool.NodeSettings.Labels))
+		d.Set("node_annotations", convertFromNodeLabels(kubernetesNodePool.NodeSettings.Annotations))
 	}
 
 	return resourceKubernetesNodePoolRead(ctx, d, m)
