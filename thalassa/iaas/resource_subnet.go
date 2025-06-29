@@ -299,28 +299,14 @@ func resourceSubnetDelete(ctx context.Context, d *schema.ResourceData, m interfa
 
 	id := d.Get("id").(string)
 
-	err = client.IaaS().DeleteSubnet(ctx, id)
-	if err != nil && !tcclient.IsNotFound(err) {
-		return diag.FromErr(err)
-	}
-
-	// wait until the subnet is deleted
 	ctxWithTimeout, cancel := context.WithTimeout(ctx, 20*time.Minute)
 	defer cancel()
-	for {
-		select {
-		case <-ctxWithTimeout.Done():
-			return diag.FromErr(fmt.Errorf("timeout while waiting for subnet to be deleted"))
-		case <-time.After(1 * time.Second):
-			// continue
-			_, err := client.IaaS().GetSubnet(ctxWithTimeout, id)
-			if err != nil && tcclient.IsNotFound(err) {
-				d.SetId("")
-				return nil
-			}
-			if err != nil {
-				return diag.FromErr(err)
-			}
-		}
+	if err := client.IaaS().DeleteSubnet(ctxWithTimeout, id); err != nil && !tcclient.IsNotFound(err) {
+		return diag.FromErr(err)
 	}
+	if err := client.IaaS().WaitUntilSubnetDeleted(ctxWithTimeout, id); err != nil {
+		return diag.FromErr(err)
+	}
+	d.SetId("")
+	return nil
 }
