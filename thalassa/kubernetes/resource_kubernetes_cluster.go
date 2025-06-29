@@ -84,7 +84,7 @@ func resourceKubernetesCluster() *schema.Resource {
 			"cluster_version": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Cluster version of the Kubernetes Cluster",
+				Description: "Cluster version of the Kubernetes Cluster, can be a name, slug or identity",
 			},
 			"cluster_type": {
 				Type:         schema.TypeString,
@@ -141,7 +141,7 @@ func resourceKubernetesCluster() *schema.Resource {
 				Optional:     true,
 				Default:      "deny-all",
 				ValidateFunc: validate.StringInSlice([]string{"", "allow-all", "deny-all"}, false),
-				Description:  "Default network policy of the Kubernetes Cluster",
+				Description:  "Default network policy of the Kubernetes Cluster. Must be one of: allow-all, deny-all. Default: deny-all.",
 			},
 			"kubernetes_api_server_endpoint": {
 				Type:        schema.TypeString,
@@ -289,6 +289,8 @@ func resourceKubernetesClusterRead(ctx context.Context, d *schema.ResourceData, 
 	currentlyConfiguredVersion := d.Get("cluster_version").(string)
 	if !(kubernetesCluster.ClusterVersion.Name == currentlyConfiguredVersion || kubernetesCluster.ClusterVersion.Slug == currentlyConfiguredVersion || kubernetesCluster.ClusterVersion.Identity == currentlyConfiguredVersion) {
 		d.Set("cluster_version", kubernetesCluster.ClusterVersion.Slug)
+	} else {
+		d.Set("cluster_version", currentlyConfiguredVersion)
 	}
 
 	d.SetId(kubernetesCluster.Identity)
@@ -363,6 +365,14 @@ func resourceKubernetesClusterUpdate(ctx context.Context, d *schema.ResourceData
 		return diag.FromErr(err)
 	}
 	if kubernetesCluster != nil {
+
+		currentlyConfiguredVersion := d.Get("cluster_version").(string)
+		if !(kubernetesCluster.ClusterVersion.Name == currentlyConfiguredVersion || kubernetesCluster.ClusterVersion.Slug == currentlyConfiguredVersion || kubernetesCluster.ClusterVersion.Identity == currentlyConfiguredVersion) {
+			d.Set("cluster_version", kubernetesCluster.ClusterVersion.Slug)
+		} else {
+			d.Set("cluster_version", currentlyConfiguredVersion)
+		}
+
 		d.Set("name", kubernetesCluster.Name)
 		d.Set("description", kubernetesCluster.Description)
 		d.Set("slug", kubernetesCluster.Slug)
@@ -376,7 +386,6 @@ func resourceKubernetesClusterUpdate(ctx context.Context, d *schema.ResourceData
 
 		d.Set("labels", kubernetesCluster.Labels)
 		d.Set("annotations", kubernetesCluster.Annotations)
-		d.Set("cluster_version", kubernetesCluster.ClusterVersion.Identity)
 		d.Set("cluster_type", kubernetesCluster.ClusterType)
 		d.Set("delete_protection", kubernetesCluster.DeleteProtection)
 		d.Set("networking_cni", kubernetesCluster.Configuration.Networking.CNI)
