@@ -3,7 +3,6 @@ package kubernetes
 import (
 	"context"
 	"fmt"
-	"log"
 	"strings"
 	"time"
 
@@ -18,7 +17,7 @@ import (
 
 func resourceKubernetesNodePool() *schema.Resource {
 	return &schema.Resource{
-		Description:   "Create an Kubernetes Node Pool",
+		Description:   "Create an Kubernetes Node Pool for a Kubernetes Cluster. This resource is only available for managed Kubernetes Clusters. A Node Pool is a group of nodes that are identically configured and are automatically joined to the Kubernetes Cluster. Node Pools can be scaled up and down as needed.",
 		CreateContext: resourceKubernetesNodePoolCreate,
 		ReadContext:   resourceKubernetesNodePoolRead,
 		UpdateContext: resourceKubernetesNodePoolUpdate,
@@ -43,18 +42,24 @@ func resourceKubernetesNodePool() *schema.Resource {
 			"labels": {
 				Type:        schema.TypeMap,
 				Optional:    true,
-				Description: "Labels for the Kubernetes Node Pool",
+				Description: "Labels for the Kubernetes Node Pool. Optional. These labels are used for filtering and grouping resources in the Thalassa Console. Labels are not applied to the Kubernetes nodes created for this Node Pool, please use node_labels instead.",
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
 			},
 			"annotations": {
 				Type:        schema.TypeMap,
 				Optional:    true,
-				Description: "Annotations for the Kubernetes Node Pool",
+				Description: "Annotations for the Kubernetes Node Pool. Optional. These annotations are used for additional metadata and configuration. Annotations are not applied to the Kubernetes nodes created for this Node Pool, please use node_annotations instead.",
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
 			},
 			"subnet_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    true,
-				Description: "Subnet of the Kubernetes Cluster. Required for managed clusters.",
+				Description: "Subnet of the Kubernetes Cluster. Required for managed Kubernetes Clusters.",
 			},
 			"cluster_id": {
 				Type:        schema.TypeString,
@@ -180,6 +185,7 @@ func resourceKubernetesNodePool() *schema.Resource {
 								"Equal",
 								"Exists",
 							}, false),
+							Description: "Value of the taint. Optional.",
 						},
 					},
 				},
@@ -187,7 +193,7 @@ func resourceKubernetesNodePool() *schema.Resource {
 			"node_labels": {
 				Type:        schema.TypeMap,
 				Optional:    true,
-				Description: "Labels for the Kubernetes Node Pool",
+				Description: "Labels for the Kubernetes Nodes within this Node Pool. Optional. These labels are applied to the Kubernetes nodes created for this Node Pool. Labels must match the same constraints as Kubernetes labels.",
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
@@ -195,7 +201,7 @@ func resourceKubernetesNodePool() *schema.Resource {
 			"node_annotations": {
 				Type:        schema.TypeMap,
 				Optional:    true,
-				Description: "Annotations for the Kubernetes Node Pool",
+				Description: "Annotations for the Kubernetes Nodes within this Node Pool. Optional. These annotations are applied to the Kubernetes nodes created for this Node Pool. Annotations must match the same constraints as Kubernetes annotations.",
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
@@ -334,8 +340,8 @@ func resourceKubernetesNodePoolRead(ctx context.Context, d *schema.ResourceData,
 	d.Set("name", kubernetesNodePool.Name)
 	d.Set("slug", kubernetesNodePool.Slug)
 	d.Set("description", kubernetesNodePool.Description)
-	d.Set("labels", kubernetesNodePool.Labels)
-	d.Set("annotations", kubernetesNodePool.Annotations)
+	d.Set("labels", convertFromNodeLabels(kubernetesNodePool.Labels))
+	d.Set("annotations", convertFromNodeLabels(kubernetesNodePool.Annotations))
 	d.Set("status", kubernetesNodePool.Status)
 	d.Set("replicas", kubernetesNodePool.Replicas)
 	d.Set("availability_zone", kubernetesNodePool.AvailabilityZone)
@@ -348,9 +354,9 @@ func resourceKubernetesNodePoolRead(ctx context.Context, d *schema.ResourceData,
 	d.Set("node_labels", convertFromNodeLabels(kubernetesNodePool.NodeSettings.Labels))
 	d.Set("node_annotations", convertFromNodeLabels(kubernetesNodePool.NodeSettings.Annotations))
 
-	// if kubernetesNodePool.Subnet != nil {
-	// 	d.Set("subnet_id", kubernetesNodePool.Subnet.Identity)
-	// }
+	if kubernetesNodePool.Subnet != nil {
+		d.Set("subnet_id", kubernetesNodePool.Subnet.Identity)
+	}
 
 	return nil
 }
@@ -407,6 +413,8 @@ func resourceKubernetesNodePoolUpdate(ctx context.Context, d *schema.ResourceDat
 
 	updateKubernetesNodePool := kubernetes.UpdateKubernetesNodePool{
 		Description:      d.Get("description").(string),
+		Labels:           convert.ConvertToMap(d.Get("labels")),
+		Annotations:      convert.ConvertToMap(d.Get("annotations")),
 		MachineType:      d.Get("machine_type").(string),
 		Replicas:         convert.Ptr(d.Get("replicas").(int)),
 		Labels:           convert.ConvertToMap(d.Get("labels")),
@@ -429,7 +437,7 @@ func resourceKubernetesNodePoolUpdate(ctx context.Context, d *schema.ResourceDat
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	log.Println("kubernetesNodePool after update", kubernetesNodePool)
+
 	if kubernetesNodePool != nil {
 		d.Set("slug", kubernetesNodePool.Slug)
 		d.Set("status", kubernetesNodePool.Status)

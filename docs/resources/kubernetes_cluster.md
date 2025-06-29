@@ -15,7 +15,7 @@ Create an Kubernetes Cluster
 
 ### Required
 
-- `cluster_version` (String) Cluster version of the Kubernetes Cluster
+- `cluster_version` (String) Cluster version of the Kubernetes Cluster, can be a name, slug or identity
 - `name` (String) Name of the Kubernetes Cluster
 - `networking_cni` (String) CNI of the Kubernetes Cluster
 - `organisation_id` (String) Reference to the Organisation of the Kubernetes Cluster. If not provided, the organisation of the (Terraform) provider will be used.
@@ -25,7 +25,7 @@ Create an Kubernetes Cluster
 - `annotations` (Map of String) Annotations for the Kubernetes Cluster
 - `audit_log_profile` (String) Audit log profile of the Kubernetes Cluster. Must be one of: none, basic, advanced. Default: none.
 - `cluster_type` (String) Cluster type of the Kubernetes Cluster. Must be one of: managed, hosted-control-plane. Default: managed.
-- `default_network_policy` (String) Default network policy of the Kubernetes Cluster
+- `default_network_policy` (String) Default network policy of the Kubernetes Cluster. Must be one of: allow-all, deny-all. Default: deny-all.
 - `delete_protection` (Boolean) Delete protection of the Kubernetes Cluster
 - `description` (String) A human readable description about the Kubernetes Cluster
 - `labels` (Map of String) Labels for the Kubernetes Cluster

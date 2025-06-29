@@ -222,13 +222,12 @@ func resourceNatGatewayDelete(ctx context.Context, d *schema.ResourceData, m int
 	}
 
 	id := d.Get("id").(string)
-
-	error := client.IaaS().DeleteNatGateway(ctx, id)
-	if error != nil {
-		return diag.FromErr(error)
+	if err := client.IaaS().DeleteNatGateway(ctx, id); err != nil {
+		return diag.FromErr(err)
 	}
-
+	if err := client.IaaS().WaitUntilNatGatewayDeleted(ctx, id); err != nil {
+		return diag.FromErr(err)
+	}
 	d.SetId("")
-
 	return nil
 }
