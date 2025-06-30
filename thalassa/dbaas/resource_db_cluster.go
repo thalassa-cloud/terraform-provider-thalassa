@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/thalassa-cloud/client-go/dbaas/dbaasalphav1"
@@ -17,7 +18,7 @@ import (
 
 func resourceDbCluster() *schema.Resource {
 	return &schema.Resource{
-		Description:   "Create an Kubernetes Cluster",
+		Description:   "Create an DB Cluster",
 		CreateContext: resourceDbClusterCreate,
 		ReadContext:   resourceDbClusterRead,
 		UpdateContext: resourceDbClusterUpdate,
@@ -32,6 +33,13 @@ func resourceDbCluster() *schema.Resource {
 				Required:    true,
 				ForceNew:    true,
 				Description: "Name of the DB Cluster",
+				ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
+					if val == "" {
+						errs = append(errs, fmt.Errorf("name is required"))
+					}
+					warns = []string{}
+					return
+				},
 			},
 			"description": {
 				Type:        schema.TypeString,
@@ -48,15 +56,17 @@ func resourceDbCluster() *schema.Resource {
 				Optional:    true,
 				Description: "Annotations of the DB Cluster",
 			},
-			"vpc_id": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "VPC of the DB Cluster",
-			},
 			"subnet_id": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Subnet of the DB Cluster",
+				ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
+					if val == "" {
+						errs = append(errs, fmt.Errorf("subnet is required"))
+					}
+					warns = []string{}
+					return
+				},
 			},
 			"database_instance_type": {
 				Type:        schema.TypeString,
@@ -86,6 +96,13 @@ func resourceDbCluster() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Version of the database engine",
+				ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
+					if val == "" {
+						errs = append(errs, fmt.Errorf("engine version is required"))
+					}
+					warns = []string{}
+					return
+				},
 			},
 			"parameters": {
 				Type:        schema.TypeMap,
@@ -101,6 +118,13 @@ func resourceDbCluster() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Storage type used to determine the size of the cluster storage",
+				ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
+					if val == "" {
+						errs = append(errs, fmt.Errorf("volume type class is required"))
+					}
+					warns = []string{}
+					return
+				},
 			},
 			"auto_minor_version_upgrade": {
 				Type:        schema.TypeBool,
@@ -110,8 +134,15 @@ func resourceDbCluster() *schema.Resource {
 			},
 			"database_name": {
 				Type:        schema.TypeString,
-				Optional:    true,
+				Required:    true,
 				Description: "Name of the database on the cluster",
+				ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
+					if val == "" {
+						errs = append(errs, fmt.Errorf("database name is required"))
+					}
+					warns = []string{}
+					return
+				},
 			},
 			"delete_protection": {
 				Type:        schema.TypeBool,
@@ -119,14 +150,14 @@ func resourceDbCluster() *schema.Resource {
 				Default:     false,
 				Description: "Flag indicating if the cluster should be protected from deletion",
 			},
-			// "security_groups": {
-			// 	Type:        schema.TypeList,
-			// 	Optional:    true,
-			// 	Description: "List of security groups associated with the cluster",
-			// 	Elem: &schema.Schema{
-			// 		Type: schema.TypeString,
-			// 	},
-			// },
+			"security_groups": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: "List of security groups associated with the cluster",
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
 			"status": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -232,24 +263,28 @@ func resourceDbClusterCreate(ctx context.Context, d *schema.ResourceData, m inte
 		return diag.FromErr(fmt.Errorf("database instance type not found: %s", databaseInstanceType))
 	}
 
-	engineVersion := d.Get("engine_version").(string)
-	// engineVersions, err := client.DbaaSAlphaV1().ListEngineVersions(ctx, &dbaasalphav1.ListEngineVersionsRequest{})
-	// if err != nil {
-	// 	return diag.FromErr(fmt.Errorf("engine version not found: %w", err))
-	// }
-	// foundEngineVersion := false
-	// for _, version := range engineVersions {
-	// 	if version.EngineVersion == engineVersion {
-	// 		foundEngineVersion = true
-	// 	}
-	// }
-	// if !foundEngineVersion {
-	// 	return diag.FromErr(fmt.Errorf("engine version not found: %s", engineVersion))
-	// }
-
 	engine := d.Get("engine").(string)
 	if engine == "" {
 		return diag.FromErr(fmt.Errorf("engine is required"))
+	}
+
+	engineVersion := d.Get("engine_version").(string)
+	tflog.Info(ctx, "engine", map[string]interface{}{
+		"engine":        engine,
+		"engineVersion": engineVersion,
+	})
+	engineVersions, err := client.DbaaSAlphaV1().ListEngineVersions(ctx, dbaasalphav1.DbClusterDatabaseEngine(engine), &dbaasalphav1.ListEngineVersionsRequest{})
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("engine version not found: %w", err))
+	}
+	foundEngineVersion := false
+	for _, version := range engineVersions {
+		if version.EngineVersion == engineVersion {
+			foundEngineVersion = true
+		}
+	}
+	if !foundEngineVersion {
+		return diag.FromErr(fmt.Errorf("engine version not found: %s", engineVersion))
 	}
 
 	createDbCluster := dbaasalphav1.CreateDbClusterRequest{
@@ -396,22 +431,26 @@ func resourceDbClusterCreate(ctx context.Context, d *schema.ResourceData, m inte
 	}
 
 	// Create the DbCluster
-	_, err = client.DbaaSAlphaV1().CreateDbCluster(ctx, createDbCluster)
+	createdDbCluster, err := client.DbaaSAlphaV1().CreateDbCluster(ctx, createDbCluster)
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
+	// Set the id to the name of the cluster
+	d.SetId(createdDbCluster.Identity)
 
 	var dbCluster *dbaasalphav1.DbCluster
 	// Wait for the cluster to be ready
 	for {
 		dbclusters, err := client.DbaaSAlphaV1().ListDbClusters(ctx, &dbaasalphav1.ListDbClustersRequest{})
 		if err != nil {
+
 			return diag.FromErr(err)
 		}
 
 		var foundCluster *dbaasalphav1.DbCluster
 		for _, dbCluster := range dbclusters {
-			if dbCluster.Identity == id || dbCluster.Name == id {
+			if dbCluster.Identity == id || dbCluster.Name == dbCluster.Name {
 				foundCluster = &dbCluster
 				break
 			}
@@ -445,9 +484,6 @@ func resourceDbClusterCreate(ctx context.Context, d *schema.ResourceData, m inte
 	// Handle optional fields
 	if dbCluster.DatabaseName != nil {
 		d.Set("database_name", *dbCluster.DatabaseName)
-	}
-	if dbCluster.Vpc != nil {
-		d.Set("vpc_id", dbCluster.Vpc.Identity)
 	}
 	if dbCluster.Subnet != nil {
 		d.Set("subnet_id", dbCluster.Subnet.Identity)
@@ -509,9 +545,6 @@ func resourceDbClusterRead(ctx context.Context, d *schema.ResourceData, m interf
 	// Handle optional fields
 	if DbCluster.DatabaseName != nil {
 		d.Set("database_name", *DbCluster.DatabaseName)
-	}
-	if DbCluster.Vpc != nil {
-		d.Set("vpc_id", DbCluster.Vpc.Identity)
 	}
 	if DbCluster.Subnet != nil {
 		d.Set("subnet_id", DbCluster.Subnet.Identity)
@@ -610,25 +643,27 @@ func resourceDbClusterUpdate(ctx context.Context, d *schema.ResourceData, m inte
 		}
 	}
 
-	DbCluster, err := client.DbaaSAlphaV1().UpdateDbCluster(ctx, id, updateDbCluster)
+	updatedDbCluster, err := client.DbaaSAlphaV1().UpdateDbCluster(ctx, id, updateDbCluster)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	for {
-		DbCluster, err = client.DbaaSAlphaV1().GetDbCluster(ctx, id)
+		updatedDbCluster, err = client.DbaaSAlphaV1().GetDbCluster(ctx, id)
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		if DbCluster.Status == dbaasalphav1.DbClusterStatusReady {
+		if updatedDbCluster.Status == dbaasalphav1.DbClusterStatusReady {
 			break
 		}
 		time.Sleep(1 * time.Second)
 	}
 
-	if DbCluster == nil {
+	if updatedDbCluster == nil {
 		return diag.FromErr(fmt.Errorf("DbCluster was not found"))
 	}
+
+	d.SetId(updatedDbCluster.Identity)
 
 	return resourceDbClusterRead(ctx, d, m)
 }
@@ -639,17 +674,35 @@ func resourceDbClusterDelete(ctx context.Context, d *schema.ResourceData, m inte
 		return diag.FromErr(err)
 	}
 
-	err = client.DbaaSAlphaV1().DeleteDbCluster(ctx, d.Get("id").(string))
+	id := d.Get("id").(string)
+	// Get the cluster
+	dbCluster, err := client.DbaaSAlphaV1().GetDbCluster(ctx, id)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	err = client.DbaaSAlphaV1().DeleteDbCluster(ctx, dbCluster.Identity)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	for {
-		DbCluster, err := client.DbaaSAlphaV1().GetDbCluster(ctx, d.Get("id").(string))
+		dbClusters, err := client.DbaaSAlphaV1().ListDbClusters(ctx, &dbaasalphav1.ListDbClustersRequest{})
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		if DbCluster.Status == dbaasalphav1.DbClusterStatusDeleted {
+		var foundCluster *dbaasalphav1.DbCluster
+		for _, dbCluster := range dbClusters {
+			if dbCluster.Identity == id {
+				foundCluster = &dbCluster
+				break
+			}
+		}
+		if foundCluster != nil && foundCluster.Status == dbaasalphav1.DbClusterStatusDeleted {
+			break
+		}
+		if foundCluster == nil {
+			// Assume the cluster is deleted
 			break
 		}
 		time.Sleep(1 * time.Second)

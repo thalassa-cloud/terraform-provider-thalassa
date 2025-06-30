@@ -16,28 +16,34 @@ func DataSourceMachineImage() *schema.Resource {
 		ReadContext: dataSourceMachineImageRead,
 		Schema: map[string]*schema.Schema{
 			"id": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:       schema.TypeString,
+				Computed:   true,
+				Deprecated: "Use the name field instead",
 			},
 			"name": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Name of the machine image",
 			},
 			"slug": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Slug of the machine image",
 			},
 			"description": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Description of the machine image",
 			},
 			"labels": {
-				Type:     schema.TypeMap,
-				Computed: true,
+				Type:        schema.TypeMap,
+				Computed:    true,
+				Description: "Labels of the machine image",
 			},
 			"annotations": {
-				Type:     schema.TypeMap,
-				Computed: true,
+				Type:        schema.TypeMap,
+				Computed:    true,
+				Description: "Annotations of the machine image",
 			},
 		},
 	}
@@ -55,8 +61,10 @@ func dataSourceMachineImageRead(ctx context.Context, d *schema.ResourceData, m i
 		return diag.FromErr(err)
 	}
 
+	name := d.Get("name").(string)
+
 	for _, machineImage := range machineImages {
-		if slug != "" && machineImage.Slug == slug {
+		if slug != "" && machineImage.Slug == slug || name != "" && machineImage.Name == name {
 			d.SetId(machineImage.Identity)
 			d.Set("id", machineImage.Identity)
 			d.Set("name", machineImage.Name)

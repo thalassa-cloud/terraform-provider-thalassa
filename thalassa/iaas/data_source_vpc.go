@@ -88,15 +88,47 @@ func dataSourceVpcRead(ctx context.Context, d *schema.ResourceData, m interface{
 	}
 
 	var vpc *iaas.Vpc
+	// First find all VPCs matching name and region
+	var matchingVpcs []iaas.Vpc
 	for _, v := range vpcs {
-		if v.CloudRegion != nil { // region filter
-			if region != "" && v.CloudRegion.Identity != region {
-				continue
+		if v.CloudRegion != nil && region != "" && v.CloudRegion.Identity != region {
+			continue
+		}
+		if v.Name == name {
+			matchingVpcs = append(matchingVpcs, v)
+		}
+	}
+
+	if len(matchingVpcs) > 1 {
+		// Multiple VPCs found with same name - require slug
+		if slug == "" {
+			var slugs []string
+			for _, v := range matchingVpcs {
+				slugs = append(slugs, v.Slug)
+			}
+			return diag.FromErr(fmt.Errorf("multiple VPCs found with name '%s', please specify one of these slugs: %v", name, slugs))
+		}
+
+		// Find exact match using slug
+		for _, v := range matchingVpcs {
+			if v.Slug == slug {
+				vpc = &v
+				break
 			}
 		}
-		// find vpc by slug or name
-		if (slug != "" && v.Slug == slug) || (name != "" && v.Name == name) {
-			vpc = &v
+	} else if len(matchingVpcs) == 1 {
+		// Single match found
+		vpc = &matchingVpcs[0]
+	} else if slug != "" {
+		// No matches by name, try finding by slug
+		for _, v := range vpcs {
+			if v.CloudRegion != nil && region != "" && v.CloudRegion.Identity != region {
+				continue
+			}
+			if v.Slug == slug {
+				vpc = &v
+				break
+			}
 		}
 	}
 

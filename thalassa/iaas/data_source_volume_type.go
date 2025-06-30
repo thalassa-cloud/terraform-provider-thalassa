@@ -22,7 +22,7 @@ func DataSourceVolumeType() *schema.Resource {
 			},
 			"name": {
 				Type:        schema.TypeString,
-				Computed:    true,
+				Required:    true,
 				Description: "The name of the volume type.",
 			},
 			"description": {
