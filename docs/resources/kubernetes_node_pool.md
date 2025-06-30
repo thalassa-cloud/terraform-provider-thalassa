@@ -27,13 +27,13 @@ Create an Kubernetes Node Pool for a Kubernetes Cluster. This resource is only a
 - `enable_autohealing` (Boolean) Enable autohealing for the Kubernetes Node Pool
 - `kubernetes_version` (String) Kubernetes version for the Kubernetes Node Pool. Optional. Will use the Kubernetes Cluster version if not set.
 - `labels` (Map of String) Labels for the Kubernetes Node Pool. Optional. These labels are used for filtering and grouping resources in the Thalassa Console. Labels are not applied to the Kubernetes nodes created for this Node Pool, please use node_labels instead.
-- `max_replicas` (Number) Maximum number of replicas for the Kubernetes Node Pool
-- `min_replicas` (Number) Minimum number of replicas for the Kubernetes Node Pool
+- `max_replicas` (Number) Maximum number of replicas for the Kubernetes Node Pool. May only be set when enable_autoscaling is true.
+- `min_replicas` (Number) Minimum number of replicas for the Kubernetes Node Pool. May only be set when enable_autoscaling is true.
 - `node_annotations` (Map of String) Annotations for the Kubernetes Nodes within this Node Pool. Optional. These annotations are applied to the Kubernetes nodes created for this Node Pool. Annotations must match the same constraints as Kubernetes annotations.
 - `node_labels` (Map of String) Labels for the Kubernetes Nodes within this Node Pool. Optional. These labels are applied to the Kubernetes nodes created for this Node Pool. Labels must match the same constraints as Kubernetes labels.
 - `node_taints` (Block List) Taints for the Kubernetes Node Pool (see [below for nested schema](#nestedblock--node_taints))
 - `organisation_id` (String) Reference to the Organisation of the Kubernetes Node Pool. If not provided, the organisation of the (Terraform) provider will be used.
-- `replicas` (Number) Number of replicas for the Kubernetes Node Pool
+- `replicas` (Number) Number of replicas for the Kubernetes Node Pool. Do not set this when enable_autoscaling is true.
 - `subnet_id` (String) Subnet of the Kubernetes Cluster. Required for managed Kubernetes Clusters.
 - `upgrade_strategy` (String) Upgrade strategy for the Kubernetes Node Pool
 
@@ -50,6 +50,7 @@ Optional:
 
 - `effect` (String) Effect of the taint
 - `key` (String) Key of the taint
+- `operator` (String) Operator of the taint
 - `value` (String) Value of the taint. Optional.
 
 
