@@ -29,12 +29,6 @@ func resourceVirtualMachineInstance() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"organisation_id": {
-				Type:        schema.TypeString,
-				Required:    true,
-				ForceNew:    true,
-				Description: "Reference to the Organisation of the Virtual Machine Instance. If not provided, the organisation of the (Terraform) provider will be used.",
-			},
 			"subnet_id": {
 				Type:        schema.TypeString,
 				Required:    true,
@@ -96,10 +90,10 @@ func resourceVirtualMachineInstance() *schema.Resource {
 				Optional:    true,
 				Description: "Cloud init of the virtual machine instance",
 			},
-			"cloud_init_ref": {
+			"cloud_init_template_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Cloud init ref of the virtual machine instance",
+				Description: "Cloud init template id of the virtual machine instance",
 			},
 			"root_volume_id": {
 				Type:        schema.TypeString,
@@ -215,9 +209,17 @@ func resourceVirtualMachineInstanceCreate(ctx context.Context, d *schema.Resourc
 		MachineImage:             d.Get("machine_image").(string),
 		DeleteProtection:         d.Get("delete_protection").(bool),
 		CloudInit:                d.Get("cloud_init").(string),
-		CloudInitRef:             d.Get("cloud_init_ref").(string),
 		RootVolume:               rootVolume,
 		SecurityGroupAttachments: convertToStrList(d.Get("security_group_attachments")),
+	}
+
+	if cloudInitTemplateId, ok := d.GetOk("cloud_init_template_id"); ok {
+		cloudInitTemplate, err := client.IaaS().GetCloudInitTemplate(ctx, cloudInitTemplateId.(string))
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		d.Set("cloud_init_template_id", cloudInitTemplate.Identity)
+		createVirtualMachineInstance.CloudInit = cloudInitTemplate.Content
 	}
 
 	if availabilityZone, ok := d.GetOk("availability_zone"); ok {
@@ -282,6 +284,7 @@ func resourceVirtualMachineInstanceRead(ctx context.Context, d *schema.ResourceD
 	}
 
 	identity := d.Get("id").(string)
+	cloudInitTemplateId := d.Get("cloud_init_template_id").(string)
 	virtualMachineInstance, err := client.IaaS().GetMachine(ctx, identity)
 	if err != nil {
 		if tcclient.IsNotFound(err) {
@@ -305,6 +308,7 @@ func resourceVirtualMachineInstanceRead(ctx context.Context, d *schema.ResourceD
 	d.Set("state", virtualMachineInstance.State)
 	d.Set("ip_addresses", getIPAddresses(virtualMachineInstance))
 	d.Set("attached_volume_ids", getAttachedVolumeIds(virtualMachineInstance))
+	d.Set("cloud_init_template_id", cloudInitTemplateId)
 
 	d.Set("machine_type", virtualMachineInstance.MachineType.Identity)
 	d.Set("machine_image", virtualMachineInstance.MachineImage.Identity)
@@ -344,6 +348,7 @@ func resourceVirtualMachineInstanceUpdate(ctx context.Context, d *schema.Resourc
 	}
 
 	identity := d.Get("id").(string)
+	cloudInitTemplateId := d.Get("cloud_init_template_id").(string)
 
 	virtualMachineInstance, err := client.IaaS().UpdateMachine(ctx, identity, updateVirtualMachineInstance)
 	if err != nil {
@@ -366,7 +371,7 @@ func resourceVirtualMachineInstanceUpdate(ctx context.Context, d *schema.Resourc
 		d.Set("subnet_id", virtualMachineInstance.Subnet.Identity)
 		d.Set("delete_protection", virtualMachineInstance.DeleteProtection)
 		d.Set("cloud_init", virtualMachineInstance.CloudInit)
-
+		d.Set("cloud_init_template_id", cloudInitTemplateId)
 		d.Set("security_group_attachments", virtualMachineInstance.SecurityGroupAttachments)
 		if virtualMachineInstance.AvailabilityZone != nil {
 			d.Set("availability_zone", *virtualMachineInstance.AvailabilityZone)
