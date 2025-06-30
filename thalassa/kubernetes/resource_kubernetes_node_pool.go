@@ -175,7 +175,7 @@ func resourceKubernetesNodePool() *schema.Resource {
 						"value": {
 							Type:        schema.TypeString,
 							Optional:    true,
-							Description: "Value of the taint",
+							Description: "Value of the taint. Optional.",
 						},
 						"operator": {
 							Type:        schema.TypeString,
@@ -185,7 +185,6 @@ func resourceKubernetesNodePool() *schema.Resource {
 								"Equal",
 								"Exists",
 							}, false),
-							Description: "Value of the taint. Optional.",
 						},
 					},
 				},
@@ -417,8 +416,6 @@ func resourceKubernetesNodePoolUpdate(ctx context.Context, d *schema.ResourceDat
 		Annotations:      convert.ConvertToMap(d.Get("annotations")),
 		MachineType:      d.Get("machine_type").(string),
 		Replicas:         convert.Ptr(d.Get("replicas").(int)),
-		Labels:           convert.ConvertToMap(d.Get("labels")),
-		Annotations:      convert.ConvertToMap(d.Get("annotations")),
 		AvailabilityZone: d.Get("availability_zone").(string),
 		// EnableAutoscaling:         convert.Ptr(d.Get("enable_autoscaling").(bool)),
 		MinReplicas:               convert.Ptr(d.Get("min_replicas").(int)),
@@ -463,8 +460,6 @@ func resourceKubernetesNodePoolUpdate(ctx context.Context, d *schema.ResourceDat
 		d.Set("node_taints", convertFromNodeTaints(kubernetesNodePool.NodeSettings.Taints))
 		d.Set("node_labels", convertFromNodeLabels(kubernetesNodePool.NodeSettings.Labels))
 		d.Set("node_annotations", convertFromNodeLabels(kubernetesNodePool.NodeSettings.Annotations))
-		d.Set("labels", kubernetesNodePool.Labels)
-		d.Set("annotations", kubernetesNodePool.Annotations)
 	}
 
 	return resourceKubernetesNodePoolRead(ctx, d, m)
