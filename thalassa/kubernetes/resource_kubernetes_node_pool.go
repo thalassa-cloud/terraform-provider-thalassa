@@ -3,6 +3,7 @@ package kubernetes
 import (
 	"context"
 	"fmt"
+	"math"
 	"strings"
 	"time"
 
@@ -122,19 +123,19 @@ func resourceKubernetesNodePool() *schema.Resource {
 				Type:        schema.TypeInt,
 				Optional:    true,
 				Default:     1,
-				Description: "Number of replicas for the Kubernetes Node Pool",
+				Description: "Number of replicas for the Kubernetes Node Pool. Do not set this when enable_autoscaling is true.",
 			},
 			"min_replicas": {
 				Type:        schema.TypeInt,
 				Optional:    true,
 				Default:     1,
-				Description: "Minimum number of replicas for the Kubernetes Node Pool",
+				Description: "Minimum number of replicas for the Kubernetes Node Pool. May only be set when enable_autoscaling is true.",
 			},
 			"max_replicas": {
 				Type:        schema.TypeInt,
 				Optional:    true,
 				Default:     1,
-				Description: "Maximum number of replicas for the Kubernetes Node Pool",
+				Description: "Maximum number of replicas for the Kubernetes Node Pool. May only be set when enable_autoscaling is true.",
 			},
 			"machine_type": {
 				Type:        schema.TypeString,
@@ -245,6 +246,8 @@ func resourceKubernetesNodePoolCreate(ctx context.Context, d *schema.ResourceDat
 		}
 	}
 
+	replicas, replicasOk := d.Get("replicas").(int)
+
 	// If autoscaling is enabled, we check the min max and replicas values
 	if _, ok := d.GetOk("enable_autoscaling"); ok && d.Get("enable_autoscaling").(bool) {
 		minReplicas := d.Get("min_replicas").(int)
@@ -252,9 +255,10 @@ func resourceKubernetesNodePoolCreate(ctx context.Context, d *schema.ResourceDat
 		if minReplicas > maxReplicas {
 			return diag.FromErr(fmt.Errorf("min_replicas must be lower than max_replicas"))
 		}
-
-		replicas := d.Get("replicas").(int)
-		if replicas < minReplicas {
+		if !replicasOk {
+			replicas = int(math.Min(float64(minReplicas), float64(maxReplicas)))
+		}
+		if replicasOk && replicas < minReplicas {
 			return diag.FromErr(fmt.Errorf("replicas must be higher or equal to min_replicas"))
 		}
 	}
@@ -262,7 +266,7 @@ func resourceKubernetesNodePoolCreate(ctx context.Context, d *schema.ResourceDat
 	createKubernetesNodePool := kubernetes.CreateKubernetesNodePool{
 		Name:        d.Get("name").(string),
 		MachineType: d.Get("machine_type").(string), // TODO: check if machine type is valid
-		Replicas:    d.Get("replicas").(int),
+		Replicas:    replicas,
 		Description: d.Get("description").(string),
 		Labels:      convert.ConvertToMap(d.Get("labels")),
 		Annotations: convert.ConvertToMap(d.Get("annotations")),
@@ -393,6 +397,8 @@ func resourceKubernetesNodePoolUpdate(ctx context.Context, d *schema.ResourceDat
 		}
 	}
 
+	replicas, replicasOk := d.Get("replicas").(int)
+
 	if _, ok := d.GetOk("enable_autoscaling"); ok && d.Get("enable_autoscaling").(bool) {
 		if d.Get("min_replicas").(int) == 0 {
 			return diag.FromErr(fmt.Errorf("min_replicas must be higher than 0 when enable_autohealing is true"))
@@ -404,8 +410,11 @@ func resourceKubernetesNodePoolUpdate(ctx context.Context, d *schema.ResourceDat
 			return diag.FromErr(fmt.Errorf("min_replicas must be lower than max_replicas"))
 		}
 
-		replicas := d.Get("replicas").(int)
-		if replicas < minReplicas {
+		if !replicasOk {
+			replicas = int(math.Min(float64(minReplicas), float64(maxReplicas)))
+		}
+
+		if replicasOk && replicas < minReplicas {
 			return diag.FromErr(fmt.Errorf("replicas must be higher or equal to min_replicas"))
 		}
 	}
@@ -415,7 +424,7 @@ func resourceKubernetesNodePoolUpdate(ctx context.Context, d *schema.ResourceDat
 		Labels:           convert.ConvertToMap(d.Get("labels")),
 		Annotations:      convert.ConvertToMap(d.Get("annotations")),
 		MachineType:      d.Get("machine_type").(string),
-		Replicas:         convert.Ptr(d.Get("replicas").(int)),
+		Replicas:         convert.Ptr(replicas),
 		AvailabilityZone: d.Get("availability_zone").(string),
 		// EnableAutoscaling:         convert.Ptr(d.Get("enable_autoscaling").(bool)),
 		MinReplicas:               convert.Ptr(d.Get("min_replicas").(int)),
