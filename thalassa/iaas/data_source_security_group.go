@@ -28,6 +28,12 @@ func DataSourceSecurityGroup() *schema.Resource {
 				Description:  "Name of the security group",
 				ExactlyOneOf: []string{"identity", "name"},
 			},
+			"organisation_id": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
+				Description: "Reference to the Organisation of the Security Group. If not provided, the organisation of the (Terraform) provider will be used.",
+			},
 			"vpc_identity": {
 				Type:        schema.TypeString,
 				Optional:    true,

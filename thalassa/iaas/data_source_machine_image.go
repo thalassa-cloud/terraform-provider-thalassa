@@ -16,14 +16,20 @@ func DataSourceMachineImage() *schema.Resource {
 		ReadContext: dataSourceMachineImageRead,
 		Schema: map[string]*schema.Schema{
 			"id": {
-				Type:       schema.TypeString,
-				Computed:   true,
-				Deprecated: "Use the name field instead",
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Identity of the machine image",
 			},
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Name of the machine image",
+			},
+			"organisation_id": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
+				Description: "Reference to the Organisation of the Machine Image. If not provided, the organisation of the (Terraform) provider will be used.",
 			},
 			"slug": {
 				Type:        schema.TypeString,

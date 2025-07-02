@@ -25,6 +25,12 @@ func DataSourceVolumeType() *schema.Resource {
 				Required:    true,
 				Description: "The name of the volume type.",
 			},
+			"organisation_id": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
+				Description: "Reference to the Organisation of the Volume Type. If not provided, the organisation of the (Terraform) provider will be used.",
+			},
 			"description": {
 				Type:        schema.TypeString,
 				Computed:    true,

@@ -28,6 +28,7 @@ func resourceRouteTableRoute() *schema.Resource {
 			"organisation_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
+				ForceNew:    true,
 				Description: "Organisation of the RouteTable",
 			},
 			"route_table_id": {

@@ -16,6 +16,7 @@ Get an machine type
 
 ### Optional
 
+- `organisation_id` (String) Reference to the Organisation of the Machine Type. If not provided, the organisation of the (Terraform) provider will be used.
 - `slug` (String)
 
 ### Read-Only

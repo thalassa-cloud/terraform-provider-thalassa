@@ -41,6 +41,12 @@ func resourceDbCluster() *schema.Resource {
 					return
 				},
 			},
+			"organisation_id": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
+				Description: "Reference to the Organisation of the Db Cluster. If not provided, the organisation of the (Terraform) provider will be used.",
+			},
 			"description": {
 				Type:        schema.TypeString,
 				Optional:    true,

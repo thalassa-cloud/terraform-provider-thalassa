@@ -29,7 +29,7 @@ func resourceRouteTable() *schema.Resource {
 			},
 			"organisation_id": {
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
 				ForceNew:    true,
 				Description: "Reference to the Organisation of the RouteTable. If not provided, the organisation of the (Terraform) provider will be used.",
 			},

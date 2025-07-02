@@ -28,6 +28,12 @@ func dataSourcePgRoles() *schema.Resource {
 				Required:    true,
 				Description: "The ID of the database cluster",
 			},
+			"organisation_id": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
+				Description: "Reference to the Organisation of the Db Cluster. If not provided, the organisation of the (Terraform) provider will be used.",
+			},
 			"connection_limit": {
 				Type:        schema.TypeInt,
 				Computed:    true,

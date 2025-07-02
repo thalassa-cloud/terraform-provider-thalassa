@@ -23,6 +23,13 @@ func DataSourceRegion() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			"organisation_id": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
+				Computed:    true,
+				Description: "Reference to the Organisation of the Region. If not provided, the organisation of the (Terraform) provider will be used.",
+			},
 			"slug": {
 				Type:     schema.TypeString,
 				Optional: true,
