@@ -28,7 +28,7 @@ func resourceTargetGroup() *schema.Resource {
 			},
 			"organisation_id": {
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
 				ForceNew:    true,
 				Description: "Reference to the Organisation of the Target Group. If not provided, the organisation of the (Terraform) provider will be used.",
 			},
@@ -122,6 +122,7 @@ func resourceTargetGroup() *schema.Resource {
 			"attachments": {
 				Type:        schema.TypeList,
 				Optional:    true,
+				Computed:    true,
 				Description: "The targets to attach to the target group. If provided, the targets will be attached to the target group when the resource is created. Overwrites the target group attachment resource.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -170,7 +171,11 @@ func resourceTargetGroupCreate(ctx context.Context, d *schema.ResourceData, m in
 		Vpc:         d.Get("vpc_id").(string),
 		TargetPort:  d.Get("port").(int),
 		Protocol:    iaas.LoadbalancerProtocol(d.Get("protocol").(string)),
-		HealthCheck: healthCheck,
+	}
+
+	healthCheckPort := d.Get("health_check_port").(int)
+	if healthCheckPort != 0 {
+		createTargetGroup.HealthCheck = healthCheck
 	}
 
 	tg, err := client.IaaS().CreateTargetGroup(ctx, createTargetGroup)
@@ -280,7 +285,11 @@ func resourceTargetGroupUpdate(ctx context.Context, d *schema.ResourceData, m in
 		Annotations: convert.ConvertToMap(d.Get("annotations")),
 		TargetPort:  d.Get("port").(int),
 		Protocol:    iaas.LoadbalancerProtocol(d.Get("protocol").(string)),
-		HealthCheck: healthCheck,
+	}
+
+	healthCheckPort := d.Get("health_check_port").(int)
+	if healthCheckPort != 0 {
+		updateTargetGroup.HealthCheck = healthCheck
 	}
 
 	id := d.Get("id").(string)

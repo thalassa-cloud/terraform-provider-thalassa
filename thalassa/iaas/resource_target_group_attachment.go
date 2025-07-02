@@ -25,7 +25,7 @@ func resourceTargetGroupAttachment() *schema.Resource {
 			},
 			"organisation_id": {
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
 				ForceNew:    true,
 				Description: "Reference to the Organisation of the Target Group Attachment. If not provided, the organisation of the (Terraform) provider will be used.",
 			},
@@ -70,7 +70,10 @@ func resourceTargetGroupAttachmentCreate(ctx context.Context, d *schema.Resource
 		return diag.FromErr(err)
 	}
 	if attachResponse != nil {
-		d.SetId(attachResponse.Identity)
+		id := fmt.Sprintf("%s:%s:%s", vmiID, targetGroupID, attachResponse.Endpoint.Identity)
+		d.SetId(id)
+		d.Set("target_group_id", targetGroupID)
+		d.Set("vmi_id", vmiID)
 	}
 	return resourceTargetGroupAttachmentRead(ctx, d, m)
 }

@@ -35,6 +35,12 @@ func resourceVirtualMachineInstance() *schema.Resource {
 				ForceNew:    true,
 				Description: "Subnet of the Virtual Machine Instance",
 			},
+			"organisation_id": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
+				Description: "Reference to the Organisation of the Machine Type. If not provided, the organisation of the (Terraform) provider will be used.",
+			},
 			"name": {
 				Type:         schema.TypeString,
 				Required:     true,
@@ -98,6 +104,7 @@ func resourceVirtualMachineInstance() *schema.Resource {
 			"root_volume_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
+				Computed:    true,
 				Description: "Root volume id of the virtual machine instance. Must be provided if root_volume_type is not set.",
 			},
 			"root_volume_size_gb": {
@@ -197,6 +204,10 @@ func resourceVirtualMachineInstanceCreate(ctx context.Context, d *schema.Resourc
 
 	if rootVolumeType, ok := d.GetOk("root_volume_type"); ok {
 		rootVolume.VolumeTypeIdentity = rootVolumeType.(string)
+	}
+
+	if rootVolumeId, ok := d.GetOk("root_volume_id"); ok {
+		d.Set("root_volume_id", rootVolumeId.(string))
 	}
 
 	createVirtualMachineInstance := iaas.CreateMachine{
@@ -340,15 +351,28 @@ func resourceVirtualMachineInstanceUpdate(ctx context.Context, d *schema.Resourc
 		return diag.FromErr(err)
 	}
 
+	subnetId := d.Get("subnet_id").(string)
+
+	state := iaas.MachineState(d.Get("state").(string))
+	availabilityZone := d.Get("availability_zone").(string)
+	machineType := d.Get("machine_type").(string)
+	deleteProtection := d.Get("delete_protection").(bool)
+	cloudInitTemplateId := d.Get("cloud_init_template_id").(string)
+
 	updateVirtualMachineInstance := iaas.UpdateMachine{
-		Name:        d.Get("name").(string),
-		Description: d.Get("description").(string),
-		Labels:      convert.ConvertToMap(d.Get("labels")),
-		Annotations: convert.ConvertToMap(d.Get("annotations")),
+		Name:             d.Get("name").(string),
+		Description:      d.Get("description").(string),
+		Labels:           convert.ConvertToMap(d.Get("labels")),
+		Annotations:      convert.ConvertToMap(d.Get("annotations")),
+		Subnet:           &subnetId,
+		State:            &state,
+		AvailabilityZone: &availabilityZone,
+		MachineType:      &machineType,
+		DeleteProtection: &deleteProtection,
+		// SecurityGroupAttachments: securityGroupAttachments,
 	}
 
 	identity := d.Get("id").(string)
-	cloudInitTemplateId := d.Get("cloud_init_template_id").(string)
 
 	virtualMachineInstance, err := client.IaaS().UpdateMachine(ctx, identity, updateVirtualMachineInstance)
 	if err != nil {

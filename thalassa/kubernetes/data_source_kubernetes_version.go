@@ -30,6 +30,12 @@ func DataSourceKubernetesVersion() *schema.Resource {
 				Optional:    true,
 				Description: "The slug of the Kubernetes version.",
 			},
+			"organisation_id": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
+				Description: "Reference to the Organisation of the Kubernetes Version. If not provided, the organisation of the (Terraform) provider will be used.",
+			},
 			"kubernetes_version": {
 				Type:        schema.TypeString,
 				Computed:    true,

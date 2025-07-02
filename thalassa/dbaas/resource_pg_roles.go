@@ -26,6 +26,12 @@ func resourcePgRoles() *schema.Resource {
 				Computed:    true,
 				Description: "The ID of the PostgreSQL role",
 			},
+			"organisation_id": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
+				Description: "Reference to the Organisation of the Db Cluster. If not provided, the organisation of the (Terraform) provider will be used.",
+			},
 			"name": {
 				Type:     schema.TypeString,
 				Required: true,

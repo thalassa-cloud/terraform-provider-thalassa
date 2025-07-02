@@ -17,6 +17,7 @@ Get an Kubernetes version
 ### Optional
 
 - `name` (String) The name of the Kubernetes version.
+- `organisation_id` (String) Reference to the Organisation of the Kubernetes Version. If not provided, the organisation of the (Terraform) provider will be used.
 - `slug` (String) The slug of the Kubernetes version.
 
 ### Read-Only

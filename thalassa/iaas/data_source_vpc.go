@@ -24,6 +24,7 @@ func DataSourceVpc() *schema.Resource {
 			"organisation_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
+				ForceNew:    true,
 				Description: "Reference to the Organisation of the Vpc. If not provided, the organisation of the (Terraform) provider will be used.",
 			},
 			"name": {

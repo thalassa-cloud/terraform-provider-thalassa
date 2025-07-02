@@ -21,6 +21,12 @@ func dataSourceDbBackupSchedule() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
+			"organisation_id": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
+				Description: "Reference to the Organisation of the Db Backup Schedule. If not provided, the organisation of the (Terraform) provider will be used.",
+			},
 			"db_cluster_id": {
 				Type:     schema.TypeString,
 				Required: true,

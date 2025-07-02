@@ -34,6 +34,12 @@ func ResourceSecurityGroup() *schema.Resource {
 				Optional:    true,
 				Description: "Description of the security group",
 			},
+			"organisation_id": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
+				Description: "Reference to the Organisation of the Security Group. If not provided, the organisation of the (Terraform) provider will be used.",
+			},
 			"vpc_identity": {
 				Type:        schema.TypeString,
 				Required:    true,

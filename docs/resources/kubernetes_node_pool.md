@@ -25,7 +25,6 @@ Create an Kubernetes Node Pool
 - `annotations` (Map of String) Annotations for the Kubernetes Node Pool
 - `description` (String) A human readable description about the Kubernetes Node Pool
 - `enable_autohealing` (Boolean) Enable autohealing for the Kubernetes Node Pool
-- `enable_autoscaling` (Boolean) Enable autoscaling for the Kubernetes Node Pool
 - `kubernetes_version` (String) Kubernetes version for the Kubernetes Node Pool. Optional. Will use the Kubernetes Cluster version if not set.
 - `labels` (Map of String) Labels for the Kubernetes Node Pool
 - `max_replicas` (Number) Maximum number of replicas for the Kubernetes Node Pool
@@ -51,6 +50,7 @@ Optional:
 
 - `effect` (String) Effect of the taint
 - `key` (String) Key of the taint
+- `operator` (String) Operator of the taint
 - `value` (String) Value of the taint
 
 

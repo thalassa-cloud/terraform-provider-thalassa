@@ -30,7 +30,7 @@ func resourceNatGateway() *schema.Resource {
 			},
 			"organisation_id": {
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
 				ForceNew:    true,
 				Description: "Reference to the Organisation of the NatGateway. If not provided, the organisation of the (Terraform) provider will be used.",
 			},

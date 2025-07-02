@@ -28,9 +28,15 @@ func resourceLoadBalancer() *schema.Resource {
 			},
 			"organisation_id": {
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
 				ForceNew:    true,
 				Description: "Reference to the Organisation of the Loadbalancer. If not provided, the organisation of the (Terraform) provider will be used.",
+			},
+			"region": {
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Description: "Region of the Loadbalancer",
 			},
 			"vpc_id": {
 				Type:        schema.TypeString,
@@ -70,6 +76,16 @@ func resourceLoadBalancer() *schema.Resource {
 				Optional:    true,
 				Description: "Annotations for the Loadbalancer",
 			},
+			"delete_protection": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Description: "Delete protection for the Loadbalancer",
+			},
+			"internal": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Description: "Internal loadbalancer",
+			},
 		},
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -93,6 +109,13 @@ func resourceLoadBalancerCreate(ctx context.Context, d *schema.ResourceData, m i
 		InternalLoadbalancer: d.Get("internal").(bool),
 	}
 
+	if deleteProtection := d.Get("delete_protection").(bool); deleteProtection {
+		createLoadbalancer.DeleteProtection = deleteProtection
+	}
+	if internal := d.Get("internal").(bool); internal {
+		createLoadbalancer.InternalLoadbalancer = internal
+	}
+
 	loadbalancer, err := client.IaaS().CreateLoadbalancer(ctx, createLoadbalancer)
 
 	if err != nil {
@@ -100,10 +123,22 @@ func resourceLoadBalancerCreate(ctx context.Context, d *schema.ResourceData, m i
 	}
 	if loadbalancer != nil {
 		d.SetId(loadbalancer.Identity)
+		d.Set("name", loadbalancer.Name)
 		d.Set("slug", loadbalancer.Slug)
-		return nil
+		d.Set("description", loadbalancer.Description)
+		d.Set("labels", loadbalancer.Labels)
+		d.Set("annotations", loadbalancer.Annotations)
+		d.Set("subnet_id", loadbalancer.Subnet.Identity)
+		d.Set("vpc_id", loadbalancer.Vpc.Identity)
+		if d.Get("delete_protection") != nil {
+			d.Set("delete_protection", d.Get("delete_protection").(bool))
+		}
+		if d.Get("internal") != nil {
+			d.Set("internal", d.Get("internal").(bool))
+		}
+		return resourceLoadBalancerRead(ctx, d, m)
 	}
-	return resourceLoadBalancerRead(ctx, d, m)
+	return diag.FromErr(fmt.Errorf("error creating loadbalancer: %s", err))
 }
 
 func resourceLoadBalancerRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -112,7 +147,7 @@ func resourceLoadBalancerRead(ctx context.Context, d *schema.ResourceData, m int
 		return diag.FromErr(err)
 	}
 
-	slug := d.Get("slug").(string)
+	slug := d.Get("id").(string)
 	loadbalancer, err := client.IaaS().GetLoadbalancer(ctx, slug)
 	if err != nil {
 		if tcclient.IsNotFound(err) {

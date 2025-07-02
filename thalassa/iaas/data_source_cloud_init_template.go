@@ -20,6 +20,12 @@ func dataSourceCloudInitTemplate() *schema.Resource {
 				Type:     schema.TypeMap,
 				Computed: true,
 			},
+			"organisation_id": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
+				Description: "Reference to the Organisation of the Cloud Init Template. If not provided, the organisation of the (Terraform) provider will be used.",
+			},
 			"annotations": {
 				Type:     schema.TypeMap,
 				Computed: true,
