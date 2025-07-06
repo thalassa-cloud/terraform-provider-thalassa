@@ -123,7 +123,7 @@ func resourceDbCluster() *schema.Resource {
 			},
 			"volume_type_class": {
 				Type:        schema.TypeString,
-				Optional:    true,
+				Required:    true,
 				Description: "Storage type used to determine the size of the cluster storage",
 				ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
 					if val == "" {
@@ -138,18 +138,6 @@ func resourceDbCluster() *schema.Resource {
 				Optional:    true,
 				Default:     false,
 				Description: "Flag indicating if the cluster should automatically upgrade to the latest minor version",
-			},
-			"database_name": {
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "Name of the database on the cluster",
-				ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
-					if val == "" {
-						errs = append(errs, fmt.Errorf("database name is required"))
-					}
-					warns = []string{}
-					return
-				},
 			},
 			"delete_protection": {
 				Type:        schema.TypeBool,
@@ -211,8 +199,6 @@ func resourceDbClusterCreate(ctx context.Context, d *schema.ResourceData, m inte
 		return diag.FromErr(err)
 	}
 
-	id := d.Get("id").(string)
-
 	// Safe type assertions with nil checks
 	labels := make(map[string]string)
 	if labelsRaw := d.Get("labels"); labelsRaw != nil {
@@ -251,7 +237,7 @@ func resourceDbClusterCreate(ctx context.Context, d *schema.ResourceData, m inte
 	}
 	foundInstanceType := false
 	for _, instanceType := range databaseInstanceTypes {
-		if instanceType.Name == databaseInstanceType {
+		if strings.EqualFold(instanceType.Name, databaseInstanceType) || strings.EqualFold(instanceType.Identity, databaseInstanceType) || strings.EqualFold(instanceType.Slug, databaseInstanceType) {
 			databaseInstanceType = instanceType.Identity
 			foundInstanceType = true
 			break
@@ -310,12 +296,20 @@ func resourceDbClusterCreate(ctx context.Context, d *schema.ResourceData, m inte
 			}
 			return diag.FromErr(fmt.Errorf("failed to get volume type class: %w", err))
 		}
+		volumeTypeClassStr := volumeTypeClass.(string)
 		for _, class := range volumeTypeClasses {
-			if strings.ToLower(class.Name) == volumeTypeClass {
+			if strings.EqualFold(class.Name, volumeTypeClassStr) || strings.EqualFold(class.Identity, volumeTypeClassStr) {
 				createDbCluster.VolumeTypeClassIdentity = class.Identity
 				foundVolumeTypeClass = true
 				break
 			}
+		}
+		if !foundVolumeTypeClass {
+			availableVolumeTypeClasses := []string{}
+			for _, class := range volumeTypeClasses {
+				availableVolumeTypeClasses = append(availableVolumeTypeClasses, class.Name)
+			}
+			return diag.FromErr(fmt.Errorf("volume type class not found: %s. Available volume type classes: %s", volumeTypeClassStr, strings.Join(availableVolumeTypeClasses, ", ")))
 		}
 	}
 
@@ -441,18 +435,19 @@ func resourceDbClusterCreate(ctx context.Context, d *schema.ResourceData, m inte
 	var dbCluster *dbaasalphav1.DbCluster
 	// Wait for the cluster to be ready
 	for {
-		dbCluster, err = client.DbaaSAlphaV1().GetDbCluster(ctx, id)
+		dbCluster, err = client.DbaaSAlphaV1().GetDbCluster(ctx, createdDbCluster.Identity)
 		if err != nil {
 			if tcclient.IsNotFound(err) {
 				return diag.FromErr(fmt.Errorf("db cluster not found: %w", err))
 			}
 			return diag.FromErr(err)
 		}
-
+		if dbCluster == nil {
+			return diag.FromErr(fmt.Errorf("db cluster not found: %w", err))
+		}
 		if dbCluster.Status == dbaasalphav1.DbClusterStatusReady {
 			break
 		}
-
 		time.Sleep(1 * time.Second)
 	}
 
@@ -473,18 +468,8 @@ func resourceDbClusterCreate(ctx context.Context, d *schema.ResourceData, m inte
 	d.Set("endpoint_ipv6", dbCluster.EndpointIpv6)
 	d.Set("port", dbCluster.Port)
 
-	// Handle optional fields
-	if dbCluster.DatabaseName != nil {
-		d.Set("database_name", *dbCluster.DatabaseName)
-	}
 	if dbCluster.Subnet != nil {
 		d.Set("subnet_id", dbCluster.Subnet.Identity)
-	}
-	if dbCluster.DatabaseInstanceType != nil {
-		d.Set("database_instance_type", dbCluster.DatabaseInstanceType.Identity)
-	}
-	if dbCluster.VolumeTypeClass != nil {
-		d.Set("volume_type_class", dbCluster.VolumeTypeClass.Identity)
 	}
 	if dbCluster.SecurityGroups != nil {
 		d.Set("security_groups", dbCluster.SecurityGroups)
@@ -532,18 +517,24 @@ func resourceDbClusterRead(ctx context.Context, d *schema.ResourceData, m interf
 	d.Set("endpoint_ipv6", DbCluster.EndpointIpv6)
 	d.Set("port", DbCluster.Port)
 
-	// Handle optional fields
-	if DbCluster.DatabaseName != nil {
-		d.Set("database_name", *DbCluster.DatabaseName)
-	}
 	if DbCluster.Subnet != nil {
 		d.Set("subnet_id", DbCluster.Subnet.Identity)
 	}
 	if DbCluster.DatabaseInstanceType != nil {
-		d.Set("database_instance_type", DbCluster.DatabaseInstanceType.Identity)
+		str := d.Get("database_instance_type").(string)
+		if str != "" {
+			d.Set("database_instance_type", str)
+		} else {
+			d.Set("database_instance_type", DbCluster.DatabaseInstanceType.Identity)
+		}
 	}
 	if DbCluster.VolumeTypeClass != nil {
-		d.Set("volume_type_class", DbCluster.VolumeTypeClass.Identity)
+		str := d.Get("volume_type_class").(string)
+		if str != "" {
+			d.Set("volume_type_class", str)
+		} else {
+			d.Set("volume_type_class", DbCluster.VolumeTypeClass.Identity)
+		}
 	}
 	if DbCluster.SecurityGroups != nil {
 		securityGroupIds := make([]string, len(DbCluster.SecurityGroups))
@@ -601,14 +592,7 @@ func resourceDbClusterUpdate(ctx context.Context, d *schema.ResourceData, m inte
 		DatabaseInstanceTypeIdentity: convert.Ptr(d.Get("database_instance_type").(string)),
 	}
 
-	// Safe handling of optional database_name
-	if databaseName := d.Get("database_name"); databaseName != nil && databaseName != "" {
-		if strVal, ok := databaseName.(string); ok {
-			updateDbCluster.DatabaseName = convert.Ptr(strVal)
-		}
-	}
-
-	updatedDbCluster, err := client.DbaaSAlphaV1().UpdateDbCluster(ctx, id, updateDbCluster)
+	_, err = client.DbaaSAlphaV1().UpdateDbCluster(ctx, id, updateDbCluster)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to update db cluster: %w", err))
 	}
@@ -620,7 +604,7 @@ func resourceDbClusterUpdate(ctx context.Context, d *schema.ResourceData, m inte
 		default:
 			time.Sleep(1 * time.Second)
 		}
-		updatedDbCluster, err = client.DbaaSAlphaV1().GetDbCluster(ctx, id)
+		updatedDbCluster, err := client.DbaaSAlphaV1().GetDbCluster(ctx, id)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -631,11 +615,6 @@ func resourceDbClusterUpdate(ctx context.Context, d *schema.ResourceData, m inte
 			break
 		}
 	}
-	if updatedDbCluster == nil {
-		return diag.FromErr(fmt.Errorf("DbCluster was not found"))
-	}
-
-	d.SetId(updatedDbCluster.Identity)
 	return resourceDbClusterRead(ctx, d, m)
 }
 
