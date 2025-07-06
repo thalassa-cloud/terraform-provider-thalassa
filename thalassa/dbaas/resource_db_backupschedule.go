@@ -4,11 +4,12 @@ import (
 	"context"
 	"fmt"
 	"regexp"
-	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/thalassa-cloud/client-go/dbaas/dbaasalphav1"
+	tcclient "github.com/thalassa-cloud/client-go/pkg/client"
+	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/convert"
 	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/provider"
 )
 
@@ -124,28 +125,22 @@ func resourceDbBackupScheduleCreate(ctx context.Context, d *schema.ResourceData,
 	var dbCluster *dbaasalphav1.DbCluster
 	dbClusterId := d.Get("db_cluster_id").(string)
 
-	for {
-		// Wait for the db cluster to be ready
-		dbClusters, err := client.DbaaSAlphaV1().ListDbClusters(ctx, &dbaasalphav1.ListDbClustersRequest{})
-		if err != nil {
-			return diag.FromErr(err)
+	dbCluster, err = client.DbaaSAlphaV1().GetDbCluster(ctx, dbClusterId)
+	if err != nil {
+		if tcclient.IsNotFound(err) {
+			return diag.FromErr(fmt.Errorf("db cluster not found: %w", err))
 		}
-
-		for _, cluster := range dbClusters {
-			if cluster.Identity == dbClusterId {
-				dbCluster = &cluster
-				break
-			}
-		}
-		if dbCluster.Status == dbaasalphav1.DbClusterStatusReady {
-			break
-		}
-		time.Sleep(1 * time.Second)
+		return diag.FromErr(fmt.Errorf("error getting db cluster: %w", err))
+	}
+	switch dbCluster.Status {
+	case dbaasalphav1.DbClusterStatusReady, dbaasalphav1.DbClusterStatusUpdating, dbaasalphav1.DbClusterStatusCreating:
+		break
+	default:
+		return diag.FromErr(fmt.Errorf("db cluster is not ready: %s", dbCluster.Status))
 	}
 
 	backupTarget := d.Get("backup_target").(string)
 	retentionPolicy := d.Get("retention_policy").(string)
-
 	createBackupSchedule := dbaasalphav1.CreatePgBackupScheduleRequest{
 		Name:            d.Get("name").(string),
 		Schedule:        d.Get("schedule").(string),
@@ -154,31 +149,19 @@ func resourceDbBackupScheduleCreate(ctx context.Context, d *schema.ResourceData,
 	}
 
 	if labels, ok := d.GetOk("labels"); ok {
-		createBackupSchedule.Labels = dbaasalphav1.Labels(convertLabels(labels.(map[string]interface{})))
+		createBackupSchedule.Labels = dbaasalphav1.Labels(convert.ConvertToMap(labels))
 	}
 	if annotations, ok := d.GetOk("annotations"); ok {
-		createBackupSchedule.Annotations = dbaasalphav1.Annotations(convertAnnotations(annotations.(map[string]interface{})))
+		createBackupSchedule.Annotations = dbaasalphav1.Annotations(convert.ConvertToMap(annotations))
 	}
 
 	createdBackupSchedule, err := client.DbaaSAlphaV1().CreatePgBackupSchedule(ctx, dbCluster.Identity, createBackupSchedule)
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("error creating backup schedule: %w", err))
 	}
 
 	d.SetId(createdBackupSchedule.Identity)
 	d.Set("db_cluster_id", dbClusterId)
-
-	for {
-		dbCluster, err = client.DbaaSAlphaV1().GetDbCluster(ctx, dbClusterId)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		if dbCluster.Status == dbaasalphav1.DbClusterStatusReady {
-			break
-		}
-		time.Sleep(1 * time.Second)
-	}
-
 	d.Set("name", createdBackupSchedule.Name)
 	d.Set("description", createdBackupSchedule.Description)
 	d.Set("labels", createdBackupSchedule.Labels)
@@ -186,8 +169,6 @@ func resourceDbBackupScheduleCreate(ctx context.Context, d *schema.ResourceData,
 	d.Set("schedule", createdBackupSchedule.Schedule)
 	d.Set("retention_policy", createdBackupSchedule.RetentionPolicy)
 	d.Set("backup_target", createdBackupSchedule.Target)
-	d.Set("labels", createdBackupSchedule.Labels)
-	d.Set("annotations", createdBackupSchedule.Annotations)
 
 	return resourceDbBackupScheduleRead(ctx, d, m)
 }
@@ -201,7 +182,11 @@ func resourceDbBackupScheduleRead(ctx context.Context, d *schema.ResourceData, m
 	dbClusterId := d.Get("db_cluster_id").(string)
 	pgBackupSchedules, err := client.DbaaSAlphaV1().ListPgBackupSchedules(ctx, dbClusterId)
 	if err != nil {
-		return diag.FromErr(err)
+		if tcclient.IsNotFound(err) {
+			d.SetId("")
+			return nil
+		}
+		return diag.FromErr(fmt.Errorf("error listing pg backup schedules: %w", err))
 	}
 
 	for _, backupSchedule := range pgBackupSchedules {
@@ -243,36 +228,30 @@ func resourceDbBackupScheduleUpdate(ctx context.Context, d *schema.ResourceData,
 	}
 
 	var dbCluster *dbaasalphav1.DbCluster
-
-	for {
-		// Wait for the db cluster to be ready
-		dbClusters, err := client.DbaaSAlphaV1().ListDbClusters(ctx, &dbaasalphav1.ListDbClustersRequest{})
-		if err != nil {
-			return diag.FromErr(err)
+	dbCluster, err = client.DbaaSAlphaV1().GetDbCluster(ctx, dbClusterId)
+	if err != nil {
+		if tcclient.IsNotFound(err) {
+			return diag.FromErr(fmt.Errorf("db cluster not found: %w", err))
 		}
-
-		for _, cluster := range dbClusters {
-			if cluster.Identity == dbClusterId {
-				dbCluster = &cluster
-				break
-			}
-		}
-		if dbCluster.Status == dbaasalphav1.DbClusterStatusReady {
-			break
-		}
-		time.Sleep(1 * time.Second)
+		return diag.FromErr(fmt.Errorf("error getting db cluster: %w", err))
+	}
+	switch dbCluster.Status {
+	case dbaasalphav1.DbClusterStatusReady, dbaasalphav1.DbClusterStatusUpdating, dbaasalphav1.DbClusterStatusCreating:
+		break
+	default:
+		return diag.FromErr(fmt.Errorf("db cluster is not ready: %s", dbCluster.Status))
 	}
 
 	if labels, ok := d.GetOk("labels"); ok {
-		updateBackupSchedule.Labels = dbaasalphav1.Labels(convertLabels(labels.(map[string]interface{})))
+		updateBackupSchedule.Labels = dbaasalphav1.Labels(convert.ConvertToMap(labels))
 	}
 	if annotations, ok := d.GetOk("annotations"); ok {
-		updateBackupSchedule.Annotations = dbaasalphav1.Annotations(convertAnnotations(annotations.(map[string]interface{})))
+		updateBackupSchedule.Annotations = dbaasalphav1.Annotations(convert.ConvertToMap(annotations))
 	}
 
 	_, err = client.DbaaSAlphaV1().UpdatePgBackupSchedule(ctx, dbCluster.Identity, d.Id(), updateBackupSchedule)
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("error updating backup schedule: %w", err))
 	}
 
 	return resourceDbBackupScheduleRead(ctx, d, m)
@@ -281,37 +260,27 @@ func resourceDbBackupScheduleUpdate(ctx context.Context, d *schema.ResourceData,
 func resourceDbBackupScheduleDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("error getting db cluster: %w", err))
 	}
 
 	dbClusterId := d.Get("db_cluster_id").(string)
 	dbCluster, err := client.DbaaSAlphaV1().GetDbCluster(ctx, dbClusterId)
 	if err != nil {
-		return diag.FromErr(err)
+		if tcclient.IsNotFound(err) {
+			d.SetId("")
+			return nil
+		}
+		return diag.FromErr(fmt.Errorf("error getting db cluster: %w", err))
 	}
 
 	err = client.DbaaSAlphaV1().DeletePgBackupSchedule(ctx, dbCluster.Identity, d.Id())
 	if err != nil {
-		return diag.FromErr(err)
+		if tcclient.IsNotFound(err) {
+			d.SetId("")
+			return nil
+		}
+		return diag.FromErr(fmt.Errorf("error deleting backup schedule: %w", err))
 	}
-
+	d.SetId("")
 	return nil
-}
-
-// Convert labels and annotations to map[string]string
-func convertLabels(labels map[string]interface{}) map[string]string {
-	labelsMap := make(map[string]string)
-	for k, v := range labels {
-		labelsMap[k] = v.(string)
-	}
-	return labelsMap
-}
-
-// Convert annotations to map[string]string
-func convertAnnotations(annotations map[string]interface{}) map[string]string {
-	annotationsMap := make(map[string]string)
-	for k, v := range annotations {
-		annotationsMap[k] = v.(string)
-	}
-	return annotationsMap
 }
