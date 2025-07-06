@@ -3,6 +3,7 @@ package dbaas
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -63,7 +64,7 @@ func dataSourcePgDatabaseRead(ctx context.Context, d *schema.ResourceData, m int
 	}
 
 	for _, database := range dbCluster.PostgresDatabases {
-		if database.Name == d.Get("name").(string) {
+		if strings.EqualFold(database.Name, d.Get("name").(string)) {
 			d.SetId(database.Identity)
 			d.Set("name", database.Name)
 			d.Set("db_cluster_id", dbClusterId)

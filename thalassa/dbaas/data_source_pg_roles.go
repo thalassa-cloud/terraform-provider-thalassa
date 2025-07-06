@@ -3,6 +3,7 @@ package dbaas
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -71,7 +72,7 @@ func dataSourcePgRolesRead(ctx context.Context, d *schema.ResourceData, m interf
 	}
 
 	for _, role := range dbCluster.PostgresRoles {
-		if role.Name == d.Get("name").(string) {
+		if strings.EqualFold(role.Name, d.Get("name").(string)) {
 			d.SetId(role.Identity)
 			d.Set("name", role.Name)
 			d.Set("db_cluster_id", dbClusterId)

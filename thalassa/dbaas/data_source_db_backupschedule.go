@@ -2,6 +2,7 @@ package dbaas
 
 import (
 	"context"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -64,7 +65,7 @@ func dataSourceDbBackupScheduleRead(ctx context.Context, d *schema.ResourceData,
 	}
 
 	for _, backupSchedule := range backupSchedules {
-		if backupSchedule.Name == d.Get("name").(string) {
+		if strings.EqualFold(backupSchedule.Name, d.Get("name").(string)) {
 			d.SetId(backupSchedule.Identity)
 			d.Set("name", backupSchedule.Name)
 			d.Set("db_cluster_id", dbClusterId)
