@@ -4,11 +4,13 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/thalassa-cloud/client-go/dbaas/dbaasalphav1"
+	tcclient "github.com/thalassa-cloud/client-go/pkg/client"
 	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/convert"
 	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/provider"
 )
@@ -102,21 +104,24 @@ func resourcePgRolesCreate(ctx context.Context, d *schema.ResourceData, m interf
 	var dbCluster *dbaasalphav1.DbCluster
 
 	for {
-		dbClusters, err := client.DbaaSAlphaV1().ListDbClusters(ctx, &dbaasalphav1.ListDbClustersRequest{})
+		select {
+		case <-ctx.Done():
+			return diag.FromErr(ctx.Err())
+		default:
+			time.Sleep(1 * time.Second)
+		}
+		dbCluster, err = client.DbaaSAlphaV1().GetDbCluster(ctx, dbClusterId)
 		if err != nil {
 			return diag.FromErr(err)
 		}
 
-		for _, cluster := range dbClusters {
-			if cluster.Identity == dbClusterId {
-				dbCluster = &cluster
-				break
-			}
+		if dbCluster == nil {
+			return diag.FromErr(fmt.Errorf("db cluster not found"))
 		}
+
 		if dbCluster.Status == dbaasalphav1.DbClusterStatusReady {
 			break
 		}
-		time.Sleep(1 * time.Second)
 	}
 
 	createRole := dbaasalphav1.CreatePgRoleRequest{
@@ -135,7 +140,7 @@ func resourcePgRolesCreate(ctx context.Context, d *schema.ResourceData, m interf
 
 	// Check if the role already exists
 	for _, role := range dbCluster.PostgresRoles {
-		if role.Name == createRole.Name {
+		if strings.EqualFold(role.Name, createRole.Name) {
 			d.SetId(role.Identity)
 			d.Set("name", role.Name)
 			d.Set("db_cluster_id", dbClusterId)
@@ -153,6 +158,12 @@ func resourcePgRolesCreate(ctx context.Context, d *schema.ResourceData, m interf
 	}
 
 	for {
+		select {
+		case <-ctx.Done():
+			return diag.FromErr(ctx.Err())
+		default:
+			time.Sleep(1 * time.Second)
+		}
 		dbCluster, err = client.DbaaSAlphaV1().GetDbCluster(ctx, dbClusterId)
 		if err != nil {
 			return diag.FromErr(err)
@@ -160,7 +171,7 @@ func resourcePgRolesCreate(ctx context.Context, d *schema.ResourceData, m interf
 		found := false
 		if dbCluster.Status == dbaasalphav1.DbClusterStatusReady {
 			for _, role := range dbCluster.PostgresRoles {
-				if role.Name == createRole.Name {
+				if strings.EqualFold(role.Name, createRole.Name) {
 					d.SetId(role.Identity)
 					d.Set("name", role.Name)
 					d.Set("db_cluster_id", dbClusterId)
@@ -176,7 +187,6 @@ func resourcePgRolesCreate(ctx context.Context, d *schema.ResourceData, m interf
 		if found {
 			break
 		}
-		time.Sleep(1 * time.Second)
 	}
 
 	return resourcePgRolesRead(ctx, d, m)
@@ -193,26 +203,23 @@ func resourcePgRolesRead(ctx context.Context, d *schema.ResourceData, m interfac
 	var dbCluster *dbaasalphav1.DbCluster
 
 	for {
-		dbClusters, err := client.DbaaSAlphaV1().ListDbClusters(ctx, &dbaasalphav1.ListDbClustersRequest{})
+		select {
+		case <-ctx.Done():
+			return diag.FromErr(ctx.Err())
+		default:
+			time.Sleep(1 * time.Second)
+		}
+		dbCluster, err = client.DbaaSAlphaV1().GetDbCluster(ctx, dbClusterId)
 		if err != nil {
 			return diag.FromErr(err)
 		}
 
-		for _, cluster := range dbClusters {
-			if cluster.Identity == dbClusterId {
-				dbCluster = &cluster
-				break
-			}
+		if dbCluster == nil {
+			return diag.FromErr(fmt.Errorf("db cluster not found"))
 		}
 		if dbCluster.Status == dbaasalphav1.DbClusterStatusReady {
 			break
 		}
-		time.Sleep(1 * time.Second)
-	}
-
-	dbCluster, err = client.DbaaSAlphaV1().GetDbCluster(ctx, dbClusterId)
-	if err != nil {
-		return diag.FromErr(err)
 	}
 
 	for _, role := range dbCluster.PostgresRoles {
@@ -240,21 +247,27 @@ func resourcePgRolesUpdate(ctx context.Context, d *schema.ResourceData, m interf
 	var dbCluster *dbaasalphav1.DbCluster
 
 	for {
-		dbClusters, err := client.DbaaSAlphaV1().ListDbClusters(ctx, &dbaasalphav1.ListDbClustersRequest{})
+		select {
+		case <-ctx.Done():
+			return diag.FromErr(ctx.Err())
+		default:
+			time.Sleep(1 * time.Second)
+		}
+		dbCluster, err = client.DbaaSAlphaV1().GetDbCluster(ctx, dbClusterId)
 		if err != nil {
+			if tcclient.IsNotFound(err) {
+				d.SetId("")
+				return nil // a deleted db cluster means the pg role is also deleted
+			}
 			return diag.FromErr(err)
 		}
 
-		for _, cluster := range dbClusters {
-			if cluster.Identity == dbClusterId {
-				dbCluster = &cluster
-				break
-			}
+		if dbCluster == nil {
+			return diag.FromErr(fmt.Errorf("db cluster not found"))
 		}
 		if dbCluster.Status == dbaasalphav1.DbClusterStatusReady {
 			break
 		}
-		time.Sleep(1 * time.Second)
 	}
 
 	updateRole := dbaasalphav1.UpdatePgRoleRequest{
@@ -265,10 +278,20 @@ func resourcePgRolesUpdate(ctx context.Context, d *schema.ResourceData, m interf
 
 	err = client.DbaaSAlphaV1().UpdatePgRole(ctx, dbCluster.Identity, d.Get("id").(string), updateRole)
 	if err != nil {
+		if tcclient.IsNotFound(err) {
+			d.SetId("")
+			return nil // a deleted db cluster means the pg role is also deleted
+		}
 		return diag.FromErr(err)
 	}
 
 	for {
+		select {
+		case <-ctx.Done():
+			return diag.FromErr(ctx.Err())
+		default:
+			time.Sleep(1 * time.Second)
+		}
 		dbCluster, err = client.DbaaSAlphaV1().GetDbCluster(ctx, dbClusterId)
 		if err != nil {
 			return diag.FromErr(err)
@@ -276,7 +299,6 @@ func resourcePgRolesUpdate(ctx context.Context, d *schema.ResourceData, m interf
 		if dbCluster.Status == dbaasalphav1.DbClusterStatusReady {
 			break
 		}
-		time.Sleep(1 * time.Second)
 	}
 
 	return resourcePgRolesRead(ctx, d, m)
@@ -292,24 +314,35 @@ func resourcePgRolesDelete(ctx context.Context, d *schema.ResourceData, m interf
 	var dbCluster *dbaasalphav1.DbCluster
 
 	for {
-		dbClusters, err := client.DbaaSAlphaV1().ListDbClusters(ctx, &dbaasalphav1.ListDbClustersRequest{})
+		select {
+		case <-ctx.Done():
+			return diag.FromErr(ctx.Err())
+		default:
+			time.Sleep(1 * time.Second)
+		}
+		dbCluster, err = client.DbaaSAlphaV1().GetDbCluster(ctx, dbClusterId)
 		if err != nil {
+			if tcclient.IsNotFound(err) {
+				d.SetId("")
+				return nil // a deleted db cluster means the pg role is also deleted
+			}
 			return diag.FromErr(err)
 		}
-		for _, cluster := range dbClusters {
-			if cluster.Identity == dbClusterId {
-				dbCluster = &cluster
-				break
-			}
+
+		if dbCluster == nil {
+			return diag.FromErr(fmt.Errorf("db cluster not found"))
 		}
 		if dbCluster.Status == dbaasalphav1.DbClusterStatusReady {
 			break
 		}
-		time.Sleep(1 * time.Second)
 	}
 
 	err = client.DbaaSAlphaV1().DeletePgRole(ctx, dbCluster.Identity, d.Get("id").(string))
 	if err != nil {
+		if tcclient.IsNotFound(err) {
+			d.SetId("")
+			return nil // a deleted db cluster means the pg role is also deleted
+		}
 		return diag.FromErr(err)
 	}
 
