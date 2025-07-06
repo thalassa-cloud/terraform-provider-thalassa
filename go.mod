@@ -5,11 +5,7 @@ go 1.24.0
 require (
 	github.com/hashicorp/terraform-plugin-log v0.9.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.37.0
-<<<<<<< HEAD
-	github.com/thalassa-cloud/client-go v0.14.1
-=======
-	github.com/thalassa-cloud/client-go v0.14.2
->>>>>>> aa9166c (feat(dbaas): add documentation and examples, various improvements.)
+	github.com/thalassa-cloud/client-go v0.14.3
 )
 
 require (
@@ -60,4 +56,4 @@ require (
 	google.golang.org/protobuf v1.36.6 // indirect
 )
 
-// replace github.com/thalassa-cloud/client-go => /Users/oscarkooi/github.com/thalassa-cloud/client-go
+// replace github.com/thalassa-cloud/client-go => ~/dev/github.com/thalassa-cloud/go-client

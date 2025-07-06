@@ -191,7 +191,7 @@ func resourceVirtualMachineInstance() *schema.Resource {
 func resourceVirtualMachineInstanceCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("failed to create Thalassa client: %w", err))
 	}
 
 	rootVolume := iaas.CreateMachineVolume{
@@ -203,7 +203,11 @@ func resourceVirtualMachineInstanceCreate(ctx context.Context, d *schema.Resourc
 	}
 
 	if rootVolumeType, ok := d.GetOk("root_volume_type"); ok {
-		rootVolume.VolumeTypeIdentity = rootVolumeType.(string)
+		volumeType, err := lookupVolumeType(ctx, client.IaaS(), rootVolumeType.(string))
+		if err != nil {
+			return diag.FromErr(fmt.Errorf("failed to lookup volume type: %w", err))
+		}
+		rootVolume.VolumeTypeIdentity = volumeType.Identity
 	}
 
 	if rootVolumeId, ok := d.GetOk("root_volume_id"); ok {
@@ -227,7 +231,10 @@ func resourceVirtualMachineInstanceCreate(ctx context.Context, d *schema.Resourc
 	if cloudInitTemplateId, ok := d.GetOk("cloud_init_template_id"); ok {
 		cloudInitTemplate, err := client.IaaS().GetCloudInitTemplate(ctx, cloudInitTemplateId.(string))
 		if err != nil {
-			return diag.FromErr(err)
+			if tcclient.IsNotFound(err) {
+				return diag.FromErr(fmt.Errorf("cloud init template not found: %w", err))
+			}
+			return diag.FromErr(fmt.Errorf("failed to get cloud init template: %w", err))
 		}
 		d.Set("cloud_init_template_id", cloudInitTemplate.Identity)
 		createVirtualMachineInstance.CloudInit = cloudInitTemplate.Content
@@ -240,7 +247,10 @@ func resourceVirtualMachineInstanceCreate(ctx context.Context, d *schema.Resourc
 	virtualMachineInstance, err := client.IaaS().CreateMachine(ctx, createVirtualMachineInstance)
 
 	if err != nil {
-		return diag.FromErr(err)
+		if tcclient.IsNotFound(err) {
+			return diag.FromErr(fmt.Errorf("used resource for creating virtual machine instance not found: %w", err))
+		}
+		return diag.FromErr(fmt.Errorf("failed to create virtual machine instance: %w", err))
 	}
 	if virtualMachineInstance != nil {
 		identity := virtualMachineInstance.Identity
@@ -291,7 +301,7 @@ func resourceVirtualMachineInstanceCreate(ctx context.Context, d *schema.Resourc
 func resourceVirtualMachineInstanceRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("failed to create Thalassa client: %w", err))
 	}
 
 	identity := d.Get("id").(string)
@@ -321,8 +331,17 @@ func resourceVirtualMachineInstanceRead(ctx context.Context, d *schema.ResourceD
 	d.Set("attached_volume_ids", getAttachedVolumeIds(virtualMachineInstance))
 	d.Set("cloud_init_template_id", cloudInitTemplateId)
 
-	d.Set("machine_type", virtualMachineInstance.MachineType.Identity)
-	d.Set("machine_image", virtualMachineInstance.MachineImage.Identity)
+	if d.Get("machine_type").(string) != "" {
+		d.Set("machine_type", d.Get("machine_type").(string))
+	} else {
+		d.Set("machine_type", virtualMachineInstance.MachineType.Identity)
+	}
+	if d.Get("machine_image").(string) != "" {
+		d.Set("machine_image", d.Get("machine_image").(string))
+	} else {
+		d.Set("machine_image", virtualMachineInstance.MachineImage.Identity)
+	}
+
 	d.Set("subnet_id", virtualMachineInstance.Subnet.Identity)
 	d.Set("delete_protection", virtualMachineInstance.DeleteProtection)
 	d.Set("cloud_init", virtualMachineInstance.CloudInit)
@@ -338,7 +357,11 @@ func resourceVirtualMachineInstanceRead(ctx context.Context, d *schema.ResourceD
 		d.Set("root_volume_id", virtualMachineInstance.PersistentVolume.Identity)
 
 		if virtualMachineInstance.PersistentVolume.VolumeType != nil {
-			d.Set("root_volume_type", virtualMachineInstance.PersistentVolume.VolumeType.Identity)
+			if d.Get("root_volume_type").(string) != "" {
+				d.Set("root_volume_type", d.Get("root_volume_type").(string))
+			} else {
+				d.Set("root_volume_type", virtualMachineInstance.PersistentVolume.VolumeType.Identity)
+			}
 		}
 	}
 
@@ -348,7 +371,7 @@ func resourceVirtualMachineInstanceRead(ctx context.Context, d *schema.ResourceD
 func resourceVirtualMachineInstanceUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("failed to create Thalassa client: %w", err))
 	}
 
 	subnetId := d.Get("subnet_id").(string)
@@ -376,7 +399,10 @@ func resourceVirtualMachineInstanceUpdate(ctx context.Context, d *schema.Resourc
 
 	virtualMachineInstance, err := client.IaaS().UpdateMachine(ctx, identity, updateVirtualMachineInstance)
 	if err != nil {
-		return diag.FromErr(err)
+		if tcclient.IsNotFound(err) {
+			return diag.FromErr(fmt.Errorf("used resource for updating virtual machine instance not found: %w", err))
+		}
+		return diag.FromErr(fmt.Errorf("failed to update virtual machine instance: %w", err))
 	}
 	if virtualMachineInstance != nil {
 		d.Set("name", virtualMachineInstance.Name)
@@ -390,8 +416,40 @@ func resourceVirtualMachineInstanceUpdate(ctx context.Context, d *schema.Resourc
 		d.Set("ip_addresses", getIPAddresses(virtualMachineInstance))
 		d.Set("attached_volume_ids", getAttachedVolumeIds(virtualMachineInstance))
 
-		d.Set("machine_type", virtualMachineInstance.MachineType.Identity)
-		d.Set("machine_image", virtualMachineInstance.MachineImage.Identity)
+		if d.Get("machine_type").(string) != "" {
+			if virtualMachineInstance.MachineType != nil {
+				// check if the machine type is the same as the one in the diff
+				stateReference := d.Get("machine_type").(string)
+				switch stateReference {
+				case virtualMachineInstance.MachineType.Identity:
+					d.Set("machine_type", stateReference)
+				case virtualMachineInstance.MachineType.Slug:
+					d.Set("machine_type", stateReference)
+				default:
+					d.Set("machine_type", virtualMachineInstance.MachineType.Identity)
+				}
+			}
+		} else {
+			d.Set("machine_type", virtualMachineInstance.MachineType.Identity)
+		}
+
+		if d.Get("machine_image").(string) != "" {
+			if virtualMachineInstance.MachineImage != nil {
+				// check if the machine image is the same as the one in the diff
+				stateReference := d.Get("machine_image").(string)
+				switch stateReference {
+				case virtualMachineInstance.MachineImage.Identity:
+					d.Set("machine_image", stateReference)
+				case virtualMachineInstance.MachineImage.Slug:
+					d.Set("machine_image", stateReference)
+				default:
+					d.Set("machine_image", virtualMachineInstance.MachineImage.Identity)
+				}
+			}
+		} else {
+			d.Set("machine_image", virtualMachineInstance.MachineImage.Identity)
+		}
+
 		d.Set("subnet_id", virtualMachineInstance.Subnet.Identity)
 		d.Set("delete_protection", virtualMachineInstance.DeleteProtection)
 		d.Set("cloud_init", virtualMachineInstance.CloudInit)
@@ -407,7 +465,11 @@ func resourceVirtualMachineInstanceUpdate(ctx context.Context, d *schema.Resourc
 			d.Set("root_volume_size_gb", virtualMachineInstance.PersistentVolume.Size)
 			d.Set("root_volume_id", virtualMachineInstance.PersistentVolume.Identity)
 			if virtualMachineInstance.PersistentVolume.VolumeType != nil {
-				d.Set("root_volume_type", virtualMachineInstance.PersistentVolume.VolumeType.Identity)
+				if d.Get("root_volume_type").(string) != "" {
+					d.Set("root_volume_type", d.Get("root_volume_type").(string))
+				} else {
+					d.Set("root_volume_type", virtualMachineInstance.PersistentVolume.VolumeType.Identity)
+				}
 			}
 		}
 
@@ -420,14 +482,14 @@ func resourceVirtualMachineInstanceUpdate(ctx context.Context, d *schema.Resourc
 func resourceVirtualMachineInstanceDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("failed to create Thalassa client: %w", err))
 	}
 
 	id := d.Get("id").(string)
 
 	err = client.IaaS().DeleteMachine(ctx, id)
 	if err != nil && !tcclient.IsNotFound(err) {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("failed to delete virtual machine instance: %w", err))
 	}
 
 	// wait until the virtual machine instance is deleted
