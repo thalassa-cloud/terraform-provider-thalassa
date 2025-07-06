@@ -1,15 +1,3 @@
-terraform {
-  required_providers {
-    thalassa = {
-      source = "local/thalassa/thalassa"
-    }
-  }
-}
-
-provider "thalassa" {
-  # Configuration options
-}
-
 # Create a VPC for the database cluster
 resource "thalassa_vpc" "example" {
   name            = "example-vpc"
@@ -33,9 +21,9 @@ resource "thalassa_db_cluster" "example" {
   subnet_id              = thalassa_subnet.example.id
   database_instance_type = "db-pgp-small"  # Available: db-pgp-small, db-pgp-medium, db-pgp-large, db-pgp-xlarge, db-pgp-2xlarge, db-pgp-4xlarge, db-dgp-small, db-dgp-medium, db-dgp-large, db-dgp-xlarge, db-dgp-2xlarge, db-dgp-4xlarge
   engine                 = "postgres"
-  engine_version         = "15"
+  engine_version         = "15.13"
   allocated_storage      = 100
-  database_name          = "example_db"
+  volume_type_class      = "block"
 }
 
 # Create a database backup schedule with Thalassa default values
