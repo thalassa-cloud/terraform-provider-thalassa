@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/thalassa-cloud/client-go/dbaas/dbaasalphav1"
 	"github.com/thalassa-cloud/client-go/iaas"
+	tcclient "github.com/thalassa-cloud/client-go/pkg/client"
 	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/convert"
 	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/provider"
 )
@@ -226,30 +227,21 @@ func resourceDbClusterCreate(ctx context.Context, d *schema.ResourceData, m inte
 
 	annotations := make(map[string]string)
 	if annotationsRaw := d.Get("annotations"); annotationsRaw != nil {
-		if annotationsMap, ok := annotationsRaw.(map[string]interface{}); ok {
-			for k, v := range annotationsMap {
-				if strVal, ok := v.(string); ok {
-					annotations[k] = strVal
-				}
-			}
-		}
+		annotations = convert.ConvertToMap(annotationsRaw)
 	}
 
 	parameters := make(map[string]string)
 	if parametersRaw := d.Get("parameters"); parametersRaw != nil {
-		if parametersMap, ok := parametersRaw.(map[string]interface{}); ok {
-			for k, v := range parametersMap {
-				if strVal, ok := v.(string); ok {
-					parameters[k] = strVal
-				}
-			}
-		}
+		parameters = convert.ConvertToMap(parametersRaw)
 	}
 
 	subnetId := d.Get("subnet_id").(string)
 	subnet, err := client.IaaS().GetSubnet(ctx, subnetId)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("subnet not found: %w", err))
+		if tcclient.IsNotFound(err) {
+			return diag.FromErr(fmt.Errorf("subnet not found: %w", err))
+		}
+		return diag.FromErr(fmt.Errorf("failed to get subnet: %w", err))
 	}
 
 	databaseInstanceType := d.Get("database_instance_type").(string)
@@ -271,7 +263,7 @@ func resourceDbClusterCreate(ctx context.Context, d *schema.ResourceData, m inte
 
 	engine := d.Get("engine").(string)
 	if engine == "" {
-		return diag.FromErr(fmt.Errorf("engine is required"))
+		return diag.FromErr(fmt.Errorf("engine is required. Must be one of: 'postgres'"))
 	}
 
 	engineVersion := d.Get("engine_version").(string)
@@ -300,7 +292,7 @@ func resourceDbClusterCreate(ctx context.Context, d *schema.ResourceData, m inte
 		Annotations:                  dbaasalphav1.Annotations(annotations),
 		SubnetIdentity:               subnet.Identity,
 		DeleteProtection:             d.Get("delete_protection").(bool),
-		Engine:                       dbaasalphav1.DbClusterDatabaseEngine(d.Get("engine").(string)),
+		Engine:                       dbaasalphav1.DbClusterDatabaseEngine(engine),
 		EngineVersion:                engineVersion,
 		Parameters:                   parameters,
 		AllocatedStorage:             uint64(d.Get("allocated_storage").(int)),
@@ -309,30 +301,31 @@ func resourceDbClusterCreate(ctx context.Context, d *schema.ResourceData, m inte
 		Instances:                    d.Get("replicas").(int),
 	}
 
+	foundVolumeTypeClass := false
 	if volumeTypeClass := d.Get("volume_type_class"); volumeTypeClass != nil && volumeTypeClass != "" {
 		volumeTypeClasses, err := client.IaaS().ListVolumeTypes(ctx, &iaas.ListVolumeTypesRequest{})
 		if err != nil {
-			return diag.FromErr(err)
+			if tcclient.IsNotFound(err) {
+				return diag.FromErr(fmt.Errorf("volume type class not found: %w", err))
+			}
+			return diag.FromErr(fmt.Errorf("failed to get volume type class: %w", err))
 		}
 		for _, class := range volumeTypeClasses {
 			if strings.ToLower(class.Name) == volumeTypeClass {
 				createDbCluster.VolumeTypeClassIdentity = class.Identity
+				foundVolumeTypeClass = true
 				break
 			}
 		}
 	}
 
+	if !foundVolumeTypeClass {
+		return diag.FromErr(fmt.Errorf("volume type class not found: %s", d.Get("volume_type_class").(string)))
+	}
+
 	// Safe handling of security groups
 	if securityGroupsRaw := d.Get("security_groups"); securityGroupsRaw != nil {
-		if securityGroupsList, ok := securityGroupsRaw.([]interface{}); ok {
-			securityGroups := make([]string, len(securityGroupsList))
-			for i, sg := range securityGroupsList {
-				if strVal, ok := sg.(string); ok {
-					securityGroups[i] = strVal
-				}
-			}
-			createDbCluster.SecurityGroupAttachments = securityGroups
-		}
+		createDbCluster.SecurityGroupAttachments = convert.ConvertToStringSlice(securityGroupsRaw)
 	}
 
 	// Safe handling of init_db
@@ -448,22 +441,15 @@ func resourceDbClusterCreate(ctx context.Context, d *schema.ResourceData, m inte
 	var dbCluster *dbaasalphav1.DbCluster
 	// Wait for the cluster to be ready
 	for {
-		dbclusters, err := client.DbaaSAlphaV1().ListDbClusters(ctx, &dbaasalphav1.ListDbClustersRequest{})
+		dbCluster, err = client.DbaaSAlphaV1().GetDbCluster(ctx, id)
 		if err != nil {
-
+			if tcclient.IsNotFound(err) {
+				return diag.FromErr(fmt.Errorf("db cluster not found: %w", err))
+			}
 			return diag.FromErr(err)
 		}
 
-		var foundCluster *dbaasalphav1.DbCluster
-		for _, dbCluster := range dbclusters {
-			if dbCluster.Identity == id || dbCluster.Name == dbCluster.Name {
-				foundCluster = &dbCluster
-				break
-			}
-		}
-
-		if foundCluster != nil && foundCluster.Status == dbaasalphav1.DbClusterStatusReady {
-			dbCluster = foundCluster
+		if dbCluster.Status == dbaasalphav1.DbClusterStatusReady {
 			break
 		}
 
@@ -513,22 +499,20 @@ func resourceDbClusterRead(ctx context.Context, d *schema.ResourceData, m interf
 		return diag.FromErr(err)
 	}
 
-	slug := d.Get("id").(string)
+	identity := d.Get("id").(string)
 	var DbCluster *dbaasalphav1.DbCluster
-	dbClusters, err := client.DbaaSAlphaV1().ListDbClusters(ctx, &dbaasalphav1.ListDbClustersRequest{})
+	DbCluster, err = client.DbaaSAlphaV1().GetDbCluster(ctx, identity)
 	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	for _, dbCluster := range dbClusters {
-		if dbCluster.Identity == slug {
-			DbCluster = &dbCluster
-			break
+		if tcclient.IsNotFound(err) {
+			d.SetId("")
+			return nil
 		}
+		return diag.FromErr(fmt.Errorf("failed to get db cluster: %w", err))
 	}
 
 	if DbCluster == nil {
-		return diag.FromErr(fmt.Errorf("DbCluster was not found"))
+		d.SetId("")
+		return nil
 	}
 
 	d.SetId(DbCluster.Identity)
@@ -583,48 +567,23 @@ func resourceDbClusterUpdate(ctx context.Context, d *schema.ResourceData, m inte
 	// Safe type assertions with nil checks
 	labels := make(map[string]string)
 	if labelsRaw := d.Get("labels"); labelsRaw != nil {
-		if labelsMap, ok := labelsRaw.(map[string]interface{}); ok {
-			for k, v := range labelsMap {
-				if strVal, ok := v.(string); ok {
-					labels[k] = strVal
-				}
-			}
-		}
+		labels = convert.ConvertToMap(labelsRaw)
 	}
 
 	annotations := make(map[string]string)
 	if annotationsRaw := d.Get("annotations"); annotationsRaw != nil {
-		if annotationsMap, ok := annotationsRaw.(map[string]interface{}); ok {
-			for k, v := range annotationsMap {
-				if strVal, ok := v.(string); ok {
-					annotations[k] = strVal
-				}
-			}
-		}
+		annotations = convert.ConvertToMap(annotationsRaw)
 	}
 
 	parameters := make(map[string]string)
 	if parametersRaw := d.Get("parameters"); parametersRaw != nil {
-		if parametersMap, ok := parametersRaw.(map[string]interface{}); ok {
-			for k, v := range parametersMap {
-				if strVal, ok := v.(string); ok {
-					parameters[k] = strVal
-				}
-			}
-		}
+		parameters = convert.ConvertToMap(parametersRaw)
 	}
 
 	// Safe handling of security groups
 	securityGroupAttachments := []string{}
 	if securityGroupsRaw := d.Get("security_groups"); securityGroupsRaw != nil {
-		if securityGroupsList, ok := securityGroupsRaw.([]interface{}); ok {
-			securityGroupAttachments = make([]string, len(securityGroupsList))
-			for i, sg := range securityGroupsList {
-				if strVal, ok := sg.(string); ok {
-					securityGroupAttachments[i] = strVal
-				}
-			}
-		}
+		securityGroupAttachments = convert.ConvertToStringSlice(securityGroupsRaw)
 	}
 
 	updateDbCluster := dbaasalphav1.UpdateDbClusterRequest{
@@ -651,26 +610,32 @@ func resourceDbClusterUpdate(ctx context.Context, d *schema.ResourceData, m inte
 
 	updatedDbCluster, err := client.DbaaSAlphaV1().UpdateDbCluster(ctx, id, updateDbCluster)
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("failed to update db cluster: %w", err))
 	}
 
 	for {
+		select {
+		case <-ctx.Done():
+			return diag.FromErr(ctx.Err())
+		default:
+			time.Sleep(1 * time.Second)
+		}
 		updatedDbCluster, err = client.DbaaSAlphaV1().GetDbCluster(ctx, id)
 		if err != nil {
 			return diag.FromErr(err)
 		}
+		if updatedDbCluster == nil {
+			return diag.FromErr(fmt.Errorf("db cluster not found"))
+		}
 		if updatedDbCluster.Status == dbaasalphav1.DbClusterStatusReady {
 			break
 		}
-		time.Sleep(1 * time.Second)
 	}
-
 	if updatedDbCluster == nil {
 		return diag.FromErr(fmt.Errorf("DbCluster was not found"))
 	}
 
 	d.SetId(updatedDbCluster.Identity)
-
 	return resourceDbClusterRead(ctx, d, m)
 }
 
@@ -684,36 +649,45 @@ func resourceDbClusterDelete(ctx context.Context, d *schema.ResourceData, m inte
 	// Get the cluster
 	dbCluster, err := client.DbaaSAlphaV1().GetDbCluster(ctx, id)
 	if err != nil {
-		return diag.FromErr(err)
+		if tcclient.IsNotFound(err) {
+			d.SetId("")
+			return nil
+		}
+		return diag.FromErr(fmt.Errorf("failed to retrieve db cluster: %w", err))
 	}
 
 	err = client.DbaaSAlphaV1().DeleteDbCluster(ctx, dbCluster.Identity)
 	if err != nil {
-		return diag.FromErr(err)
+		if tcclient.IsNotFound(err) {
+			d.SetId("")
+			return nil
+		}
+		return diag.FromErr(fmt.Errorf("failed to delete db cluster: %w", err))
 	}
 
 	for {
-		dbClusters, err := client.DbaaSAlphaV1().ListDbClusters(ctx, &dbaasalphav1.ListDbClustersRequest{})
+		select {
+		case <-ctx.Done():
+			return diag.FromErr(ctx.Err())
+		default:
+			time.Sleep(1 * time.Second)
+		}
+		dbCluster, err = client.DbaaSAlphaV1().GetDbCluster(ctx, id)
 		if err != nil {
-			return diag.FromErr(err)
-		}
-		var foundCluster *dbaasalphav1.DbCluster
-		for _, dbCluster := range dbClusters {
-			if dbCluster.Identity == id {
-				foundCluster = &dbCluster
-				break
+			if tcclient.IsNotFound(err) {
+				d.SetId("")
+				return nil
 			}
+			return diag.FromErr(fmt.Errorf("failed to retrieve db cluster: %w", err))
 		}
-		if foundCluster != nil && foundCluster.Status == dbaasalphav1.DbClusterStatusDeleted {
+		if dbCluster == nil {
+			d.SetId("")
+			return nil
+		}
+		if dbCluster.Status == dbaasalphav1.DbClusterStatusDeleted {
 			break
 		}
-		if foundCluster == nil {
-			// Assume the cluster is deleted
-			break
-		}
-		time.Sleep(1 * time.Second)
 	}
-
 	d.SetId("")
 	return nil
 }
