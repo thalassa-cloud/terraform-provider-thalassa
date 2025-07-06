@@ -3,6 +3,7 @@ package dbaas
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -163,9 +164,9 @@ func dataSourceDbClusterRead(ctx context.Context, d *schema.ResourceData, m inte
 			DbCluster = &dbCluster
 			break
 		}
-		if dbCluster.Name == name {
+		if strings.EqualFold(dbCluster.Name, name) {
 			// If name matches, also check slug to ensure uniqueness
-			if slug != "" && dbCluster.Slug == slug {
+			if slug != "" && strings.EqualFold(dbCluster.Slug, slug) {
 				DbCluster = &dbCluster
 				break
 			} else if slug == "" {
@@ -174,7 +175,7 @@ func dataSourceDbClusterRead(ctx context.Context, d *schema.ResourceData, m inte
 			}
 			continue
 		}
-		if dbCluster.Slug == slug {
+		if strings.EqualFold(dbCluster.Slug, slug) {
 			DbCluster = &dbCluster
 			break
 		}
