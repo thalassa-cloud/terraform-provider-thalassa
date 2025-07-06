@@ -149,37 +149,15 @@ func resourceSubnetCreate(ctx context.Context, d *schema.ResourceData, m interfa
 		// wait until the subnet is ready
 		ctxWithTimeout, cancel := context.WithTimeout(ctx, 20*time.Minute)
 		defer cancel()
-		for {
-			select {
-			case <-ctxWithTimeout.Done():
-				if subnet != nil {
-					return diag.FromErr(fmt.Errorf("timeout while waiting for subnet to be ready. Current status: %s", subnet.Status))
-				}
-				return diag.FromErr(fmt.Errorf("timeout while waiting for subnet to be ready"))
-			case <-time.After(1 * time.Second):
-				// continue
-				subnet, err = client.IaaS().GetSubnet(ctxWithTimeout, subnet.Identity)
-				if err != nil {
-					if tcclient.IsNotFound(err) {
-						return diag.FromErr(fmt.Errorf("subnet %s was not found after creation", subnet.Identity))
-					}
-					return diag.FromErr(err)
-				}
 
-				if subnet.Status == iaas.SubnetStatusReady {
-					d.Set("status", subnet.Status)
-					d.Set("ipv4_addresses_used", subnet.V4usingIPs)
-					d.Set("ipv4_addresses_available", subnet.V4availableIPs)
-					d.Set("ipv6_addresses_used", subnet.V6usingIPs)
-					d.Set("ipv6_addresses_available", subnet.V6availableIPs)
-
-					return nil
-				} else if subnet.Status == iaas.SubnetStatusFailed {
-					return diag.FromErr(fmt.Errorf("subnet is in failed state: %s", subnet.Status))
-				}
-				d.Set("status", subnet.Status)
-			}
+		if subnet, err = client.IaaS().WaitUntilSubnetReady(ctxWithTimeout, subnet.Identity); err != nil {
+			return diag.FromErr(fmt.Errorf("error waiting for subnet to be ready: %w", err))
 		}
+		d.Set("status", subnet.Status)
+		d.Set("ipv4_addresses_used", subnet.V4usingIPs)
+		d.Set("ipv4_addresses_available", subnet.V4availableIPs)
+		d.Set("ipv6_addresses_used", subnet.V6usingIPs)
+		d.Set("ipv6_addresses_available", subnet.V6availableIPs)
 	}
 	return resourceSubnetRead(ctx, d, m)
 }
@@ -197,7 +175,7 @@ func resourceSubnetRead(ctx context.Context, d *schema.ResourceData, m interface
 			d.SetId("")
 			return nil
 		}
-		return diag.FromErr(fmt.Errorf("error getting subnet: %s", err))
+		return diag.FromErr(fmt.Errorf("error getting subnet: %w", err))
 	}
 	if subnet == nil {
 		d.SetId("")
@@ -227,7 +205,7 @@ func resourceSubnetRead(ctx context.Context, d *schema.ResourceData, m interface
 func resourceSubnetUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("error creating client: %w", err))
 	}
 
 	updateSubnet := iaas.UpdateSubnet{
@@ -245,7 +223,7 @@ func resourceSubnetUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 
 	subnet, err := client.IaaS().UpdateSubnet(ctx, identity, updateSubnet)
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("error updating subnet: %w", err))
 	}
 	if subnet != nil {
 		d.Set("name", subnet.Name)
@@ -264,28 +242,16 @@ func resourceSubnetUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 
 		ctxWithTimeout, cancel := context.WithTimeout(ctx, 20*time.Minute)
 		defer cancel()
-		// wait until the subnet is ready
-		for {
-			select {
-			case <-ctxWithTimeout.Done():
-				return diag.FromErr(fmt.Errorf("timeout while waiting for subnet to be ready. Current status: %s", subnet.Status))
-			case <-time.After(1 * time.Second):
-				// continue
-				subnet, err = client.IaaS().GetSubnet(ctxWithTimeout, subnet.Identity)
-				if err != nil {
-					if tcclient.IsNotFound(err) {
-						return diag.FromErr(fmt.Errorf("subnet %s was not found after update", subnet.Identity))
-					}
-					return diag.FromErr(err)
-				}
-				if subnet.Status == iaas.SubnetStatusReady {
-					d.Set("status", subnet.Status)
-					return nil
-				} else if subnet.Status == iaas.SubnetStatusFailed {
-					return diag.FromErr(fmt.Errorf("subnet is in failed state: %s", subnet.Status))
-				}
-			}
+
+		if subnet, err = client.IaaS().WaitUntilSubnetReady(ctxWithTimeout, subnet.Identity); err != nil {
+			return diag.FromErr(fmt.Errorf("error waiting for subnet to be ready: %w", err))
 		}
+
+		d.Set("status", subnet.Status)
+		d.Set("ipv4_addresses_used", subnet.V4usingIPs)
+		d.Set("ipv4_addresses_available", subnet.V4availableIPs)
+		d.Set("ipv6_addresses_used", subnet.V6usingIPs)
+		d.Set("ipv6_addresses_available", subnet.V6availableIPs)
 	}
 
 	return resourceSubnetRead(ctx, d, m)
@@ -304,23 +270,11 @@ func resourceSubnetDelete(ctx context.Context, d *schema.ResourceData, m interfa
 		return diag.FromErr(err)
 	}
 
-	// wait until the subnet is deleted
 	ctxWithTimeout, cancel := context.WithTimeout(ctx, 20*time.Minute)
 	defer cancel()
-	for {
-		select {
-		case <-ctxWithTimeout.Done():
-			return diag.FromErr(fmt.Errorf("timeout while waiting for subnet to be deleted"))
-		case <-time.After(1 * time.Second):
-			// continue
-			_, err := client.IaaS().GetSubnet(ctxWithTimeout, id)
-			if err != nil && tcclient.IsNotFound(err) {
-				d.SetId("")
-				return nil
-			}
-			if err != nil {
-				return diag.FromErr(err)
-			}
-		}
+	if err := client.IaaS().WaitUntilSubnetDeleted(ctxWithTimeout, id); err != nil {
+		return diag.FromErr(fmt.Errorf("error waiting for subnet to be deleted: %w", err))
 	}
+	d.SetId("")
+	return nil
 }
