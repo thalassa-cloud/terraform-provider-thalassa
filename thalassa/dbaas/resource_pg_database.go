@@ -3,11 +3,13 @@ package dbaas
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/thalassa-cloud/client-go/dbaas/dbaasalphav1"
+	tcclient "github.com/thalassa-cloud/client-go/pkg/client"
 	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/provider"
 )
 
@@ -64,26 +66,22 @@ func resourcePgDatabaseCreate(ctx context.Context, d *schema.ResourceData, m int
 	var dbCluster *dbaasalphav1.DbCluster
 
 	for {
-		dbClusters, err := client.DbaaSAlphaV1().ListDbClusters(ctx, &dbaasalphav1.ListDbClustersRequest{})
+		select {
+		case <-ctx.Done():
+			return diag.FromErr(ctx.Err())
+		default:
+			time.Sleep(1 * time.Second)
+		}
+		dbCluster, err = client.DbaaSAlphaV1().GetDbCluster(ctx, dbClusterId)
 		if err != nil {
 			return diag.FromErr(err)
 		}
-
-		for _, cluster := range dbClusters {
-			if cluster.Identity == dbClusterId {
-				dbCluster = &cluster
-				break
-			}
+		if dbCluster == nil {
+			return diag.FromErr(fmt.Errorf("db cluster not found"))
 		}
 		if dbCluster.Status == dbaasalphav1.DbClusterStatusReady {
 			break
 		}
-		time.Sleep(1 * time.Second)
-	}
-
-	dbCluster, err = client.DbaaSAlphaV1().GetDbCluster(ctx, dbClusterId)
-	if err != nil {
-		return diag.FromErr(err)
 	}
 
 	// check the owner exists
@@ -104,12 +102,12 @@ func resourcePgDatabaseCreate(ctx context.Context, d *schema.ResourceData, m int
 		}
 	}
 	if ownerRoleName == "" {
-		return diag.FromErr(fmt.Errorf("owner role not found"))
+		return diag.FromErr(fmt.Errorf("owner role %s not found for database cluster", ownerRoleId))
 	}
 
 	// Check if the database already exists
 	for _, database := range dbCluster.PostgresDatabases {
-		if database.Name == d.Get("name").(string) {
+		if strings.EqualFold(database.Name, d.Get("name").(string)) {
 			d.SetId(database.Identity)
 			d.Set("name", database.Name)
 			d.Set("db_cluster_id", dbClusterId)
@@ -137,7 +135,7 @@ func resourcePgDatabaseCreate(ctx context.Context, d *schema.ResourceData, m int
 	}
 
 	for _, database := range dbCluster.PostgresDatabases {
-		if database.Name == createDatabase.Name {
+		if strings.EqualFold(database.Name, createDatabase.Name) {
 			d.SetId(database.Identity)
 			d.Set("name", database.Name)
 			d.Set("db_cluster_id", dbClusterId)
@@ -161,32 +159,33 @@ func resourcePgDatabaseRead(ctx context.Context, d *schema.ResourceData, m inter
 	var dbCluster *dbaasalphav1.DbCluster
 
 	for {
-		dbClusters, err := client.DbaaSAlphaV1().ListDbClusters(ctx, &dbaasalphav1.ListDbClustersRequest{})
+		select {
+		case <-ctx.Done():
+			return diag.FromErr(ctx.Err())
+		default:
+			time.Sleep(1 * time.Second)
+		}
+		dbCluster, err = client.DbaaSAlphaV1().GetDbCluster(ctx, dbClusterId)
 		if err != nil {
+			if tcclient.IsNotFound(err) {
+				d.SetId("")
+				return nil // a deleted db cluster means the pg database is also deleted
+			}
 			return diag.FromErr(err)
 		}
-
-		for _, cluster := range dbClusters {
-			if cluster.Identity == dbClusterId {
-				dbCluster = &cluster
-				break
-			}
+		if dbCluster == nil {
+			return diag.FromErr(fmt.Errorf("db cluster not found"))
 		}
+
 		if dbCluster.Status == dbaasalphav1.DbClusterStatusReady {
 			break
 		}
-		time.Sleep(1 * time.Second)
-	}
-
-	dbCluster, err = client.DbaaSAlphaV1().GetDbCluster(ctx, dbClusterId)
-	if err != nil {
-		return diag.FromErr(err)
 	}
 
 	ownerRoleId := d.Get("owner_role_id").(string)
 
 	for _, database := range dbCluster.PostgresDatabases {
-		if database.Name == d.Get("name").(string) {
+		if strings.EqualFold(database.Name, d.Get("name").(string)) {
 			d.SetId(database.Identity)
 			d.Set("name", database.Name)
 			d.Set("db_cluster_id", dbClusterId)
@@ -208,21 +207,24 @@ func resourcePgDatabaseUpdate(ctx context.Context, d *schema.ResourceData, m int
 	var dbCluster *dbaasalphav1.DbCluster
 
 	for {
-		dbClusters, err := client.DbaaSAlphaV1().ListDbClusters(ctx, &dbaasalphav1.ListDbClustersRequest{})
+		select {
+		case <-ctx.Done():
+			return diag.FromErr(ctx.Err())
+		default:
+			time.Sleep(1 * time.Second)
+		}
+		dbCluster, err = client.DbaaSAlphaV1().GetDbCluster(ctx, dbClusterId)
 		if err != nil {
 			return diag.FromErr(err)
 		}
 
-		for _, cluster := range dbClusters {
-			if cluster.Identity == dbClusterId {
-				dbCluster = &cluster
-				break
-			}
+		if dbCluster == nil {
+			return diag.FromErr(fmt.Errorf("db cluster not found"))
 		}
+
 		if dbCluster.Status == dbaasalphav1.DbClusterStatusReady {
 			break
 		}
-		time.Sleep(1 * time.Second)
 	}
 
 	connectionLimit := d.Get("connection_limit").(int)
@@ -239,7 +241,7 @@ func resourcePgDatabaseUpdate(ctx context.Context, d *schema.ResourceData, m int
 	ownerRoleId := d.Get("owner_role_id").(string)
 
 	for _, database := range dbCluster.PostgresDatabases {
-		if database.Name == d.Get("name").(string) {
+		if strings.EqualFold(database.Name, d.Get("name").(string)) {
 			d.SetId(database.Identity)
 			d.Set("name", database.Name)
 			d.Set("db_cluster_id", dbClusterId)
@@ -261,26 +263,33 @@ func resourcePgDatabaseDelete(ctx context.Context, d *schema.ResourceData, m int
 	var dbCluster *dbaasalphav1.DbCluster
 
 	for {
-		dbClusters, err := client.DbaaSAlphaV1().ListDbClusters(ctx, &dbaasalphav1.ListDbClustersRequest{})
+		select {
+		case <-ctx.Done():
+			return diag.FromErr(ctx.Err())
+		default:
+			time.Sleep(1 * time.Second)
+		}
+		dbCluster, err = client.DbaaSAlphaV1().GetDbCluster(ctx, dbClusterId)
 		if err != nil {
+			if tcclient.IsNotFound(err) {
+				d.SetId("")
+				return nil // a deleted db cluster means the pg database is also deleted
+			}
 			return diag.FromErr(err)
 		}
 
-		for _, cluster := range dbClusters {
-			if cluster.Identity == dbClusterId {
-				dbCluster = &cluster
-				break
-			}
+		if dbCluster == nil {
+			return diag.FromErr(fmt.Errorf("db cluster not found"))
 		}
+
 		if dbCluster.Status == dbaasalphav1.DbClusterStatusReady {
 			break
 		}
-		time.Sleep(1 * time.Second)
 	}
 
 	// Check if the database is not already scheduled for deletion
 	for _, database := range dbCluster.PostgresDatabases {
-		if database.Name == d.Get("name").(string) {
+		if strings.EqualFold(database.Name, d.Get("name").(string)) {
 			if database.DeleteScheduledAt != nil {
 				d.SetId("")
 				return nil
@@ -290,6 +299,10 @@ func resourcePgDatabaseDelete(ctx context.Context, d *schema.ResourceData, m int
 
 	err = client.DbaaSAlphaV1().DeletePgDatabase(ctx, dbCluster.Identity, d.Get("id").(string))
 	if err != nil {
+		if tcclient.IsNotFound(err) {
+			d.SetId("")
+			return nil // a deleted db cluster means the pg database is also deleted
+		}
 		return diag.FromErr(err)
 	}
 
