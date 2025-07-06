@@ -28,7 +28,15 @@ func resourcePgDatabase() *schema.Resource {
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
+				ForceNew:    true,
 				Description: "The name of the database",
+				ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
+					if strings.TrimSpace(val.(string)) == "" {
+						errs = append(errs, fmt.Errorf("database name is required"))
+					}
+					warns = []string{}
+					return
+				},
 			},
 			"organisation_id": {
 				Type:        schema.TypeString,
@@ -74,7 +82,10 @@ func resourcePgDatabaseCreate(ctx context.Context, d *schema.ResourceData, m int
 		}
 		dbCluster, err = client.DbaaSAlphaV1().GetDbCluster(ctx, dbClusterId)
 		if err != nil {
-			return diag.FromErr(err)
+			if tcclient.IsNotFound(err) {
+				return diag.FromErr(fmt.Errorf("db cluster not found: %w", err))
+			}
+			return diag.FromErr(fmt.Errorf("error getting db cluster: %w", err))
 		}
 		if dbCluster == nil {
 			return diag.FromErr(fmt.Errorf("db cluster not found"))
@@ -125,13 +136,16 @@ func resourcePgDatabaseCreate(ctx context.Context, d *schema.ResourceData, m int
 
 	err = client.DbaaSAlphaV1().CreatePgDatabase(ctx, dbCluster.Identity, createDatabase)
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("error creating pg database: %w", err))
 	}
 
 	// Get the database
 	dbCluster, err = client.DbaaSAlphaV1().GetDbCluster(ctx, dbClusterId)
 	if err != nil {
-		return diag.FromErr(err)
+		if tcclient.IsNotFound(err) {
+			return diag.FromErr(fmt.Errorf("db cluster not found: %w", err))
+		}
+		return diag.FromErr(fmt.Errorf("error getting db cluster: %w", err))
 	}
 
 	for _, database := range dbCluster.PostgresDatabases {
@@ -215,7 +229,10 @@ func resourcePgDatabaseUpdate(ctx context.Context, d *schema.ResourceData, m int
 		}
 		dbCluster, err = client.DbaaSAlphaV1().GetDbCluster(ctx, dbClusterId)
 		if err != nil {
-			return diag.FromErr(err)
+			if tcclient.IsNotFound(err) {
+				return diag.FromErr(fmt.Errorf("db cluster not found: %w", err))
+			}
+			return diag.FromErr(fmt.Errorf("error getting db cluster: %w", err))
 		}
 
 		if dbCluster == nil {
@@ -235,7 +252,7 @@ func resourcePgDatabaseUpdate(ctx context.Context, d *schema.ResourceData, m int
 
 	err = client.DbaaSAlphaV1().UpdatePgDatabase(ctx, dbCluster.Identity, d.Get("id").(string), updateDatabase)
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("error updating pg database: %w", err))
 	}
 
 	ownerRoleId := d.Get("owner_role_id").(string)
@@ -275,7 +292,7 @@ func resourcePgDatabaseDelete(ctx context.Context, d *schema.ResourceData, m int
 				d.SetId("")
 				return nil // a deleted db cluster means the pg database is also deleted
 			}
-			return diag.FromErr(err)
+			return diag.FromErr(fmt.Errorf("error getting db cluster: %w", err))
 		}
 
 		if dbCluster == nil {
@@ -303,7 +320,7 @@ func resourcePgDatabaseDelete(ctx context.Context, d *schema.ResourceData, m int
 			d.SetId("")
 			return nil // a deleted db cluster means the pg database is also deleted
 		}
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("error deleting pg database: %w", err))
 	}
 
 	d.SetId("")
