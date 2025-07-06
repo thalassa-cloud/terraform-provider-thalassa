@@ -110,13 +110,49 @@ func resourceBlockVolumeCreate(ctx context.Context, d *schema.ResourceData, m in
 	region := d.Get("region").(string)
 	regions, err := client.IaaS().ListRegions(ctx, &iaas.ListRegionsRequest{})
 	if err != nil {
-		return diag.FromErr(err)
+		if tcclient.IsNotFound(err) {
+			return diag.FromErr(fmt.Errorf("region not found: %w", err))
+		}
+		return diag.FromErr(fmt.Errorf("failed to find region: %w", err))
 	}
+	foundRegion := false
 	for _, r := range regions {
 		if r.Identity == region || r.Slug == region || r.Name == region {
 			region = r.Identity
+			foundRegion = true
 			break
 		}
+	}
+	if !foundRegion {
+		availableRegions := make([]string, len(regions))
+		for i, r := range regions {
+			availableRegions[i] = r.Slug
+		}
+		return diag.FromErr(fmt.Errorf("region not found: %s. Available regions: %v", region, strings.Join(availableRegions, ", ")))
+	}
+
+	// lets find the volume type
+	volumeType := d.Get("volume_type").(string)
+	volumeTypeIdentity := ""
+	volumeTypes, err := client.IaaS().ListVolumeTypes(ctx, &iaas.ListVolumeTypesRequest{})
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("failed to list volume types: %w", err))
+	}
+	foundVolumeType := false
+	for _, v := range volumeTypes {
+		if v.Identity == volumeType || strings.EqualFold(v.Name, volumeType) {
+			volumeTypeIdentity = v.Identity
+			foundVolumeType = true
+			break
+		}
+	}
+
+	if !foundVolumeType {
+		availableVolumeTypes := make([]string, len(volumeTypes))
+		for i, v := range volumeTypes {
+			availableVolumeTypes[i] = v.Name
+		}
+		return diag.FromErr(fmt.Errorf("volume type not found: %s. Available volume types: %v", volumeType, strings.Join(availableVolumeTypes, ", ")))
 	}
 
 	createBlockVolume := iaas.CreateVolume{
@@ -125,15 +161,19 @@ func resourceBlockVolumeCreate(ctx context.Context, d *schema.ResourceData, m in
 		Labels:              convert.ConvertToMap(d.Get("labels")),
 		Annotations:         convert.ConvertToMap(d.Get("annotations")),
 		CloudRegionIdentity: region,
-		VolumeTypeIdentity:  d.Get("volume_type").(string),
+		VolumeTypeIdentity:  volumeTypeIdentity,
 		Size:                d.Get("size_gb").(int),
 		// DeleteProtection:          d.Get("delete_protection").(bool),
 	}
 
 	blockVolume, err := client.IaaS().CreateVolume(ctx, createBlockVolume)
 	if err != nil {
-		return diag.FromErr(err)
+		if tcclient.IsNotFound(err) {
+			return diag.FromErr(fmt.Errorf("volume type not found: %w", err))
+		}
+		return diag.FromErr(fmt.Errorf("failed to create block volume: %w", err))
 	}
+
 	if blockVolume != nil {
 		d.SetId(blockVolume.Identity)
 		d.Set("slug", blockVolume.Slug)
@@ -145,7 +185,7 @@ func resourceBlockVolumeCreate(ctx context.Context, d *schema.ResourceData, m in
 		for {
 			blockVolume, err := client.IaaS().GetVolume(ctx, blockVolume.Identity)
 			if err != nil {
-				return diag.FromErr(err)
+				return diag.FromErr(fmt.Errorf("failed to check block volume status: %w", err))
 			}
 			if strings.EqualFold(blockVolume.Status, "available") || strings.EqualFold(blockVolume.Status, "ready") {
 				break
@@ -160,7 +200,7 @@ func resourceBlockVolumeCreate(ctx context.Context, d *schema.ResourceData, m in
 func resourceBlockVolumeRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("failed to create Thalassa client: %w", err))
 	}
 
 	identity := d.Get("id").(string)
@@ -187,19 +227,24 @@ func resourceBlockVolumeRead(ctx context.Context, d *schema.ResourceData, m inte
 	d.Set("size_gb", blockVolume.Size)
 
 	if blockVolume.VolumeType != nil {
-		d.Set("volume_type", blockVolume.VolumeType.Identity)
+		if d.Get("volume_type").(string) != "" {
+			d.Set("volume_type", d.Get("volume_type").(string))
+		} else {
+			d.Set("volume_type", blockVolume.VolumeType.Identity)
+		}
 	}
 
 	if blockVolume.Region != nil {
 		currentRegion := d.Get("region").(string)
-		if currentRegion == "" {
+
+		switch currentRegion {
+		case "":
 			d.Set("region", blockVolume.Region.Slug)
-		}
-		if currentRegion == blockVolume.Region.Slug {
+		case blockVolume.Region.Slug:
 			d.Set("region", blockVolume.Region.Slug)
-		} else if currentRegion == blockVolume.Region.Identity {
+		case blockVolume.Region.Identity:
 			d.Set("region", blockVolume.Region.Identity)
-		} else {
+		default:
 			d.Set("region", blockVolume.Region.Slug)
 		}
 	}
@@ -210,7 +255,7 @@ func resourceBlockVolumeRead(ctx context.Context, d *schema.ResourceData, m inte
 func resourceBlockVolumeUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("failed to create Thalassa client: %w", err))
 	}
 
 	updateBlockVolume := iaas.UpdateVolume{
@@ -223,7 +268,7 @@ func resourceBlockVolumeUpdate(ctx context.Context, d *schema.ResourceData, m in
 	identity := d.Get("id").(string)
 	blockVolume, err := client.IaaS().UpdateVolume(ctx, identity, updateBlockVolume)
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("failed to update block volume: %w", err))
 	}
 	if blockVolume != nil {
 		d.Set("name", blockVolume.Name)
@@ -233,7 +278,11 @@ func resourceBlockVolumeUpdate(ctx context.Context, d *schema.ResourceData, m in
 		d.Set("labels", blockVolume.Labels)
 		d.Set("annotations", blockVolume.Annotations)
 		if blockVolume.VolumeType != nil {
-			d.Set("volume_type", blockVolume.VolumeType.Identity)
+			if d.Get("volume_type").(string) != "" {
+				d.Set("volume_type", d.Get("volume_type").(string))
+			} else {
+				d.Set("volume_type", blockVolume.VolumeType.Identity)
+			}
 		}
 		d.Set("size_gb", blockVolume.Size)
 		return nil
@@ -245,7 +294,7 @@ func resourceBlockVolumeUpdate(ctx context.Context, d *schema.ResourceData, m in
 func resourceBlockVolumeDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("failed to create Thalassa client: %w", err))
 	}
 
 	identity := d.Get("id").(string)
@@ -253,7 +302,7 @@ func resourceBlockVolumeDelete(ctx context.Context, d *schema.ResourceData, m in
 	err = client.IaaS().DeleteVolume(ctx, identity)
 	if err != nil {
 		if !tcclient.IsNotFound(err) {
-			return diag.FromErr(err)
+			return diag.FromErr(fmt.Errorf("failed to delete block volume: %w", err))
 		}
 	}
 
@@ -272,7 +321,7 @@ func resourceBlockVolumeDelete(ctx context.Context, d *schema.ResourceData, m in
 			if tcclient.IsNotFound(err) {
 				break
 			}
-			return diag.FromErr(err)
+			return diag.FromErr(fmt.Errorf("failed to retrieve block volume: %w", err))
 		}
 		if blockVolume == nil {
 			break
