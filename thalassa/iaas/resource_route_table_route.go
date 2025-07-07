@@ -78,11 +78,31 @@ func resourceRouteTableRouteCreate(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 
+	targetGateway := d.Get("target_gateway").(string)
+	targetNatGateway := d.Get("target_natgateway").(string)
+	gatewayAddress := d.Get("gateway_address").(string)
+
+	if targetGateway == "" && targetNatGateway == "" && gatewayAddress == "" {
+		return diag.FromErr(fmt.Errorf("target_gateway, target_natgateway or gateway_address is required"))
+	}
+	if targetNatGateway != "" {
+		natGateway, err := client.IaaS().GetNatGateway(ctx, targetNatGateway)
+		if err != nil {
+			if tcclient.IsNotFound(err) {
+				return diag.FromErr(fmt.Errorf("NAT Gateway %s was not found", targetNatGateway))
+			}
+			return diag.FromErr(err)
+		}
+		if natGateway == nil {
+			return diag.FromErr(fmt.Errorf("NAT Gateway %s was not found", targetNatGateway))
+		}
+	}
+
 	createRouteTableRoute := iaas.CreateRouteTableRoute{
 		DestinationCidrBlock:     d.Get("destination_cidr").(string),
-		TargetGatewayIdentity:    d.Get("target_gateway").(string),
-		TargetNatGatewayIdentity: d.Get("target_natgateway").(string),
-		GatewayAddress:           d.Get("gateway_address").(string),
+		TargetGatewayIdentity:    targetGateway,
+		TargetNatGatewayIdentity: targetNatGateway,
+		GatewayAddress:           gatewayAddress,
 	}
 	route, err := client.IaaS().CreateRouteTableRoute(ctx, d.Get("route_table_id").(string), createRouteTableRoute)
 
@@ -136,11 +156,31 @@ func resourceRouteTableRouteUpdate(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 
+	targetGateway := d.Get("target_gateway").(string)
+	targetNatGateway := d.Get("target_natgateway").(string)
+	gatewayAddress := d.Get("gateway_address").(string)
+
+	if targetGateway == "" && targetNatGateway == "" && gatewayAddress == "" {
+		return diag.FromErr(fmt.Errorf("target_gateway, target_natgateway or gateway_address is required"))
+	}
+	if targetNatGateway != "" {
+		natGateway, err := client.IaaS().GetNatGateway(ctx, targetNatGateway)
+		if err != nil {
+			if tcclient.IsNotFound(err) {
+				return diag.FromErr(fmt.Errorf("NAT Gateway %s was not found", targetNatGateway))
+			}
+			return diag.FromErr(err)
+		}
+		if natGateway == nil {
+			return diag.FromErr(fmt.Errorf("NAT Gateway %s was not found", targetNatGateway))
+		}
+	}
+
 	updateRouteTableRoute := iaas.UpdateRouteTableRoute{
 		DestinationCidrBlock:     d.Get("destination_cidr").(string),
-		TargetGatewayIdentity:    d.Get("target_gateway").(string),
-		TargetNatGatewayIdentity: d.Get("target_natgateway").(string),
-		GatewayAddress:           d.Get("gateway_address").(string),
+		TargetGatewayIdentity:    targetGateway,
+		TargetNatGatewayIdentity: targetNatGateway,
+		GatewayAddress:           gatewayAddress,
 	}
 
 	id := d.Get("id").(string)
@@ -149,6 +189,9 @@ func resourceRouteTableRouteUpdate(ctx context.Context, d *schema.ResourceData, 
 	// get the route table
 	rt, err := client.IaaS().GetRouteTable(ctx, routeTableIdentity)
 	if err != nil {
+		if tcclient.IsNotFound(err) {
+			return diag.FromErr(fmt.Errorf("route table %q was not found", routeTableIdentity))
+		}
 		return diag.FromErr(fmt.Errorf("error getting route table %q: %s", routeTableIdentity, err))
 	}
 	if rt == nil {
@@ -172,6 +215,20 @@ func resourceRouteTableRouteDelete(ctx context.Context, d *schema.ResourceData, 
 	}
 	id := d.Get("id").(string)
 	routeTableIdentity := d.Get("route_table_id").(string)
+
+	// get the route table
+	rt, err := client.IaaS().GetRouteTable(ctx, routeTableIdentity)
+	if err != nil {
+		if tcclient.IsNotFound(err) {
+			d.SetId("")
+			return nil
+		}
+		return diag.FromErr(fmt.Errorf("error getting route table %q: %s", routeTableIdentity, err))
+	}
+	if rt == nil {
+		d.SetId("")
+		return nil
+	}
 
 	err = client.IaaS().DeleteRouteTableRoute(ctx, routeTableIdentity, id)
 	if err != nil {
