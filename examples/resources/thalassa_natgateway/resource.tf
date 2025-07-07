@@ -1,15 +1,3 @@
-terraform {
-  required_providers {
-    thalassa = {
-      source = "local/thalassa/thalassa"
-    }
-  }
-}
-
-provider "thalassa" {
-  # Configuration options
-}
-
 # Create a VPC for the NAT gateway
 resource "thalassa_vpc" "example" {
   name            = "example-vpc"
@@ -28,13 +16,9 @@ resource "thalassa_subnet" "example" {
 
 # Create a NAT gateway with all optional attributes
 resource "thalassa_natgateway" "example" {
-  # Required attributes
-  organisation_id = "org-123" # Replace with your organisation ID
   name            = "example-nat-gateway"
   subnet_id       = thalassa_subnet.example.id
-  
-  # Optional attributes
-  description = "Example NAT gateway for documentation with all optional attributes"
+  description     = "Example NAT gateway for documentation"
   
   # Labels are key-value pairs for organizing resources
   labels = {
