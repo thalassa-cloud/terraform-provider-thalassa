@@ -192,6 +192,16 @@ func resourceLoadBalancerListenerRead(ctx context.Context, d *schema.ResourceDat
 	loadbalancerID := d.Get("loadbalancer_id").(string)
 	listenerID := d.Id()
 
+	// lets try and find the loadbalancer
+	_, err = client.IaaS().GetLoadbalancer(ctx, loadbalancerID)
+	if err != nil {
+		if tcclient.IsNotFound(err) {
+			d.SetId("")
+			return nil
+		}
+		return diag.FromErr(err)
+	}
+
 	listener, err := client.IaaS().GetListener(ctx, iaas.GetLoadbalancerListenerRequest{
 		Loadbalancer: loadbalancerID,
 		Listener:     listenerID,
@@ -270,6 +280,10 @@ func resourceLoadBalancerListenerUpdate(ctx context.Context, d *schema.ResourceD
 
 	listener, err := client.IaaS().UpdateListener(ctx, loadbalancerID, listenerID, updateListener)
 	if err != nil {
+		if tcclient.IsNotFound(err) {
+			d.SetId("")
+			return nil
+		}
 		return diag.FromErr(err)
 	}
 
@@ -306,6 +320,10 @@ func resourceLoadBalancerListenerDelete(ctx context.Context, d *schema.ResourceD
 	listenerID := d.Id()
 
 	if err := client.IaaS().DeleteListener(ctx, loadbalancerID, listenerID); err != nil {
+		if tcclient.IsNotFound(err) {
+			d.SetId("")
+			return nil
+		}
 		return diag.FromErr(err)
 	}
 
