@@ -12,56 +12,40 @@ Create an NAT Gateway within a VPC
 ## Example Usage
 
 ```terraform
-terraform {
-  required_providers {
-    thalassa = {
-      source = "local/thalassa/thalassa"
-    }
-  }
-}
-
-provider "thalassa" {
-  # Configuration options
-}
-
 # Create a VPC for the NAT gateway
 resource "thalassa_vpc" "example" {
-  name            = "example-vpc"
-  description     = "Example VPC for NAT gateway"
-  region          = "nl-01"
-  cidrs           = ["10.0.0.0/16"]
+  name        = "example-vpc"
+  description = "Example VPC for NAT gateway"
+  region      = "nl-01"
+  cidrs       = ["10.0.0.0/16"]
 }
 
 # Create a subnet for the NAT gateway
 resource "thalassa_subnet" "example" {
-  name            = "example-subnet"
-  description     = "Example subnet for NAT gateway"
-  vpc_id          = thalassa_vpc.example.id
-  cidr            = "10.0.1.0/24"
+  name        = "example-subnet"
+  description = "Example subnet for NAT gateway"
+  vpc_id      = thalassa_vpc.example.id
+  cidr        = "10.0.1.0/24"
 }
 
 # Create a NAT gateway with all optional attributes
 resource "thalassa_natgateway" "example" {
-  # Required attributes
-  organisation_id = "org-123" # Replace with your organisation ID
-  name            = "example-nat-gateway"
-  subnet_id       = thalassa_subnet.example.id
-  
-  # Optional attributes
-  description = "Example NAT gateway for documentation with all optional attributes"
-  
+  name        = "example-nat-gateway"
+  subnet_id   = thalassa_subnet.example.id
+  description = "Example NAT gateway for documentation"
+
   # Labels are key-value pairs for organizing resources
   labels = {
     environment = "production"
     service     = "networking"
     tier        = "public"
   }
-  
+
   # Annotations are additional metadata for resources
   annotations = {
-    cost-center = "cc-12345"
+    cost-center   = "cc-12345"
     backup-policy = "none"
-    monitoring = "enabled"
+    monitoring    = "enabled"
   }
 }
 
@@ -80,7 +64,6 @@ output "nat_gateway_endpoint_ip" {
 ### Required
 
 - `name` (String) Name of the NatGateway
-- `organisation_id` (String) Reference to the Organisation of the NatGateway. If not provided, the organisation of the (Terraform) provider will be used.
 - `subnet_id` (String) Subnet of the NatGateway
 
 ### Optional
@@ -88,6 +71,7 @@ output "nat_gateway_endpoint_ip" {
 - `annotations` (Map of String) Annotations for the NatGateway
 - `description` (String) A human readable description about the natGateway
 - `labels` (Map of String) Labels for the NatGateway
+- `organisation_id` (String) Reference to the Organisation of the NatGateway. If not provided, the organisation of the (Terraform) provider will be used.
 
 ### Read-Only
 

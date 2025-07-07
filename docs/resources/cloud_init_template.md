@@ -12,18 +12,6 @@ description: |-
 ## Example Usage
 
 ```terraform
-terraform {
-  required_providers {
-    thalassa = {
-      source = "local/thalassa/thalassa"
-    }
-  }
-}
-
-provider "thalassa" {
-  # Configuration options
-}
-
 # Create a cloud init template with Thalassa default values
 resource "thalassa_cloud_init_template" "example" {
   name    = "example-cloud-init-template"
@@ -44,18 +32,18 @@ output "cloud_init_template_name" {
 
 ### Required
 
-- `content` (String)
-- `name` (String)
+- `content` (String) The content of the cloud init template
+- `name` (String) The name of the cloud init template
 
 ### Optional
 
-- `annotations` (Map of String)
-- `labels` (Map of String)
+- `annotations` (Map of String) Annotations to add to the cloud init template
+- `labels` (Map of String) Labels to add to the cloud init template
 - `organisation_id` (String) Reference to the Organisation of the Machine Type. If not provided, the organisation of the (Terraform) provider will be used.
 
 ### Read-Only
 
-- `id` (String) The ID of this resource.
-- `slug` (String)
+- `id` (String) The identity of the cloud init template
+- `slug` (String) The slug of the cloud init template
 
  

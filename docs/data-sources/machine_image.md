@@ -27,5 +27,5 @@ Get an machine image
 
 - `annotations` (Map of String) Annotations of the machine image
 - `description` (String) Description of the machine image
-- `id` (String, Deprecated) The ID of this resource.
+- `id` (String) Identity of the machine image
 - `labels` (Map of String) Labels of the machine image

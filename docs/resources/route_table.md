@@ -12,48 +12,31 @@ Create an routeTable
 ## Example Usage
 
 ```terraform
-terraform {
-  required_providers {
-    thalassa = {
-      source = "local/thalassa/thalassa"
-    }
-  }
-}
-
-provider "thalassa" {
-  # Configuration options
-}
-
 # Create a VPC for the route table
 resource "thalassa_vpc" "example" {
-  name            = "example-vpc"
-  description     = "Example VPC for route table"
-  region          = "nl-01"
-  cidrs           = ["10.0.0.0/16"]
+  name        = "example-vpc"
+  description = "Example VPC for route table"
+  region      = "nl-01"
+  cidrs       = ["10.0.0.0/16"]
 }
 
-# Create a route table with all optional attributes
+# Create a route table
 resource "thalassa_route_table" "example" {
-  # Required attributes
-  organisation_id = "org-123" # Replace with your organisation ID
-  name            = "example-route-table"
-  vpc_id          = thalassa_vpc.example.id
-  
-  # Optional attributes
-  description = "Example route table for documentation with all optional attributes"
-  
-  # Labels are key-value pairs for organizing resources
+  name   = "example-route-table"
+  vpc_id = thalassa_vpc.example.id
+
+  description = "Example route table for documentation"
+
   labels = {
     environment = "production"
     service     = "networking"
     tier        = "private"
   }
-  
-  # Annotations are additional metadata for resources
+
   annotations = {
-    cost-center = "cc-12345"
+    cost-center   = "cc-12345"
     backup-policy = "none"
-    monitoring = "enabled"
+    monitoring    = "enabled"
   }
 }
 
@@ -68,7 +51,6 @@ output "route_table_id" {
 ### Required
 
 - `name` (String) Name of the RouteTable
-- `organisation_id` (String) Reference to the Organisation of the RouteTable. If not provided, the organisation of the (Terraform) provider will be used.
 - `vpc_id` (String) VPC of the RouteTable
 
 ### Optional
@@ -76,6 +58,7 @@ output "route_table_id" {
 - `annotations` (Map of String) Annotations for the RouteTable
 - `description` (String) A human readable description about the routeTable
 - `labels` (Map of String) Labels for the RouteTable
+- `organisation_id` (String) Reference to the Organisation of the RouteTable. If not provided, the organisation of the (Terraform) provider will be used.
 
 ### Read-Only
 

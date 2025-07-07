@@ -12,51 +12,39 @@ Create an DB Cluster
 ## Example Usage
 
 ```terraform
-terraform {
-  required_providers {
-    thalassa = {
-      source = "local/thalassa/thalassa"
-    }
-  }
-}
-
-provider "thalassa" {
-  # Configuration options
-}
-
 # Create a VPC for the database cluster
 resource "thalassa_vpc" "example" {
-  name            = "example-vpc"
-  description     = "Example VPC for database cluster"
-  region          = "nl-01"
-  cidrs           = ["10.0.0.0/16"]
+  name        = "example-vpc"
+  description = "Example VPC for database cluster"
+  region      = "nl-01"
+  cidrs       = ["10.0.0.0/16"]
 }
 
 # Create a subnet for the database cluster
 resource "thalassa_subnet" "example" {
-  name            = "example-subnet"
-  description     = "Example subnet for database cluster"
-  vpc_id          = thalassa_vpc.example.id
-  cidr            = "10.0.1.0/24"
+  name        = "example-subnet"
+  description = "Example subnet for database cluster"
+  vpc_id      = thalassa_vpc.example.id
+  cidr        = "10.0.1.0/24"
 }
 
 # Create a security group for the DB cluster
 resource "thalassa_security_group" "example" {
-  name        = "example-db-security-group"
-  description = "Example security group for DB cluster"
+  name         = "example-db-security-group"
+  description  = "Example security group for DB cluster"
   vpc_identity = thalassa_vpc.example.id
 }
 
 # Create a database cluster with Thalassa default values
 resource "thalassa_db_cluster" "example" {
-  name                    = "example-db-cluster"
-  description             = "Example database cluster for documentation"
-  subnet_id               = thalassa_subnet.example.id
-  database_instance_type  = "db-pgp-small"  # Available: db-pgp-small, db-pgp-medium, db-pgp-large, db-pgp-xlarge, db-pgp-2xlarge, db-pgp-4xlarge, db-dgp-small, db-dgp-medium, db-dgp-large, db-dgp-xlarge, db-dgp-2xlarge, db-dgp-4xlarge
-  engine                  = "postgres"
-  engine_version          = "15"
-  allocated_storage       = 100
-  database_name           = "example_db"
+  name                   = "example-db-cluster"
+  description            = "Example database cluster for documentation"
+  subnet_id              = thalassa_subnet.example.id
+  database_instance_type = "db-pgp-small" # Available: db-pgp-small, db-pgp-medium, db-pgp-large, db-pgp-xlarge, db-pgp-2xlarge, db-pgp-4xlarge, db-dgp-small, db-dgp-medium, db-dgp-large, db-dgp-xlarge, db-dgp-2xlarge, db-dgp-4xlarge
+  engine                 = "postgres"
+  engine_version         = "15.13"
+  allocated_storage      = 100
+  volume_type_class      = "block"
 }
 
 # Output the database cluster details
@@ -83,11 +71,11 @@ output "db_cluster_port" {
 
 - `allocated_storage` (Number) Amount of storage allocated to the cluster in GB
 - `database_instance_type` (String) Database instance type of the DB Cluster
-- `database_name` (String) Name of the database on the cluster
 - `engine` (String) Database engine of the cluster
 - `engine_version` (String) Version of the database engine
 - `name` (String) Name of the DB Cluster
 - `subnet_id` (String) Subnet of the DB Cluster
+- `volume_type_class` (String) Storage type used to determine the size of the cluster storage
 
 ### Optional
 
@@ -102,7 +90,6 @@ output "db_cluster_port" {
 - `replicas` (Number) Number of instances in the cluster
 - `restore_from_backup_identity` (String) Identity of the backup to restore from
 - `security_groups` (List of String) List of security groups associated with the cluster
-- `volume_type_class` (String) Storage type used to determine the size of the cluster storage
 
 ### Read-Only
 
