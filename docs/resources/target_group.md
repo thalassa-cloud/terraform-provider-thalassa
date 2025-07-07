@@ -12,62 +12,38 @@ Create a target group for a load balancer
 ## Example Usage
 
 ```terraform
-terraform {
-  required_providers {
-    thalassa = {
-      source = "local/thalassa/thalassa"
-    }
-  }
-}
-
-provider "thalassa" {
-  # Configuration options
-}
-
 # Create a VPC for the target group
 resource "thalassa_vpc" "example" {
-  name            = "example-vpc"
-  description     = "Example VPC for target group"
-  region          = "nl-01"
-  cidrs           = ["10.0.0.0/16"]
+  name        = "example-vpc"
+  description = "Example VPC for target group"
+  region      = "nl-01"
+  cidrs       = ["10.0.0.0/16"]
 }
 
 # Create a target group with all optional attributes
 resource "thalassa_target_group" "example" {
-  # Required attributes
-  organisation_id = "org-123" # Replace with your organisation ID
-  name            = "example-target-group"
-  vpc_id          = thalassa_vpc.example.id
-  protocol        = "http"
-  port            = 80
-  
+  name     = "example-target-group"
+  vpc_id   = thalassa_vpc.example.id
+  protocol = "tcp"
+  port     = 80
+
   # Optional attributes
   description = "Example target group for documentation with all optional attributes"
-  
-  # Labels are key-value pairs for organizing resources
+
   labels = {
     environment = "production"
     service     = "web"
     tier        = "backend"
   }
-  
-  # Annotations are additional metadata for resources
-  annotations = {
-    cost-center = "cc-12345"
-    backup-policy = "none"
-    monitoring = "enabled"
-  }
-  
-  # Health check configuration (optional)
+
   health_check_protocol = "http"
   health_check_port     = 80
   health_check_path     = "/health"
-  
-  # Health check timing configuration (optional)
-  health_check_interval = 30      # Check every 30 seconds
-  health_check_timeout  = 5       # 5 second timeout
-  healthy_threshold     = 3       # 3 successful checks to mark healthy
-  unhealthy_threshold   = 3       # 3 failed checks to mark unhealthy
+
+  health_check_interval = 30 # Check every 30 seconds
+  health_check_timeout  = 5  # 5 second timeout
+  healthy_threshold     = 3  # 3 successful checks to mark healthy
+  unhealthy_threshold   = 3  # 3 failed checks to mark unhealthy
 }
 
 # Output the target group ID
@@ -81,9 +57,8 @@ output "target_group_id" {
 ### Required
 
 - `name` (String) Name of the Target Group
-- `organisation_id` (String) Reference to the Organisation of the Target Group. If not provided, the organisation of the (Terraform) provider will be used.
 - `port` (Number) The port on which the targets receive traffic
-- `protocol` (String) The protocol to use for routing traffic to the targets. Must be one of: tcp, udp, http, https, grpc, quic.
+- `protocol` (String) The protocol to use for routing traffic to the targets. Must be one of: tcp, udp.
 - `vpc_id` (String) The VPC this target group belongs to
 
 ### Optional
@@ -98,6 +73,7 @@ output "target_group_id" {
 - `health_check_timeout` (Number) The amount of time, in seconds, during which no response means a failed health check
 - `healthy_threshold` (Number) The number of consecutive health checks successes required before considering an unhealthy target healthy
 - `labels` (Map of String) Labels for the Target Group
+- `organisation_id` (String) Reference to the Organisation of the Target Group. If not provided, the organisation of the (Terraform) provider will be used.
 - `unhealthy_threshold` (Number) The number of consecutive health check failures required before considering a target unhealthy
 
 ### Read-Only

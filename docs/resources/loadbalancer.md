@@ -12,55 +12,42 @@ Create an loadbalancer within a VPC
 ## Example Usage
 
 ```terraform
-terraform {
-  required_providers {
-    thalassa = {
-      source = "local/thalassa/thalassa"
-    }
-  }
-}
-
-provider "thalassa" {
-  # Configuration options
-}
-
 # Create a VPC for the loadbalancer
 resource "thalassa_vpc" "example" {
-  name            = "example-vpc"
-  description     = "Example VPC for loadbalancer"
-  region          = "nl-01"
-  cidrs           = ["10.0.0.0/16"]
+  name        = "example-vpc"
+  description = "Example VPC for loadbalancer"
+  region      = "nl-01"
+  cidrs       = ["10.0.0.0/16"]
 }
 
 # Create a subnet for the loadbalancer
 resource "thalassa_subnet" "example" {
-  name            = "example-subnet"
-  description     = "Example subnet for loadbalancer"
-  vpc_id          = thalassa_vpc.example.id
-  cidr            = "10.0.1.0/24"
+  name        = "example-subnet"
+  description = "Example subnet for loadbalancer"
+  vpc_id      = thalassa_vpc.example.id
+  cidr        = "10.0.1.0/24"
 }
 
 # Create a loadbalancer with all optional attributes
 resource "thalassa_loadbalancer" "example" {
-  # Required attributes
-  organisation_id = "org-123" # Replace with your organisation ID
-  name            = "example-loadbalancer"
-  subnet_id       = thalassa_subnet.example.id
-  
+  name      = "example-loadbalancer"
+  subnet_id = thalassa_subnet.example.id
+  region    = thalassa_vpc.example.region
+
   # Optional attributes
-  description = "Example loadbalancer for documentation with all optional attributes"
-  
+  description = "Example loadbalancer for documentation with optional attributes"
+
   # Labels are key-value pairs for organizing resources
   labels = {
     environment = "production"
     service     = "web"
     tier        = "frontend"
   }
-  
+
   # Annotations are additional metadata for resources
   annotations = {
-    cost-center = "cc-12345"
-    ssl-cert = "wildcard.example.com"
+    cost-center  = "cc-12345"
+    ssl-cert     = "wildcard.example.com"
     health-check = "enabled"
   }
 }
@@ -76,19 +63,23 @@ output "loadbalancer_id" {
 ### Required
 
 - `name` (String) Name of the Loadbalancer
-- `organisation_id` (String) Reference to the Organisation of the Loadbalancer. If not provided, the organisation of the (Terraform) provider will be used.
 - `region` (String) Region of the Loadbalancer
 - `subnet_id` (String) Subnet of the Loadbalancer
 
 ### Optional
 
 - `annotations` (Map of String) Annotations for the Loadbalancer
+- `delete_protection` (Boolean) Delete protection for the Loadbalancer
 - `description` (String) A human readable description about the loadbalancer
+- `internal` (Boolean) Internal loadbalancer
 - `labels` (Map of String) Labels for the Loadbalancer
+- `organisation_id` (String) Reference to the Organisation of the Loadbalancer. If not provided, the organisation of the (Terraform) provider will be used.
 
 ### Read-Only
 
+- `external_ip_addresses` (List of String) The external IP addresses of the loadbalancer
 - `id` (String) The ID of this resource.
+- `ip_address` (String) The IP address of the loadbalancer
 - `slug` (String)
 - `vpc_id` (String) VPC of the Loadbalancer
 

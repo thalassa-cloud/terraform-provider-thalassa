@@ -12,58 +12,43 @@ Create an subnet in a VPC. Subnets are used to create a network for your resourc
 ## Example Usage
 
 ```terraform
-terraform {
-  required_providers {
-    thalassa = {
-      source = "local/thalassa/thalassa"
-    }
-  }
-}
-
-provider "thalassa" {
-  # Configuration options
-}
-
 # Create a VPC for the subnet
 resource "thalassa_vpc" "example" {
-  name            = "example-vpc"
-  description     = "Example VPC for subnet"
-  region          = "nl-01"
-  cidrs           = ["10.0.0.0/16"]
+  name        = "example-vpc"
+  description = "Example VPC for subnet"
+  region      = "nl-01"
+  cidrs       = ["10.0.0.0/16"]
 }
 
 # Create a route table for the subnet (optional)
 resource "thalassa_route_table" "example" {
-  name            = "example-route-table"
-  description     = "Example route table for subnet"
-  vpc_id          = thalassa_vpc.example.id
+  name        = "example-route-table"
+  description = "Example route table for subnet"
+  vpc_id      = thalassa_vpc.example.id
 }
 
 # Create a subnet with all optional attributes
 resource "thalassa_subnet" "example" {
-  # Required attributes
-  organisation_id = "org-123" # Replace with your organisation ID
-  name            = "example-subnet"
-  vpc_id          = thalassa_vpc.example.id
-  cidr            = "10.0.1.0/24"
-  
+  name   = "example-subnet"
+  vpc_id = thalassa_vpc.example.id
+  cidr   = "10.0.1.0/24"
+
   # Optional attributes
   description = "Example subnet for documentation with all optional attributes"
-  
-  # Labels are key-value pairs for organizing resources
+
   labels = {
     environment = "production"
     tier        = "web"
     network     = "private"
   }
-  
+
   # Annotations are additional metadata for resources
   annotations = {
-    cost-center = "cc-12345"
+    cost-center   = "cc-12345"
     backup-policy = "none"
-    monitoring = "enabled"
+    monitoring    = "enabled"
   }
-  
+
   # Associate with a route table (optional)
   route_table_id = thalassa_route_table.example.id
 }
@@ -80,7 +65,6 @@ output "subnet_id" {
 
 - `cidr` (String) CIDR of the Subnet
 - `name` (String) Name of the Subnet
-- `organisation_id` (String) Reference to the Organisation of the Subnet. If not provided, the organisation of the (Terraform) provider will be used.
 - `vpc_id` (String) VPC of the Subnet
 
 ### Optional
@@ -88,6 +72,7 @@ output "subnet_id" {
 - `annotations` (Map of String) Annotations for the Subnet
 - `description` (String) A human readable description about the subnet
 - `labels` (Map of String) Labels for the Subnet
+- `organisation_id` (String) Reference to the Organisation of the Subnet. If not provided, the organisation of the (Terraform) provider will be used.
 - `route_table_id` (String) Route Table of the Subnet
 
 ### Read-Only

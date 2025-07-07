@@ -16,6 +16,7 @@ Get an region
 
 ### Optional
 
+- `organisation_id` (String) Reference to the Organisation of the Region. If not provided, the organisation of the (Terraform) provider will be used.
 - `slug` (String)
 
 ### Read-Only
@@ -24,5 +25,4 @@ Get an region
 - `description` (String)
 - `id` (String) The ID of this resource.
 - `labels` (Map of String)
-- `name` (String)
-- `organisation_id` (String) Reference to the Organisation of the Region. If not provided, the organisation of the (Terraform) provider will be used. 
+- `name` (String) 

@@ -12,67 +12,58 @@ A security group is a collection of rules that control the traffic to and from a
 ## Example Usage
 
 ```terraform
-terraform {
-  required_providers {
-    thalassa = {
-      source = "local/thalassa/thalassa"
-    }
-  }
-}
-
-provider "thalassa" {
-  # Configuration options
-}
-
-# Create a VPC for the security group
 resource "thalassa_vpc" "example" {
-  name            = "example-vpc"
-  description     = "Example VPC for security group"
-  region          = "nl-01"
-  cidrs           = ["10.0.0.0/16"]
+  name        = "example-vpc"
+  description = "Example VPC for security group"
+  region      = "nl-01"
+  cidrs       = ["10.0.0.0/16"]
 }
 
-# Create a security group with Thalassa default values
+# Create a security group
 resource "thalassa_security_group" "example" {
-  # Required attributes
   name        = "example-security-group"
-  vpc_identity = thalassa_vpc.example.id
-  
-  # Optional attributes
   description = "Example security group for documentation"
-  
-  # Allow traffic between instances in the same security group (optional, default: false)
-  allow_same_group_traffic = true
+  vpc_id      = thalassa_vpc.example.id
 
-  ingress_rules = [
-    {
-      name = "allow-http"
-      ip_version = "ipv4"
-      protocol = "tcp"
-      priority = 100
-      remote_type = "address"
-      remote_address = "0.0.0.0/0"
-      port_range_min = 80
-      port_range_max = 80
-      policy = "allow"
-    },
-    {
-      name = "allow-https"
-      ip_version = "ipv4"
-      protocol = "tcp"
-      priority = 101
-      remote_type = "address"
-      remote_address = "0.0.0.0/0"
-      port_range_min = 443
-      port_range_max = 443
-      policy = "allow"
-    }
-  ]
+  allow_same_group_traffic = false
+
+  ingress_rule {
+    name           = "allow-http"
+    ip_version     = "ipv4"
+    protocol       = "tcp"
+    priority       = 100
+    remote_type    = "address"
+    remote_address = "10.0.0.0/0"
+    port_range_min = 80
+    port_range_max = 80
+    policy         = "allow"
+  }
+  ingress_rule {
+    name           = "allow-https"
+    ip_version     = "ipv4"
+    protocol       = "tcp"
+    priority       = 101
+    remote_type    = "address"
+    remote_address = "0.0.0.0/0"
+    port_range_min = 443
+    port_range_max = 443
+    policy         = "allow"
+  }
+
+  egress_rule {
+    name           = "allow-all"
+    ip_version     = "ipv4"
+    protocol       = "all"
+    priority       = 100
+    remote_type    = "address"
+    remote_address = "0.0.0.0/0"
+    policy         = "allow"
+  }
 }
 
 # Output the security group details
 output "security_group_id" {
-  value = thalassa_security_group.example.identity
+  value = thalassa_security_group.example.id
 }
 
 output "security_group_name" {
@@ -85,14 +76,14 @@ output "security_group_name" {
 ### Required
 
 - `name` (String) Name of the security group. Must be between 1 and 16 characters and contain only ASCII characters.
-- `vpc_identity` (String) Identity of the VPC that the security group belongs to
+- `vpc_id` (String) Identity of the VPC that the security group belongs to
 
 ### Optional
 
 - `allow_same_group_traffic` (Boolean) Flag that indicates if the security group allows traffic between instances in the same security group
 - `description` (String) Description of the security group
-- `egress_rules` (Block List) List of egress rules for the security group (see [below for nested schema](#nestedblock--egress_rules))
-- `ingress_rules` (Block List) List of ingress rules for the security group (see [below for nested schema](#nestedblock--ingress_rules))
+- `egress_rule` (Block List) List of egress rules for the security group (see [below for nested schema](#nestedblock--egress_rule))
+- `ingress_rule` (Block List) List of ingress rules for the security group (see [below for nested schema](#nestedblock--ingress_rule))
 - `organisation_id` (String) Reference to the Organisation of the Security Group. If not provided, the organisation of the (Terraform) provider will be used.
 
 ### Read-Only
@@ -103,42 +94,42 @@ output "security_group_name" {
 - `status` (String) Status of the security group
 - `updated_at` (String) Last update timestamp of the security group
 
-<a id="nestedblock--egress_rules"></a>
-### Nested Schema for `egress_rules`
+<a id="nestedblock--egress_rule"></a>
+### Nested Schema for `egress_rule`
 
 Required:
 
 - `ip_version` (String) IP version of the rule (ipv4 or ipv6)
 - `name` (String) Name of the rule
 - `policy` (String) Policy of the rule (allow or drop)
-- `port_range_max` (Number) Maximum port of the rule. Must be greater than 0 and less than 65535.
-- `port_range_min` (Number) Minimum port of the rule. Must be greater than 0 and less than 65535.
 - `priority` (Number) Priority of the rule. Must be greater than 0 and less than 200.
 - `protocol` (String) Protocol of the rule (all, tcp, udp, icmp)
 - `remote_type` (String) Type of the remote address (address or securityGroup)
 
 Optional:
 
+- `port_range_max` (Number) Maximum port of the rule. Must be greater than 0 and less than 65535.
+- `port_range_min` (Number) Minimum port of the rule. Must be greater than 0 and less than 65535.
 - `remote_address` (String) IP address or CIDR block that the rule applies to
 - `remote_security_group_identity` (String) Identity of the security group that the rule applies to
 
 
-<a id="nestedblock--ingress_rules"></a>
-### Nested Schema for `ingress_rules`
+<a id="nestedblock--ingress_rule"></a>
+### Nested Schema for `ingress_rule`
 
 Required:
 
 - `ip_version` (String) IP version of the rule (ipv4 or ipv6)
 - `name` (String) Name of the rule
 - `policy` (String) Policy of the rule (allow or drop)
-- `port_range_max` (Number) Maximum port of the rule. Must be greater than 0 and less than 65535.
-- `port_range_min` (Number) Minimum port of the rule. Must be greater than 0 and less than 65535.
 - `priority` (Number) Priority of the rule. Must be greater than 0 and less than 200.
 - `protocol` (String) Protocol of the rule (all, tcp, udp, icmp)
 - `remote_type` (String) Type of the remote address (address or securityGroup)
 
 Optional:
 
+- `port_range_max` (Number) Maximum port of the rule. Must be greater than 0 and less than 65535.
+- `port_range_min` (Number) Minimum port of the rule. Must be greater than 0 and less than 65535.
 - `remote_address` (String) IP address or CIDR block that the rule applies to
 - `remote_security_group_identity` (String) Identity of the security group that the rule applies to
 
