@@ -1,15 +1,3 @@
-terraform {
-  required_providers {
-    thalassa = {
-      source = "local/thalassa/thalassa"
-    }
-  }
-}
-
-provider "thalassa" {
-  # Configuration options
-}
-
 # Create a VPC for the resources
 resource "thalassa_vpc" "example" {
   name            = "example-vpc"
@@ -31,7 +19,7 @@ resource "thalassa_target_group" "example" {
   name            = "example-target-group"
   description     = "Example target group for attachment"
   vpc_id          = thalassa_vpc.example.id
-  protocol        = "http"
+  protocol        = "tcp"
   port            = 80
 }
 
@@ -48,13 +36,11 @@ resource "thalassa_virtual_machine_instance" "example" {
 
 # Create a target group attachment with all required attributes
 resource "thalassa_target_group_attachment" "example" {
-  # Required attributes
-  organisation_id = "org-123" # Replace with your organisation ID
   target_group_id = thalassa_target_group.example.id
   vmi_id          = thalassa_virtual_machine_instance.example.id
 }
 
-# Output the attachment details
+# # Output the attachment details
 output "attachment_id" {
   value = thalassa_target_group_attachment.example.id
-} 
+}
