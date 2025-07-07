@@ -162,7 +162,11 @@ func resourceNatGatewayRead(ctx context.Context, d *schema.ResourceData, m inter
 
 	id := d.Get("id").(string)
 	natGateway, err := client.IaaS().GetNatGateway(ctx, id)
-	if err != nil && !tcclient.IsNotFound(err) {
+	if err != nil {
+		if tcclient.IsNotFound(err) {
+			d.SetId("")
+			return nil
+		}
 		return diag.FromErr(fmt.Errorf("error getting natGateway: %s", err))
 	}
 	if natGateway == nil {
@@ -223,12 +227,22 @@ func resourceNatGatewayDelete(ctx context.Context, d *schema.ResourceData, m int
 
 	id := d.Get("id").(string)
 
-	error := client.IaaS().DeleteNatGateway(ctx, id)
-	if error != nil {
-		return diag.FromErr(error)
+	err = client.IaaS().DeleteNatGateway(ctx, id)
+	if err != nil {
+		if tcclient.IsNotFound(err) {
+			d.SetId("")
+			return nil
+		}
+		return diag.FromErr(err)
+	}
+
+	// wait until the natGateway is deleted
+	ctxWithTimeout, cancel := context.WithTimeout(ctx, 20*time.Minute)
+	defer cancel()
+	if err := client.IaaS().WaitUntilNatGatewayDeleted(ctxWithTimeout, id); err != nil {
+		return diag.FromErr(fmt.Errorf("error waiting for natGateway to be deleted: %w", err))
 	}
 
 	d.SetId("")
-
 	return nil
 }
