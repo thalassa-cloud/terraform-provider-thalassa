@@ -1,15 +1,3 @@
-terraform {
-  required_providers {
-    thalassa = {
-      source = "local/thalassa/thalassa"
-    }
-  }
-}
-
-provider "thalassa" {
-  # Configuration options
-}
-
 # Create a cloud init template with Thalassa default values
 resource "thalassa_cloud_init_template" "example" {
   name    = "example-cloud-init-template"
@@ -23,6 +11,5 @@ output "cloud_init_template_id" {
 
 output "cloud_init_template_name" {
   value = thalassa_cloud_init_template.example.name
-} 
-
+}
 

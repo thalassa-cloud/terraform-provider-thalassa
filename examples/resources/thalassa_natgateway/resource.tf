@@ -1,37 +1,37 @@
 # Create a VPC for the NAT gateway
 resource "thalassa_vpc" "example" {
-  name            = "example-vpc"
-  description     = "Example VPC for NAT gateway"
-  region          = "nl-01"
-  cidrs           = ["10.0.0.0/16"]
+  name        = "example-vpc"
+  description = "Example VPC for NAT gateway"
+  region      = "nl-01"
+  cidrs       = ["10.0.0.0/16"]
 }
 
 # Create a subnet for the NAT gateway
 resource "thalassa_subnet" "example" {
-  name            = "example-subnet"
-  description     = "Example subnet for NAT gateway"
-  vpc_id          = thalassa_vpc.example.id
-  cidr            = "10.0.1.0/24"
+  name        = "example-subnet"
+  description = "Example subnet for NAT gateway"
+  vpc_id      = thalassa_vpc.example.id
+  cidr        = "10.0.1.0/24"
 }
 
 # Create a NAT gateway with all optional attributes
 resource "thalassa_natgateway" "example" {
-  name            = "example-nat-gateway"
-  subnet_id       = thalassa_subnet.example.id
-  description     = "Example NAT gateway for documentation"
-  
+  name        = "example-nat-gateway"
+  subnet_id   = thalassa_subnet.example.id
+  description = "Example NAT gateway for documentation"
+
   # Labels are key-value pairs for organizing resources
   labels = {
     environment = "production"
     service     = "networking"
     tier        = "public"
   }
-  
+
   # Annotations are additional metadata for resources
   annotations = {
-    cost-center = "cc-12345"
+    cost-center   = "cc-12345"
     backup-policy = "none"
-    monitoring = "enabled"
+    monitoring    = "enabled"
   }
 }
 
