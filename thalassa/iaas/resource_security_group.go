@@ -2,6 +2,7 @@ package iaas
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -40,7 +41,7 @@ func ResourceSecurityGroup() *schema.Resource {
 				ForceNew:    true,
 				Description: "Reference to the Organisation of the Security Group. If not provided, the organisation of the (Terraform) provider will be used.",
 			},
-			"vpc_identity": {
+			"vpc_id": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
@@ -52,7 +53,7 @@ func ResourceSecurityGroup() *schema.Resource {
 				Default:     false,
 				Description: "Flag that indicates if the security group allows traffic between instances in the same security group",
 			},
-			"ingress_rules": {
+			"ingress_rule": {
 				Type:        schema.TypeList,
 				Optional:    true,
 				Description: "List of ingress rules for the security group",
@@ -99,13 +100,15 @@ func ResourceSecurityGroup() *schema.Resource {
 						},
 						"port_range_min": {
 							Type:         schema.TypeInt,
-							Required:     true,
+							Optional:     true,
+							Default:      1,
 							ValidateFunc: validate.IntBetween(1, 65535),
 							Description:  "Minimum port of the rule. Must be greater than 0 and less than 65535.",
 						},
 						"port_range_max": {
 							Type:         schema.TypeInt,
-							Required:     true,
+							Optional:     true,
+							Default:      65535,
 							ValidateFunc: validate.IntBetween(1, 65535),
 							Description:  "Maximum port of the rule. Must be greater than 0 and less than 65535.",
 						},
@@ -118,7 +121,7 @@ func ResourceSecurityGroup() *schema.Resource {
 					},
 				},
 			},
-			"egress_rules": {
+			"egress_rule": {
 				Type:        schema.TypeList,
 				Optional:    true,
 				Description: "List of egress rules for the security group",
@@ -165,13 +168,15 @@ func ResourceSecurityGroup() *schema.Resource {
 						},
 						"port_range_min": {
 							Type:         schema.TypeInt,
-							Required:     true,
+							Optional:     true,
+							Default:      1,
 							ValidateFunc: validate.IntBetween(1, 65535),
 							Description:  "Minimum port of the rule. Must be greater than 0 and less than 65535.",
 						},
 						"port_range_max": {
 							Type:         schema.TypeInt,
-							Required:     true,
+							Optional:     true,
+							Default:      65535,
 							ValidateFunc: validate.IntBetween(1, 65535),
 							Description:  "Maximum port of the rule. Must be greater than 0 and less than 65535.",
 						},
@@ -211,27 +216,27 @@ func ResourceSecurityGroup() *schema.Resource {
 func resourceSecurityGroupCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(meta), d)
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("error getting client: %w", err))
 	}
 
 	createReq := iaas.CreateSecurityGroupRequest{
 		Name:                  d.Get("name").(string),
 		Description:           d.Get("description").(string),
-		VpcIdentity:           d.Get("vpc_identity").(string),
+		VpcIdentity:           d.Get("vpc_id").(string),
 		AllowSameGroupTraffic: d.Get("allow_same_group_traffic").(bool),
 	}
 
-	if v, ok := d.GetOk("ingress_rules"); ok {
+	if v, ok := d.GetOk("ingress_rule"); ok {
 		createReq.IngressRules = expandSecurityGroupRules(v.([]interface{}))
 	}
 
-	if v, ok := d.GetOk("egress_rules"); ok {
+	if v, ok := d.GetOk("egress_rule"); ok {
 		createReq.EgressRules = expandSecurityGroupRules(v.([]interface{}))
 	}
 
 	securityGroup, err := client.IaaS().CreateSecurityGroup(ctx, createReq)
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("error creating security group: %w", err))
 	}
 
 	d.SetId(securityGroup.Identity)
@@ -241,7 +246,7 @@ func resourceSecurityGroupCreate(ctx context.Context, d *schema.ResourceData, me
 func resourceSecurityGroupRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(meta), d)
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("error getting security group: %w", err))
 	}
 
 	securityGroup, err := client.IaaS().GetSecurityGroup(ctx, d.Id())
@@ -250,7 +255,7 @@ func resourceSecurityGroupRead(ctx context.Context, d *schema.ResourceData, meta
 			d.SetId("")
 			return nil
 		}
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("error getting security group: %w", err))
 	}
 
 	if err := d.Set("name", securityGroup.Name); err != nil {
@@ -259,16 +264,16 @@ func resourceSecurityGroupRead(ctx context.Context, d *schema.ResourceData, meta
 	if err := d.Set("description", securityGroup.Description); err != nil {
 		return diag.FromErr(err)
 	}
-	if err := d.Set("vpc_identity", securityGroup.Vpc.Identity); err != nil {
+	if err := d.Set("vpc_id", securityGroup.Vpc.Identity); err != nil {
 		return diag.FromErr(err)
 	}
 	if err := d.Set("allow_same_group_traffic", securityGroup.AllowSameGroupTraffic); err != nil {
 		return diag.FromErr(err)
 	}
-	if err := d.Set("ingress_rules", flattenSecurityGroupRules(securityGroup.IngressRules)); err != nil {
+	if err := d.Set("ingress_rule", flattenSecurityGroupRules(securityGroup.IngressRules)); err != nil {
 		return diag.FromErr(err)
 	}
-	if err := d.Set("egress_rules", flattenSecurityGroupRules(securityGroup.EgressRules)); err != nil {
+	if err := d.Set("egress_rule", flattenSecurityGroupRules(securityGroup.EgressRules)); err != nil {
 		return diag.FromErr(err)
 	}
 	if err := d.Set("identity", securityGroup.Identity); err != nil {
@@ -290,27 +295,35 @@ func resourceSecurityGroupRead(ctx context.Context, d *schema.ResourceData, meta
 func resourceSecurityGroupUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(meta), d)
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("error getting client: %w", err))
+	}
+
+	allowSameGroupTraffic := d.Get("allow_same_group_traffic").(bool)
+
+	// get the security group
+	securityGroup, err := client.IaaS().GetSecurityGroup(ctx, d.Id())
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("error getting security group for object version: %w", err))
 	}
 
 	updateReq := iaas.UpdateSecurityGroupRequest{
 		Name:                  d.Get("name").(string),
 		Description:           d.Get("description").(string),
-		AllowSameGroupTraffic: d.Get("allow_same_group_traffic").(bool),
-		ObjectVersion:         d.Get("object_version").(int),
+		AllowSameGroupTraffic: allowSameGroupTraffic,
+		ObjectVersion:         securityGroup.ObjectVersion,
 	}
 
-	if v, ok := d.GetOk("ingress_rules"); ok {
+	if v, ok := d.GetOk("ingress_rule"); ok {
 		updateReq.IngressRules = expandSecurityGroupRules(v.([]interface{}))
 	}
 
-	if v, ok := d.GetOk("egress_rules"); ok {
+	if v, ok := d.GetOk("egress_rule"); ok {
 		updateReq.EgressRules = expandSecurityGroupRules(v.([]interface{}))
 	}
 
 	_, err = client.IaaS().UpdateSecurityGroup(ctx, d.Id(), updateReq)
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("error updating security group: %w", err))
 	}
 
 	return resourceSecurityGroupRead(ctx, d, meta)
@@ -319,12 +332,16 @@ func resourceSecurityGroupUpdate(ctx context.Context, d *schema.ResourceData, me
 func resourceSecurityGroupDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(meta), d)
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("error getting client: %w", err))
 	}
 
 	err = client.IaaS().DeleteSecurityGroup(ctx, d.Id())
 	if err != nil {
-		return diag.FromErr(err)
+		if tcclient.IsNotFound(err) {
+			d.SetId("")
+			return nil
+		}
+		return diag.FromErr(fmt.Errorf("error deleting security group: %w", err))
 	}
 
 	return nil
