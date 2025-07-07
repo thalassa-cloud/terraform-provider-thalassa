@@ -57,34 +57,57 @@ func resourceTargetGroupAttachmentCreate(ctx context.Context, d *schema.Resource
 	targetGroupID := d.Get("target_group_id").(string)
 	vmiID := d.Get("vmi_id").(string)
 
-	// Create a single attachment
-	attachment := iaas.AttachTarget{
-		ServerIdentity: vmiID,
-	}
-	batch := iaas.AttachTargetGroupRequest{
-		TargetGroupID: targetGroupID,
-		AttachTarget:  attachment,
-	}
-	attachResponse, err := client.IaaS().AttachServerToTargetGroup(ctx, batch)
+	// lets try and find the target group and vmi
+	_, err = client.IaaS().GetTargetGroup(ctx, iaas.GetTargetGroupRequest{Identity: targetGroupID})
 	if err != nil {
-		return diag.FromErr(err)
+		if tcclient.IsNotFound(err) {
+			return diag.FromErr(fmt.Errorf("target group %s was not found", targetGroupID))
+		}
+		return diag.FromErr(fmt.Errorf("error getting target group: %w", err))
+	}
+	_, err = client.IaaS().GetMachine(ctx, vmiID)
+	if err != nil {
+		if tcclient.IsNotFound(err) {
+			return diag.FromErr(fmt.Errorf("virtual machine instance %s was not found", vmiID))
+		}
+		return diag.FromErr(fmt.Errorf("error getting virtual machine instance: %w", err))
+	}
+
+	// Create a single target
+	attachmentRequest := iaas.AttachTargetGroupRequest{
+		TargetGroupID: targetGroupID,
+		AttachTarget: iaas.AttachTarget{
+			ServerIdentity: vmiID,
+		},
+	}
+	attachResponse, err := client.IaaS().AttachServerToTargetGroup(ctx, attachmentRequest)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("error getting client: %w", err))
 	}
 	if attachResponse != nil {
-		id := fmt.Sprintf("%s:%s:%s", vmiID, targetGroupID, attachResponse.Endpoint.Identity)
-		d.SetId(id)
+		d.SetId(createTargetGroupAttachmentID(vmiID, targetGroupID))
 		d.Set("target_group_id", targetGroupID)
 		d.Set("vmi_id", vmiID)
 	}
 	return resourceTargetGroupAttachmentRead(ctx, d, m)
 }
 
+func createTargetGroupAttachmentID(vmiID, targetGroupID string) string {
+	return fmt.Sprintf("%s:%s", vmiID, targetGroupID)
+}
+
 func resourceTargetGroupAttachmentRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("error getting client: %w", err))
 	}
 
 	targetGroupID := d.Get("target_group_id").(string)
+	vmiID := d.Get("vmi_id").(string)
+
+	// Check if the VMI is attached to the target group
+	found := false
+
 	// Get the target group to check if the attachment exists
 	tg, err := client.IaaS().GetTargetGroup(ctx, iaas.GetTargetGroupRequest{Identity: targetGroupID})
 	if err != nil {
@@ -95,14 +118,11 @@ func resourceTargetGroupAttachmentRead(ctx context.Context, d *schema.ResourceDa
 		return diag.FromErr(fmt.Errorf("error getting target group: %s", err))
 	}
 
-	// Check if the VMI is attached to the target group
-	found := false
-	id := d.Id()
 	if tg.LoadbalancerTargetGroupAttachments != nil {
 		for _, att := range tg.LoadbalancerTargetGroupAttachments {
-			if att.Identity == id {
+			if vmiID != "" && att.VirtualMachineInstance != nil && att.VirtualMachineInstance.Identity == vmiID {
 				found = true
-				d.Set("target_group_id", targetGroupID)
+				d.Set("vmi_id", att.VirtualMachineInstance.Identity)
 				break
 			}
 		}
@@ -113,21 +133,30 @@ func resourceTargetGroupAttachmentRead(ctx context.Context, d *schema.ResourceDa
 		return nil
 	}
 
+	d.SetId(createTargetGroupAttachmentID(vmiID, targetGroupID))
+	d.Set("target_group_id", targetGroupID)
+	d.Set("vmi_id", vmiID)
+
 	return nil
 }
 
 func resourceTargetGroupAttachmentDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("error getting client: %w", err))
 	}
 
 	targetGroupID := d.Get("target_group_id").(string)
+	vmiID := d.Get("vmi_id").(string)
 	if err := client.IaaS().DetachServerFromTargetGroup(ctx, iaas.DetachTargetRequest{
 		TargetGroupID: targetGroupID,
-		AttachmentID:  d.Id(),
+		AttachmentID:  vmiID,
 	}); err != nil {
-		return diag.FromErr(err)
+		if tcclient.IsNotFound(err) {
+			d.SetId("")
+			return nil
+		}
+		return diag.FromErr(fmt.Errorf("error detaching server from target group: %w", err))
 	}
 
 	d.SetId("")

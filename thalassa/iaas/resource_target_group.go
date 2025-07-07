@@ -88,7 +88,7 @@ func resourceTargetGroup() *schema.Resource {
 			"health_check_protocol": {
 				Type:         schema.TypeString,
 				Optional:     true,
-				ValidateFunc: validate.StringInSlice([]string{"tcp", "https"}, false),
+				ValidateFunc: validate.StringInSlice([]string{"tcp", "http"}, false),
 				Description:  "The protocol to use for health checks. Must be one of: tcp, http.",
 			},
 			"health_check_interval": {
