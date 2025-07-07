@@ -14,17 +14,10 @@ resource "thalassa_subnet" "example" {
   cidr        = "10.0.1.0/24"
 }
 
-# Create a security group for the DB cluster
-resource "thalassa_security_group" "example" {
-  name         = "example-db-security-group"
-  description  = "Example security group for DB cluster"
-  vpc_identity = thalassa_vpc.example.id
-}
-
-# Create a database cluster with Thalassa default values
-resource "thalassa_db_cluster" "example" {
+# Create a database cluster for the backup schedule
+resource "thalassa_dbaas_db_cluster" "example" {
   name                   = "example-db-cluster"
-  description            = "Example database cluster for documentation"
+  description            = "Example database cluster for backup schedule"
   subnet_id              = thalassa_subnet.example.id
   database_instance_type = "db-pgp-small" # Available: db-pgp-small, db-pgp-medium, db-pgp-large, db-pgp-xlarge, db-pgp-2xlarge, db-pgp-4xlarge, db-dgp-small, db-dgp-medium, db-dgp-large, db-dgp-xlarge, db-dgp-2xlarge, db-dgp-4xlarge
   engine                 = "postgres"
@@ -33,19 +26,19 @@ resource "thalassa_db_cluster" "example" {
   volume_type_class      = "block"
 }
 
-# Output the database cluster details
-output "db_cluster_id" {
-  value = thalassa_db_cluster.example.id
+# Create a database backup schedule with Thalassa default values
+resource "thalassa_dbaas_db_backupschedule" "example" {
+  db_cluster_id    = thalassa_dbaas_db_cluster.example.id
+  name             = "example-backup-schedule"
+  schedule         = "0 2 * * *" # Daily at 2 AM
+  retention_policy = "7d"        # Available: 7d, 14d, 30d, 90d, 180d, 365d, 730d
 }
 
-output "db_cluster_name" {
-  value = thalassa_db_cluster.example.name
+# Output the backup schedule details
+output "backup_schedule_id" {
+  value = thalassa_dbaas_db_backupschedule.example.id
 }
 
-output "db_cluster_endpoint" {
-  value = thalassa_db_cluster.example.endpoint_ipv4
-}
-
-output "db_cluster_port" {
-  value = thalassa_db_cluster.example.port
+output "backup_schedule_name" {
+  value = thalassa_dbaas_db_backupschedule.example.name
 }

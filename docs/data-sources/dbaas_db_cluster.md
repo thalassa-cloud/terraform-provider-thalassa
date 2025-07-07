@@ -1,11 +1,11 @@
 ---
-page_title: "thalassa_db_cluster Data Source - terraform-provider-thalassa"
+page_title: "thalassa_dbaas_db_cluster Data Source - terraform-provider-thalassa"
 subcategory: "Database"
 description: |-
   Get an DB Cluster
 ---
 
-# thalassa_db_cluster (Data Source)
+# thalassa_dbaas_db_cluster (Data Source)
 
 Get an DB Cluster
 
