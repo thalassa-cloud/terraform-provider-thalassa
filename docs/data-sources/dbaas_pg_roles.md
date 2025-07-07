@@ -1,11 +1,11 @@
 ---
-page_title: "thalassa_pg_database Data Source - terraform-provider-thalassa"
+page_title: "thalassa_dbaas_pg_roles Data Source - terraform-provider-thalassa"
 subcategory: "Database"
 description: |-
   
 ---
 
-# thalassa_pg_database (Data Source)
+# thalassa_dbaas_pg_roles (Data Source)
 
 
 
@@ -17,7 +17,7 @@ description: |-
 ### Required
 
 - `db_cluster_id` (String) The ID of the database cluster
-- `name` (String) The name of the database
+- `name` (String) The name of the role
 
 ### Optional
 
@@ -25,6 +25,8 @@ description: |-
 
 ### Read-Only
 
-- `connection_limit` (Number) The connection limit of the database
+- `connection_limit` (Number) The connection limit of the role
+- `create_db` (Boolean) Whether the role can create databases
+- `create_role` (Boolean) Whether the role can create roles
 - `id` (String) The ID of this resource.
-- `owner_role_id` (String) The ID of the owner role 
+- `login` (Boolean) Whether the role can login 

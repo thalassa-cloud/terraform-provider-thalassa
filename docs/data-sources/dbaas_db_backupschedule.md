@@ -1,11 +1,11 @@
 ---
-page_title: "thalassa_db_backupschedule Data Source - terraform-provider-thalassa"
+page_title: "thalassa_dbaas_db_backupschedule Data Source - terraform-provider-thalassa"
 subcategory: "Database"
 description: |-
   
 ---
 
-# thalassa_db_backupschedule (Data Source)
+# thalassa_dbaas_db_backupschedule (Data Source)
 
 
 
