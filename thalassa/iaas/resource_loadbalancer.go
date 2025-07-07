@@ -87,6 +87,20 @@ func resourceLoadBalancer() *schema.Resource {
 				Optional:    true,
 				Description: "Internal loadbalancer",
 			},
+			"ip_address": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The IP address of the loadbalancer",
+			},
+			"external_ip_addresses": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "The external IP addresses of the loadbalancer",
+				Elem: &schema.Schema{
+					Type:        schema.TypeString,
+					Description: "The external IP address of the loadbalancer",
+				},
+			},
 		},
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -155,6 +169,10 @@ func resourceLoadBalancerCreate(ctx context.Context, d *schema.ResourceData, m i
 			return diag.FromErr(err)
 		}
 		if loadbalancer.Status == "ready" {
+			if len(loadbalancer.ExternalIpAddresses) > 0 {
+				d.Set("ip_address", loadbalancer.ExternalIpAddresses[0])
+			}
+			d.Set("external_ip_addresses", loadbalancer.ExternalIpAddresses)
 			break
 		}
 	}
@@ -190,6 +208,10 @@ func resourceLoadBalancerRead(ctx context.Context, d *schema.ResourceData, m int
 	d.Set("annotations", loadbalancer.Annotations)
 	d.Set("subnet_id", loadbalancer.Subnet.Identity)
 	d.Set("vpc_id", loadbalancer.Vpc.Identity)
+	if len(loadbalancer.ExternalIpAddresses) > 0 {
+		d.Set("ip_address", loadbalancer.ExternalIpAddresses[0])
+	}
+	d.Set("external_ip_addresses", loadbalancer.ExternalIpAddresses)
 	// d.Set("delete_protection", loadbalancer.DeleteProtection)
 	// d.Set("internal", loadbalancer.InternalLoadbalancer)
 
@@ -214,6 +236,10 @@ func resourceLoadBalancerUpdate(ctx context.Context, d *schema.ResourceData, m i
 
 	loadbalancer, err := client.IaaS().UpdateLoadbalancer(ctx, slug, updateLoadbalancer)
 	if err != nil {
+		if tcclient.IsNotFound(err) {
+			d.SetId("")
+			return nil
+		}
 		return diag.FromErr(err)
 	}
 	if loadbalancer != nil {
