@@ -179,7 +179,11 @@ func resourceRouteTableDelete(ctx context.Context, d *schema.ResourceData, m int
 	id := d.Get("id").(string)
 
 	err = client.IaaS().DeleteRouteTable(ctx, id)
-	if err != nil && !tcclient.IsNotFound(err) {
+	if err != nil {
+		if tcclient.IsNotFound(err) {
+			d.SetId("")
+			return nil
+		}
 		return diag.FromErr(err)
 	}
 
