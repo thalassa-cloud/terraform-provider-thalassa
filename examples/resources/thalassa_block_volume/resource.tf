@@ -1,12 +1,18 @@
 
-data "thalassa_organisation" "example" {
-  slug = "your-organisation-slug"
+# Create a block volume with Thalassa default values
+resource "thalassa_block_volume" "example" {
+  name        = "example-block-volume"
+  description = "Example block volume for documentation"
+  region      = "nl-01"
+  volume_type = "Block" # Available: Block, Premium Block
+  size_gb     = 20
 }
 
-resource "thalassa_block_volume" "example" {
-  name         = "example"
-  organisation_id = data.thalassa_organisation.example.id
-  region       = "your-region"
-  size_gb      = 15
-  volume_type  = "your-volume-type-id"
+# Output the block volume details
+output "block_volume_id" {
+  value = thalassa_block_volume.example.id
+}
+
+output "block_volume_name" {
+  value = thalassa_block_volume.example.name
 }

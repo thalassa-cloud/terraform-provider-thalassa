@@ -18,6 +18,7 @@ var (
 		"thalassa_target_group":             resourceTargetGroup(),
 		"thalassa_virtual_machine_instance": resourceVirtualMachineInstance(),
 		"thalassa_vpc":                      resourceVpc(),
+		"thalassa_cloud_init_template":      resourceCloudInitTemplate(),
 	}
 
 	DataSourcesMap = map[string]*schema.Resource{
@@ -28,5 +29,6 @@ var (
 		"thalassa_vpc":            DataSourceVpc(),
 		"thalassa_security_group": DataSourceSecurityGroup(),
 		"thalassa_volume_type":    DataSourceVolumeType(),
+		"thalassa_subnet":         dataSourceSubnet(),
 	}
 )

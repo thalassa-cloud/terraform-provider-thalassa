@@ -3,6 +3,7 @@ package iaas
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -28,9 +29,15 @@ func resourceLoadBalancer() *schema.Resource {
 			},
 			"organisation_id": {
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
 				ForceNew:    true,
 				Description: "Reference to the Organisation of the Loadbalancer. If not provided, the organisation of the (Terraform) provider will be used.",
+			},
+			"region": {
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Description: "Region of the Loadbalancer",
 			},
 			"vpc_id": {
 				Type:        schema.TypeString,
@@ -70,6 +77,30 @@ func resourceLoadBalancer() *schema.Resource {
 				Optional:    true,
 				Description: "Annotations for the Loadbalancer",
 			},
+			"delete_protection": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Description: "Delete protection for the Loadbalancer",
+			},
+			"internal": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Description: "Internal loadbalancer",
+			},
+			"ip_address": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The IP address of the loadbalancer",
+			},
+			"external_ip_addresses": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "The external IP addresses of the loadbalancer",
+				Elem: &schema.Schema{
+					Type:        schema.TypeString,
+					Description: "The external IP address of the loadbalancer",
+				},
+			},
 		},
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -93,16 +124,59 @@ func resourceLoadBalancerCreate(ctx context.Context, d *schema.ResourceData, m i
 		InternalLoadbalancer: d.Get("internal").(bool),
 	}
 
+	if deleteProtection := d.Get("delete_protection").(bool); deleteProtection {
+		createLoadbalancer.DeleteProtection = deleteProtection
+	}
+	if internal := d.Get("internal").(bool); internal {
+		createLoadbalancer.InternalLoadbalancer = internal
+	}
+
 	loadbalancer, err := client.IaaS().CreateLoadbalancer(ctx, createLoadbalancer)
 
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	if loadbalancer != nil {
-		d.SetId(loadbalancer.Identity)
-		d.Set("slug", loadbalancer.Slug)
-		return nil
+
+	if loadbalancer == nil {
+		return diag.FromErr(fmt.Errorf("error creating loadbalancer: %s", err))
 	}
+	d.SetId(loadbalancer.Identity)
+	d.Set("name", loadbalancer.Name)
+	d.Set("slug", loadbalancer.Slug)
+	d.Set("description", loadbalancer.Description)
+	d.Set("labels", loadbalancer.Labels)
+	d.Set("annotations", loadbalancer.Annotations)
+	d.Set("subnet_id", loadbalancer.Subnet.Identity)
+	d.Set("vpc_id", loadbalancer.Vpc.Identity)
+	if d.Get("delete_protection") != nil {
+		d.Set("delete_protection", d.Get("delete_protection").(bool))
+	}
+	if d.Get("internal") != nil {
+		d.Set("internal", d.Get("internal").(bool))
+	}
+
+	// wait until the loadbalancer is ready
+	ctxWithTimeout, cancel := context.WithTimeout(ctx, 20*time.Minute)
+	defer cancel()
+	for {
+		select {
+		case <-ctxWithTimeout.Done():
+			return diag.FromErr(fmt.Errorf("timeout while waiting for loadbalancer to be ready"))
+		case <-time.After(1 * time.Second):
+		}
+		loadbalancer, err = client.IaaS().GetLoadbalancer(ctxWithTimeout, loadbalancer.Identity)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		if loadbalancer.Status == "ready" {
+			if len(loadbalancer.ExternalIpAddresses) > 0 {
+				d.Set("ip_address", loadbalancer.ExternalIpAddresses[0])
+			}
+			d.Set("external_ip_addresses", loadbalancer.ExternalIpAddresses)
+			break
+		}
+	}
+
 	return resourceLoadBalancerRead(ctx, d, m)
 }
 
@@ -112,7 +186,7 @@ func resourceLoadBalancerRead(ctx context.Context, d *schema.ResourceData, m int
 		return diag.FromErr(err)
 	}
 
-	slug := d.Get("slug").(string)
+	slug := d.Get("id").(string)
 	loadbalancer, err := client.IaaS().GetLoadbalancer(ctx, slug)
 	if err != nil {
 		if tcclient.IsNotFound(err) {
@@ -134,6 +208,10 @@ func resourceLoadBalancerRead(ctx context.Context, d *schema.ResourceData, m int
 	d.Set("annotations", loadbalancer.Annotations)
 	d.Set("subnet_id", loadbalancer.Subnet.Identity)
 	d.Set("vpc_id", loadbalancer.Vpc.Identity)
+	if len(loadbalancer.ExternalIpAddresses) > 0 {
+		d.Set("ip_address", loadbalancer.ExternalIpAddresses[0])
+	}
+	d.Set("external_ip_addresses", loadbalancer.ExternalIpAddresses)
 	// d.Set("delete_protection", loadbalancer.DeleteProtection)
 	// d.Set("internal", loadbalancer.InternalLoadbalancer)
 
@@ -158,6 +236,10 @@ func resourceLoadBalancerUpdate(ctx context.Context, d *schema.ResourceData, m i
 
 	loadbalancer, err := client.IaaS().UpdateLoadbalancer(ctx, slug, updateLoadbalancer)
 	if err != nil {
+		if tcclient.IsNotFound(err) {
+			d.SetId("")
+			return nil
+		}
 		return diag.FromErr(err)
 	}
 	if loadbalancer != nil {
@@ -168,6 +250,27 @@ func resourceLoadBalancerUpdate(ctx context.Context, d *schema.ResourceData, m i
 		d.Set("annotations", loadbalancer.Annotations)
 		// d.Set("delete_protection", loadbalancer.DeleteProtection)
 		return nil
+	}
+
+	ctxWithTimeout, cancel := context.WithTimeout(ctx, 20*time.Minute)
+	defer cancel()
+	for {
+		select {
+		case <-ctxWithTimeout.Done():
+			return diag.FromErr(fmt.Errorf("timeout while waiting for loadbalancer to be ready"))
+		case <-time.After(1 * time.Second):
+		}
+		// continue
+		loadbalancer, err = client.IaaS().GetLoadbalancer(ctxWithTimeout, slug)
+		if err != nil {
+			if tcclient.IsNotFound(err) {
+				return diag.FromErr(fmt.Errorf("loadbalancer %s was not found after update", slug))
+			}
+			return diag.FromErr(err)
+		}
+		if loadbalancer.Status == "ready" {
+			break
+		}
 	}
 
 	return resourceLoadBalancerRead(ctx, d, m)
@@ -181,9 +284,36 @@ func resourceLoadBalancerDelete(ctx context.Context, d *schema.ResourceData, m i
 
 	id := d.Get("id").(string)
 	if err := client.IaaS().DeleteLoadbalancer(ctx, id); err != nil {
+		if tcclient.IsNotFound(err) {
+			d.SetId("")
+			return nil
+		}
 		return diag.FromErr(err)
 	}
-	d.SetId("")
 
+	// wait until the loadbalancer is deleted
+	ctxWithTimeout, cancel := context.WithTimeout(ctx, 20*time.Minute)
+	defer cancel()
+
+	for {
+		select {
+		case <-ctxWithTimeout.Done():
+			return diag.FromErr(fmt.Errorf("timeout while waiting for loadbalancer to be deleted"))
+		case <-time.After(1 * time.Second):
+		}
+		loadbalancer, err := client.IaaS().GetLoadbalancer(ctxWithTimeout, id)
+		if err != nil {
+			if tcclient.IsNotFound(err) {
+				d.SetId("")
+				return nil
+			}
+			return diag.FromErr(err)
+		}
+		if loadbalancer.Status == "deleted" {
+			break
+		}
+	}
+
+	d.SetId("")
 	return nil
 }

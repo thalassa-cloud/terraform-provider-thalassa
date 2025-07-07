@@ -29,7 +29,7 @@ func resourceRouteTable() *schema.Resource {
 			},
 			"organisation_id": {
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
 				ForceNew:    true,
 				Description: "Reference to the Organisation of the RouteTable. If not provided, the organisation of the (Terraform) provider will be used.",
 			},
@@ -179,7 +179,11 @@ func resourceRouteTableDelete(ctx context.Context, d *schema.ResourceData, m int
 	id := d.Get("id").(string)
 
 	err = client.IaaS().DeleteRouteTable(ctx, id)
-	if err != nil && !tcclient.IsNotFound(err) {
+	if err != nil {
+		if tcclient.IsNotFound(err) {
+			d.SetId("")
+			return nil
+		}
 		return diag.FromErr(err)
 	}
 

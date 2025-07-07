@@ -3,6 +3,7 @@ package thalassa
 import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
+	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/dbaas"
 	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/iaas"
 	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/kubernetes"
 	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/organisation"
@@ -50,11 +51,13 @@ func Provider() *schema.Provider {
 			iaas.ResourcesMap,
 			kubernetes.ResourcesMap,
 			organisation.ResourcesMap,
+			dbaas.ResourcesMap,
 		),
 		DataSourcesMap: JoinMaps(
 			iaas.DataSourcesMap,
 			kubernetes.DataSourcesMap,
 			organisation.DataSourcesMap,
+			dbaas.DataSourcesMap,
 		),
 		ConfigureContextFunc: provider.ProviderConfigure,
 	}

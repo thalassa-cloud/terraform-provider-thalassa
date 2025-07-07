@@ -12,24 +12,21 @@ Create an vpc
 ## Example Usage
 
 ```terraform
-terraform {
-  required_providers {
-    thalassa = {
-      source = "thalassa-cloud/thalassa"
-    }
-  }
-}
-
-provider "thalassa" {
-  # Configuration options
-}
-
-# Create a VPC
+# Create a VPC with all optional attributes
 resource "thalassa_vpc" "example" {
-  name        = "example-vpc"
-  description = "Example VPC for documentation"
-  region      = "nl-01"
-  cidrs       = ["10.0.0.0/16", "10.2.0.0/16", "10.3.0.0/16"]
+  name   = "example-vpc"
+  region = "nl-01"
+  cidrs  = ["10.0.0.0/16", "10.2.0.0/16", "10.3.0.0/16"]
+
+  # Optional attributes
+  description = "Example VPC for documentation with all optional attributes"
+
+  # Labels are key-value pairs for organizing resources
+  labels = {
+    environment = "production"
+    project     = "example-project"
+    owner       = "team-a"
+  }
 }
 
 # Create a subnet within the VPC
@@ -37,7 +34,7 @@ resource "thalassa_subnet" "example" {
   name        = "example-subnet"
   description = "Example subnet for documentation"
   vpc_id      = thalassa_vpc.example.id
-  cidr        = ["10.0.1.0/24", "10.2.1.0/24", "10.3.1.0/24"]
+  cidr        = "10.0.1.0/24"
 }
 
 # Output the VPC and subnet IDs
@@ -56,7 +53,6 @@ output "subnet_id" {
 
 - `cidrs` (List of String) List of CIDRs for the Vpc
 - `name` (String) Name of the Vpc
-- `organisation_id` (String) Reference to the Organisation of the Vpc. If not provided, the organisation of the (Terraform) provider will be used.
 - `region` (String) Region of the Vpc. Provide the identity of the region. Can only be set on creation.
 
 ### Optional
@@ -64,6 +60,7 @@ output "subnet_id" {
 - `annotations` (Map of String) Annotations for the Vpc
 - `description` (String) A human readable description about the vpc
 - `labels` (Map of String) Labels for the Vpc
+- `organisation_id` (String) Reference to the Organisation of the Vpc. If not provided, the organisation of the (Terraform) provider will be used.
 
 ### Read-Only
 

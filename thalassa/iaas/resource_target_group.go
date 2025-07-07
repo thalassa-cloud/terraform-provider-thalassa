@@ -28,7 +28,7 @@ func resourceTargetGroup() *schema.Resource {
 			},
 			"organisation_id": {
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
 				ForceNew:    true,
 				Description: "Reference to the Organisation of the Target Group. If not provided, the organisation of the (Terraform) provider will be used.",
 			},
@@ -63,8 +63,8 @@ func resourceTargetGroup() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: validate.StringInSlice([]string{"tcp", "udp", "http", "https", "grpc", "quic"}, false),
-				Description:  "The protocol to use for routing traffic to the targets. Must be one of: tcp, udp, http, https, grpc, quic.",
+				ValidateFunc: validate.StringInSlice([]string{"tcp", "udp"}, false),
+				Description:  "The protocol to use for routing traffic to the targets. Must be one of: tcp, udp.",
 			},
 			"port": {
 				Type:         schema.TypeInt,
@@ -88,7 +88,7 @@ func resourceTargetGroup() *schema.Resource {
 			"health_check_protocol": {
 				Type:         schema.TypeString,
 				Optional:     true,
-				ValidateFunc: validate.StringInSlice([]string{"tcp", "https"}, false),
+				ValidateFunc: validate.StringInSlice([]string{"tcp", "http"}, false),
 				Description:  "The protocol to use for health checks. Must be one of: tcp, http.",
 			},
 			"health_check_interval": {
@@ -122,6 +122,7 @@ func resourceTargetGroup() *schema.Resource {
 			"attachments": {
 				Type:        schema.TypeList,
 				Optional:    true,
+				Computed:    true,
 				Description: "The targets to attach to the target group. If provided, the targets will be attached to the target group when the resource is created. Overwrites the target group attachment resource.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -149,7 +150,7 @@ func resourceTargetGroup() *schema.Resource {
 func resourceTargetGroupCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("error creating client: %w", err))
 	}
 
 	healthCheck := &iaas.BackendHealthCheck{
@@ -170,12 +171,16 @@ func resourceTargetGroupCreate(ctx context.Context, d *schema.ResourceData, m in
 		Vpc:         d.Get("vpc_id").(string),
 		TargetPort:  d.Get("port").(int),
 		Protocol:    iaas.LoadbalancerProtocol(d.Get("protocol").(string)),
-		HealthCheck: healthCheck,
+	}
+
+	healthCheckPort := d.Get("health_check_port").(int)
+	if healthCheckPort != 0 {
+		createTargetGroup.HealthCheck = healthCheck
 	}
 
 	tg, err := client.IaaS().CreateTargetGroup(ctx, createTargetGroup)
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("error creating target group: %w", err))
 	}
 	if tg != nil {
 		d.SetId(tg.Identity)
@@ -193,7 +198,7 @@ func resourceTargetGroupCreate(ctx context.Context, d *schema.ResourceData, m in
 				Attachments:   attachments,
 			}
 			if err := client.IaaS().SetTargetGroupServerAttachments(ctx, batch); err != nil {
-				return diag.FromErr(err)
+				return diag.FromErr(fmt.Errorf("error setting target group server attachments: %w", err))
 			}
 		}
 		return nil
@@ -204,7 +209,7 @@ func resourceTargetGroupCreate(ctx context.Context, d *schema.ResourceData, m in
 func resourceTargetGroupRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("error creating client: %w", err))
 	}
 
 	id := d.Get("id").(string)
@@ -214,7 +219,7 @@ func resourceTargetGroupRead(ctx context.Context, d *schema.ResourceData, m inte
 			d.SetId("")
 			return nil
 		}
-		return diag.FromErr(fmt.Errorf("error getting target group: %s", err))
+		return diag.FromErr(fmt.Errorf("error getting target group: %w", err))
 	}
 	if tg == nil {
 		d.SetId("")
@@ -280,7 +285,11 @@ func resourceTargetGroupUpdate(ctx context.Context, d *schema.ResourceData, m in
 		Annotations: convert.ConvertToMap(d.Get("annotations")),
 		TargetPort:  d.Get("port").(int),
 		Protocol:    iaas.LoadbalancerProtocol(d.Get("protocol").(string)),
-		HealthCheck: healthCheck,
+	}
+
+	healthCheckPort := d.Get("health_check_port").(int)
+	if healthCheckPort != 0 {
+		updateTargetGroup.HealthCheck = healthCheck
 	}
 
 	id := d.Get("id").(string)
@@ -289,7 +298,7 @@ func resourceTargetGroupUpdate(ctx context.Context, d *schema.ResourceData, m in
 		UpdateTargetGroup: updateTargetGroup,
 	})
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("error updating target group: %w", err))
 	}
 	if tg != nil {
 		// Attach targets if specified
@@ -305,7 +314,7 @@ func resourceTargetGroupUpdate(ctx context.Context, d *schema.ResourceData, m in
 				Attachments:   attachments,
 			}
 			if err := client.IaaS().SetTargetGroupServerAttachments(ctx, batch); err != nil {
-				return diag.FromErr(err)
+				return diag.FromErr(fmt.Errorf("error setting target group server attachments: %w", err))
 			}
 		}
 		return nil
@@ -316,13 +325,17 @@ func resourceTargetGroupUpdate(ctx context.Context, d *schema.ResourceData, m in
 func resourceTargetGroupDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("error creating client: %w", err))
 	}
 
 	id := d.Get("id").(string)
 	err = client.IaaS().DeleteTargetGroup(ctx, iaas.DeleteTargetGroupRequest{Identity: id})
 	if err != nil {
-		return diag.FromErr(err)
+		if tcclient.IsNotFound(err) {
+			d.SetId("")
+			return nil
+		}
+		return diag.FromErr(fmt.Errorf("error deleting target group: %w", err))
 	}
 	d.SetId("")
 	return nil

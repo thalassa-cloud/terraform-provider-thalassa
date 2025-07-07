@@ -30,7 +30,7 @@ func resourceNatGateway() *schema.Resource {
 			},
 			"organisation_id": {
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
 				ForceNew:    true,
 				Description: "Reference to the Organisation of the NatGateway. If not provided, the organisation of the (Terraform) provider will be used.",
 			},
@@ -162,7 +162,11 @@ func resourceNatGatewayRead(ctx context.Context, d *schema.ResourceData, m inter
 
 	id := d.Get("id").(string)
 	natGateway, err := client.IaaS().GetNatGateway(ctx, id)
-	if err != nil && !tcclient.IsNotFound(err) {
+	if err != nil {
+		if tcclient.IsNotFound(err) {
+			d.SetId("")
+			return nil
+		}
 		return diag.FromErr(fmt.Errorf("error getting natGateway: %s", err))
 	}
 	if natGateway == nil {
@@ -222,11 +226,21 @@ func resourceNatGatewayDelete(ctx context.Context, d *schema.ResourceData, m int
 	}
 
 	id := d.Get("id").(string)
-	if err := client.IaaS().DeleteNatGateway(ctx, id); err != nil {
+
+	err = client.IaaS().DeleteNatGateway(ctx, id)
+	if err != nil {
+		if tcclient.IsNotFound(err) {
+			d.SetId("")
+			return nil
+		}
 		return diag.FromErr(err)
 	}
-	if err := client.IaaS().WaitUntilNatGatewayDeleted(ctx, id); err != nil {
-		return diag.FromErr(err)
+
+	// wait until the natGateway is deleted
+	ctxWithTimeout, cancel := context.WithTimeout(ctx, 20*time.Minute)
+	defer cancel()
+	if err := client.IaaS().WaitUntilNatGatewayDeleted(ctxWithTimeout, id); err != nil {
+		return diag.FromErr(fmt.Errorf("error waiting for natGateway to be deleted: %w", err))
 	}
 	d.SetId("")
 	return nil
