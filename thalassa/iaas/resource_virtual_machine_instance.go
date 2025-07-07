@@ -99,7 +99,8 @@ func resourceVirtualMachineInstance() *schema.Resource {
 			"cloud_init_template_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Cloud init template id of the virtual machine instance",
+				ForceNew:    true,
+				Description: "Cloud init template id of the virtual machine instance. If provided, the cloud init will be set to the content of the template.",
 			},
 			"root_volume_id": {
 				Type:        schema.TypeString,
