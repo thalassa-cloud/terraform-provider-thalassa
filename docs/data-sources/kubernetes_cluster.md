@@ -22,7 +22,9 @@ Get an Kubernetes cluster
 ### Read-Only
 
 - `annotations` (Map of String) Annotations for the Kubernetes Cluster
+- `api_server_acls` (List of Object) API server ACLs for the Kubernetes Cluster (see [below for nested schema](#nestedatt--api_server_acls))
 - `audit_log_profile` (String) Audit log profile of the Kubernetes Cluster
+- `auto_upgrade_policy` (String) Auto upgrade policy of the Kubernetes Cluster
 - `cluster_type` (String) Cluster type of the Kubernetes Cluster
 - `cluster_version` (String) Cluster version of the Kubernetes Cluster
 - `default_network_policy` (String) Default network policy of the Kubernetes Cluster
@@ -32,6 +34,8 @@ Get an Kubernetes cluster
 - `kubernetes_api_server_ca_certificate` (String) Kubernetes API server CA certificate of the Kubernetes Cluster
 - `kubernetes_api_server_endpoint` (String) Kubernetes API server endpoint of the Kubernetes Cluster
 - `labels` (Map of String) Labels for the Kubernetes Cluster
+- `maintenance_day` (Number) Day of the week when the cluster will be upgraded (0-6, where 0 is Sunday)
+- `maintenance_start_at` (Number) Time of day when the cluster will be upgraded in minutes from midnight
 - `networking_cni` (String) CNI of the Kubernetes Cluster
 - `networking_pod_cidr` (String) Pod CIDR of the Kubernetes Cluster
 - `networking_service_cidr` (String) Service CIDR of the Kubernetes Cluster
@@ -40,3 +44,10 @@ Get an Kubernetes cluster
 - `slug` (String) The slug of the Kubernetes version.
 - `subnet_id` (String) Subnet of the Kubernetes Cluster.
 - `vpc_id` (String) VPC of the Kubernetes Cluster.
+
+<a id="nestedatt--api_server_acls"></a>
+### Nested Schema for `api_server_acls`
+
+Read-Only:
+
+- `allowed_cidrs` (List of String)

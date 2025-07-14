@@ -23,12 +23,16 @@ Create an Kubernetes Cluster
 ### Optional
 
 - `annotations` (Map of String) Annotations for the Kubernetes Cluster
+- `api_server_acls` (Block List, Max: 10) API server ACLs for the Kubernetes Cluster (see [below for nested schema](#nestedblock--api_server_acls))
 - `audit_log_profile` (String) Audit log profile of the Kubernetes Cluster. Must be one of: none, basic, advanced. Default: none.
+- `auto_upgrade_policy` (String) Auto upgrade policy of the Kubernetes Cluster. Must be one of: none, latest-version, latest-stable. Default: none.
 - `cluster_type` (String) Cluster type of the Kubernetes Cluster. Must be one of: managed, hosted-control-plane. Default: managed.
 - `default_network_policy` (String) Default network policy of the Kubernetes Cluster. Must be one of: allow-all, deny-all. Default: deny-all.
 - `delete_protection` (Boolean) Delete protection of the Kubernetes Cluster
 - `description` (String) A human readable description about the Kubernetes Cluster
 - `labels` (Map of String) Labels for the Kubernetes Cluster
+- `maintenance_day` (Number) Day of the week when the cluster will be upgraded (0-6, where 0 is Sunday)
+- `maintenance_start_at` (Number) Time of day when the cluster will be upgraded in minutes from midnight (0-1439)
 - `networking_pod_cidr` (String) Pod CIDR of the Kubernetes Cluster. Must be a valid CIDR block.
 - `networking_service_cidr` (String) Service CIDR of the Kubernetes Cluster. Must be a valid CIDR block.
 - `pod_security_standards_profile` (String) Pod security standards profile of the Kubernetes Cluster. Must be one of: restricted, baseline, privileged. Default: baseline.
@@ -43,5 +47,12 @@ Create an Kubernetes Cluster
 - `slug` (String)
 - `status` (String) Status of the Kubernetes Cluster
 - `vpc_id` (String) VPC of the Kubernetes Cluster. This is automatically set when a subnet is provided.
+
+<a id="nestedblock--api_server_acls"></a>
+### Nested Schema for `api_server_acls`
+
+Optional:
+
+- `allowed_cidrs` (List of String) List of allowed CIDRs for API server access
 
 
