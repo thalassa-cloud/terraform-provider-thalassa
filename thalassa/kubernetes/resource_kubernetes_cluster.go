@@ -153,6 +153,43 @@ func resourceKubernetesCluster() *schema.Resource {
 				Computed:    true,
 				Description: "Kubernetes API server CA certificate of the Kubernetes Cluster",
 			},
+			"api_server_acls": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				MaxItems:    10,
+				Description: "API server ACLs for the Kubernetes Cluster",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"allowed_cidrs": {
+							Type:        schema.TypeList,
+							Optional:    true,
+							Description: "List of allowed CIDRs for API server access",
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+					},
+				},
+			},
+			"auto_upgrade_policy": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				Default:      "none",
+				ValidateFunc: validate.StringInSlice([]string{"none", "latest-version", "latest-stable"}, false),
+				Description:  "Auto upgrade policy of the Kubernetes Cluster. Must be one of: none, latest-version, latest-stable. Default: none.",
+			},
+			"maintenance_day": {
+				Type:         schema.TypeInt,
+				Optional:     true,
+				ValidateFunc: validate.IntBetween(0, 6),
+				Description:  "Day of the week when the cluster will be upgraded (0-6, where 0 is Sunday)",
+			},
+			"maintenance_start_at": {
+				Type:         schema.TypeInt,
+				Optional:     true,
+				ValidateFunc: validate.IntBetween(0, 1439),
+				Description:  "Time of day when the cluster will be upgraded in minutes from midnight (0-1439)",
+			},
 		},
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -227,6 +264,18 @@ func resourceKubernetesClusterCreate(ctx context.Context, d *schema.ResourceData
 		PodSecurityStandardsProfile: kubernetes.KubernetesClusterPodSecurityStandards(d.Get("pod_security_standards_profile").(string)),
 		AuditLogProfile:             kubernetes.KubernetesClusterAuditLoggingProfile(d.Get("audit_log_profile").(string)),
 		DefaultNetworkPolicy:        kubernetes.KubernetesDefaultNetworkPolicies(d.Get("default_network_policy").(string)),
+		ApiServerACLs:               convertApiServerACLs(d.Get("api_server_acls")),
+		AutoUpgradePolicy:           kubernetes.KubernetesClusterAutoUpgradePolicy(d.Get("auto_upgrade_policy").(string)),
+	}
+
+	// Set maintenance settings if provided
+	if maintenanceDay, ok := d.GetOk("maintenance_day"); ok {
+		day := uint(maintenanceDay.(int))
+		createKubernetesCluster.MaintenanceDay = &day
+	}
+	if maintenanceStartAt, ok := d.GetOk("maintenance_start_at"); ok {
+		startAt := uint(maintenanceStartAt.(int))
+		createKubernetesCluster.MaintenanceStartAt = &startAt
 	}
 
 	kubernetesCluster, err := client.Kubernetes().CreateKubernetesCluster(ctx, createKubernetesCluster)
@@ -311,6 +360,27 @@ func resourceKubernetesClusterRead(ctx context.Context, d *schema.ResourceData, 
 	d.Set("kubernetes_api_server_endpoint", kubernetesCluster.APIServerURL)
 	d.Set("kubernetes_api_server_ca_certificate", kubernetesCluster.APIServerCA)
 
+	// Set API server ACLs
+	if len(kubernetesCluster.ApiServerACLs.AllowedCIDRs) > 0 {
+		apiServerACLs := map[string]interface{}{
+			"allowed_cidrs": kubernetesCluster.ApiServerACLs.AllowedCIDRs,
+		}
+		if err := d.Set("api_server_acls", []interface{}{apiServerACLs}); err != nil {
+			return diag.FromErr(fmt.Errorf("error setting api_server_acls: %s", err))
+		}
+	}
+
+	// Set auto upgrade policy
+	d.Set("auto_upgrade_policy", kubernetesCluster.AutoUpgradePolicy)
+
+	// Set maintenance settings
+	if kubernetesCluster.MaintenanceDay != nil {
+		d.Set("maintenance_day", int(*kubernetesCluster.MaintenanceDay))
+	}
+	if kubernetesCluster.MaintenanceStartAt != nil {
+		d.Set("maintenance_start_at", int(*kubernetesCluster.MaintenanceStartAt))
+	}
+
 	if kubernetesCluster.VPC != nil {
 		d.Set("vpc", kubernetesCluster.VPC.Identity)
 	}
@@ -358,7 +428,20 @@ func resourceKubernetesClusterUpdate(ctx context.Context, d *schema.ResourceData
 		PodSecurityStandardsProfile: convert.Ptr(kubernetes.KubernetesClusterPodSecurityStandards(d.Get("pod_security_standards_profile").(string))),
 		AuditLogProfile:             convert.Ptr(kubernetes.KubernetesClusterAuditLoggingProfile(d.Get("audit_log_profile").(string))),
 		DefaultNetworkPolicy:        convert.Ptr(kubernetes.KubernetesDefaultNetworkPolicies(d.Get("default_network_policy").(string))),
+		ApiServerACLs:               convertApiServerACLs(d.Get("api_server_acls")),
+		AutoUpgradePolicy:           kubernetes.KubernetesClusterAutoUpgradePolicy(d.Get("auto_upgrade_policy").(string)),
 	}
+
+	// Set maintenance settings if provided
+	if maintenanceDay, ok := d.GetOk("maintenance_day"); ok {
+		day := uint(maintenanceDay.(int))
+		updateKubernetesCluster.MaintenanceDay = &day
+	}
+	if maintenanceStartAt, ok := d.GetOk("maintenance_start_at"); ok {
+		startAt := uint(maintenanceStartAt.(int))
+		updateKubernetesCluster.MaintenanceStartAt = &startAt
+	}
+
 	identity := d.Get("id").(string)
 	kubernetesCluster, err := client.Kubernetes().UpdateKubernetesCluster(ctx, identity, updateKubernetesCluster)
 	if err != nil {
@@ -394,6 +477,27 @@ func resourceKubernetesClusterUpdate(ctx context.Context, d *schema.ResourceData
 		d.Set("pod_security_standards_profile", kubernetesCluster.PodSecurityStandardsProfile)
 		d.Set("audit_log_profile", kubernetesCluster.AuditLogProfile)
 		d.Set("default_network_policy", kubernetesCluster.DefaultNetworkPolicy)
+
+		// Set API server ACLs
+		if len(kubernetesCluster.ApiServerACLs.AllowedCIDRs) > 0 {
+			apiServerACLs := map[string]interface{}{
+				"allowed_cidrs": kubernetesCluster.ApiServerACLs.AllowedCIDRs,
+			}
+			if err := d.Set("api_server_acls", []interface{}{apiServerACLs}); err != nil {
+				return diag.FromErr(fmt.Errorf("error setting api_server_acls: %s", err))
+			}
+		}
+
+		// Set auto upgrade policy
+		d.Set("auto_upgrade_policy", kubernetesCluster.AutoUpgradePolicy)
+
+		// Set maintenance settings
+		if kubernetesCluster.MaintenanceDay != nil {
+			d.Set("maintenance_day", int(*kubernetesCluster.MaintenanceDay))
+		}
+		if kubernetesCluster.MaintenanceStartAt != nil {
+			d.Set("maintenance_start_at", int(*kubernetesCluster.MaintenanceStartAt))
+		}
 
 		return nil
 	}
@@ -443,4 +547,23 @@ func resourceKubernetesClusterDelete(ctx context.Context, d *schema.ResourceData
 
 	d.SetId("")
 	return nil
+}
+
+// convertApiServerACLs converts the API server ACLs from Terraform schema to the API format
+func convertApiServerACLs(acls interface{}) kubernetes.KubernetesApiServerACLs {
+	if acls == nil {
+		return kubernetes.KubernetesApiServerACLs{}
+	}
+
+	aclsList := acls.([]interface{})
+	if len(aclsList) == 0 {
+		return kubernetes.KubernetesApiServerACLs{}
+	}
+
+	acl := aclsList[0].(map[string]interface{})
+	allowedCIDRs := convert.ConvertToStringSlice(acl["allowed_cidrs"])
+
+	return kubernetes.KubernetesApiServerACLs{
+		AllowedCIDRs: allowedCIDRs,
+	}
 }
