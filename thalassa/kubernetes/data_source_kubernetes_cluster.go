@@ -121,6 +121,38 @@ func DataSourceKubernetesCluster() *schema.Resource {
 				Computed:    true,
 				Description: "Kubernetes API server CA certificate of the Kubernetes Cluster",
 			},
+			"api_server_acls": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "API server ACLs for the Kubernetes Cluster",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"allowed_cidrs": {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "List of allowed CIDRs for API server access",
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+					},
+				},
+			},
+			"auto_upgrade_policy": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Auto upgrade policy of the Kubernetes Cluster",
+			},
+			"maintenance_day": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Day of the week when the cluster will be upgraded (0-6, where 0 is Sunday)",
+			},
+			"maintenance_start_at": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Time of day when the cluster will be upgraded in minutes from midnight",
+			},
 		},
 	}
 }
@@ -161,6 +193,27 @@ func dataSourceKubernetesClusterRead(ctx context.Context, d *schema.ResourceData
 			}
 			d.Set("kubernetes_api_server_endpoint", cluster.APIServerURL)
 			d.Set("kubernetes_api_server_ca_certificate", cluster.APIServerCA)
+
+			// Set API server ACLs
+			if cluster.ApiServerACLs.AllowedCIDRs != nil {
+				apiServerACLs := map[string]interface{}{
+					"allowed_cidrs": cluster.ApiServerACLs.AllowedCIDRs,
+				}
+				if err := d.Set("api_server_acls", []interface{}{apiServerACLs}); err != nil {
+					return diag.FromErr(fmt.Errorf("error setting api_server_acls: %s", err))
+				}
+			}
+
+			// Set auto upgrade policy
+			d.Set("auto_upgrade_policy", cluster.AutoUpgradePolicy)
+
+			// Set maintenance settings
+			if cluster.MaintenanceDay != nil {
+				d.Set("maintenance_day", int(*cluster.MaintenanceDay))
+			}
+			if cluster.MaintenanceStartAt != nil {
+				d.Set("maintenance_start_at", int(*cluster.MaintenanceStartAt))
+			}
 
 			// Set labels and annotations directly
 			if err := d.Set("labels", cluster.Labels); err != nil {
