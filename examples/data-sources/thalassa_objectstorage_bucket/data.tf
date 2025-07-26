@@ -1,15 +1,3 @@
-terraform {
-  required_providers {
-    thalassa = {
-      source = "local/thalassa/thalassa"
-    }
-  }
-}
-
-provider "thalassa" {
-  # Configuration options
-}
-
 # Reference an existing object storage bucket
 data "thalassa_objectstorage_bucket" "existing" {
   name   = "existing-bucket-name"
