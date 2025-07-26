@@ -69,3 +69,6 @@ wip/
 
 # Used for the examples, allow dropping this file in the examples directory and running `terraform init` for validation and testing of examples
 _exampleprovider.tf
+
+thalassa/objectstorage/resource_bucket.go
+thalassa/objectstorage/resources.go
