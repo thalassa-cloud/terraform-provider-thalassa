@@ -59,11 +59,6 @@ func resourceBucket() *schema.Resource {
 				Computed:    true,
 				Description: "Status of the bucket",
 			},
-			"usage": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Usage information for the bucket as a JSON string",
-			},
 			"endpoint": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -132,12 +127,8 @@ func resourceBucketRead(ctx context.Context, d *schema.ResourceData, m interface
 	if bucket.Region != nil {
 		d.Set("region", bucket.Region.Identity)
 	}
-	if bucket.Policy != nil {
-		d.Set("policy", string(bucket.Policy))
-	}
-	if bucket.Usage != nil {
-		d.Set("usage", string(bucket.Usage))
-	}
+	d.Set("policy", bucket.Policy)
+
 	return nil
 }
 
