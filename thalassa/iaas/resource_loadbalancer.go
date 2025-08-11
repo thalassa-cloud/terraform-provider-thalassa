@@ -101,6 +101,12 @@ func resourceLoadBalancer() *schema.Resource {
 					Description: "The external IP address of the loadbalancer",
 				},
 			},
+			"security_group_attachments": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "List identitties of security group that will be attached to the Loadbalancer",
+				Elem:        &schema.Schema{Type: schema.TypeString},
+			},
 		},
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -115,13 +121,14 @@ func resourceLoadBalancerCreate(ctx context.Context, d *schema.ResourceData, m i
 	}
 
 	createLoadbalancer := iaas.CreateLoadbalancer{
-		Name:                 d.Get("name").(string),
-		Description:          d.Get("description").(string),
-		Labels:               convert.ConvertToMap(d.Get("labels")),
-		Annotations:          convert.ConvertToMap(d.Get("annotations")),
-		Subnet:               d.Get("subnet_id").(string),
-		DeleteProtection:     d.Get("delete_protection").(bool),
-		InternalLoadbalancer: d.Get("internal").(bool),
+		Name:                     d.Get("name").(string),
+		Description:              d.Get("description").(string),
+		Labels:                   convert.ConvertToMap(d.Get("labels")),
+		Annotations:              convert.ConvertToMap(d.Get("annotations")),
+		Subnet:                   d.Get("subnet_id").(string),
+		DeleteProtection:         d.Get("delete_protection").(bool),
+		InternalLoadbalancer:     d.Get("internal").(bool),
+		SecurityGroupAttachments: convert.ConvertToStringSlice(d.Get("security_group_attachments")),
 	}
 
 	if deleteProtection := d.Get("delete_protection").(bool); deleteProtection {
@@ -212,8 +219,14 @@ func resourceLoadBalancerRead(ctx context.Context, d *schema.ResourceData, m int
 		d.Set("ip_address", loadbalancer.ExternalIpAddresses[0])
 	}
 	d.Set("external_ip_addresses", loadbalancer.ExternalIpAddresses)
-	// d.Set("delete_protection", loadbalancer.DeleteProtection)
+	d.Set("delete_protection", loadbalancer.DeleteProtection)
+
 	// d.Set("internal", loadbalancer.InternalLoadbalancer)
+	securityGroupAttachments := make([]string, len(loadbalancer.SecurityGroups))
+	for i, securityGroup := range loadbalancer.SecurityGroups {
+		securityGroupAttachments[i] = securityGroup.Identity
+	}
+	d.Set("security_group_attachments", securityGroupAttachments)
 
 	return nil
 }
@@ -225,11 +238,12 @@ func resourceLoadBalancerUpdate(ctx context.Context, d *schema.ResourceData, m i
 	}
 
 	updateLoadbalancer := iaas.UpdateLoadbalancer{
-		Name:             d.Get("name").(string),
-		Description:      d.Get("description").(string),
-		Labels:           convert.ConvertToMap(d.Get("labels")),
-		Annotations:      convert.ConvertToMap(d.Get("annotations")),
-		DeleteProtection: d.Get("delete_protection").(bool),
+		Name:                     d.Get("name").(string),
+		Description:              d.Get("description").(string),
+		Labels:                   convert.ConvertToMap(d.Get("labels")),
+		Annotations:              convert.ConvertToMap(d.Get("annotations")),
+		DeleteProtection:         d.Get("delete_protection").(bool),
+		SecurityGroupAttachments: convert.ConvertToStringSlice(d.Get("security_group_attachments")),
 	}
 
 	slug := d.Get("slug").(string)

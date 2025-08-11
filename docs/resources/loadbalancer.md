@@ -80,6 +80,7 @@ output "loadbalancer_id" {
 - `external_ip_addresses` (List of String) The external IP addresses of the loadbalancer
 - `id` (String) The ID of this resource.
 - `ip_address` (String) The IP address of the loadbalancer
+- `security_group_attachments` (List of String) List identitties of security group that will be attached to the Loadbalancer
 - `slug` (String)
 - `vpc_id` (String) VPC of the Loadbalancer
 

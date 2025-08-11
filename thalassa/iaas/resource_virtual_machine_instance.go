@@ -147,9 +147,10 @@ func resourceVirtualMachineInstance() *schema.Resource {
 			"security_group_attachments": {
 				Type:        schema.TypeList,
 				Optional:    true,
-				Description: "Security group attached to the virtual machine instance",
+				Description: "List identitties of security group that will be attached to the Virtual Machine Instance",
 				Elem: &schema.Schema{
-					Type: schema.TypeString,
+					Type:        schema.TypeString,
+					Description: "The identity of the security group that will be attached to the Virtual Machine Instance",
 				},
 			},
 		},
@@ -226,7 +227,7 @@ func resourceVirtualMachineInstanceCreate(ctx context.Context, d *schema.Resourc
 		DeleteProtection:         d.Get("delete_protection").(bool),
 		CloudInit:                d.Get("cloud_init").(string),
 		RootVolume:               rootVolume,
-		SecurityGroupAttachments: convertToStrList(d.Get("security_group_attachments")),
+		SecurityGroupAttachments: convert.ConvertToStringSlice(d.Get("security_group_attachments")),
 	}
 
 	if cloudInitTemplateId, ok := d.GetOk("cloud_init_template_id"); ok {
@@ -283,7 +284,13 @@ func resourceVirtualMachineInstanceCreate(ctx context.Context, d *schema.Resourc
 					d.Set("attached_volume_ids", getAttachedVolumeIds(virtualMachineInstance))
 					d.Set("status", virtualMachineInstance.Status.Status)
 					d.Set("state", virtualMachineInstance.State)
-					d.Set("security_group_attachments", virtualMachineInstance.SecurityGroupAttachments)
+
+					securityGroupAttachments := make([]string, len(virtualMachineInstance.SecurityGroups))
+					for i, securityGroup := range virtualMachineInstance.SecurityGroups {
+						securityGroupAttachments[i] = securityGroup.Identity
+					}
+					d.Set("security_group_attachments", securityGroupAttachments)
+
 					if virtualMachineInstance.AvailabilityZone != nil {
 						d.Set("availability_zone", *virtualMachineInstance.AvailabilityZone)
 					} else {
@@ -346,7 +353,13 @@ func resourceVirtualMachineInstanceRead(ctx context.Context, d *schema.ResourceD
 	d.Set("subnet_id", virtualMachineInstance.Subnet.Identity)
 	d.Set("delete_protection", virtualMachineInstance.DeleteProtection)
 	d.Set("cloud_init", virtualMachineInstance.CloudInit)
-	d.Set("security_group_attachments", virtualMachineInstance.SecurityGroupAttachments)
+
+	securityGroupAttachments := make([]string, len(virtualMachineInstance.SecurityGroups))
+	for i, securityGroup := range virtualMachineInstance.SecurityGroups {
+		securityGroupAttachments[i] = securityGroup.Identity
+	}
+	d.Set("security_group_attachments", securityGroupAttachments)
+
 	if virtualMachineInstance.AvailabilityZone != nil {
 		d.Set("availability_zone", *virtualMachineInstance.AvailabilityZone)
 	} else {
@@ -384,16 +397,16 @@ func resourceVirtualMachineInstanceUpdate(ctx context.Context, d *schema.Resourc
 	cloudInitTemplateId := d.Get("cloud_init_template_id").(string)
 
 	updateVirtualMachineInstance := iaas.UpdateMachine{
-		Name:             d.Get("name").(string),
-		Description:      d.Get("description").(string),
-		Labels:           convert.ConvertToMap(d.Get("labels")),
-		Annotations:      convert.ConvertToMap(d.Get("annotations")),
-		Subnet:           &subnetId,
-		State:            &state,
-		AvailabilityZone: &availabilityZone,
-		MachineType:      &machineType,
-		DeleteProtection: &deleteProtection,
-		// SecurityGroupAttachments: securityGroupAttachments,
+		Name:                     d.Get("name").(string),
+		Description:              d.Get("description").(string),
+		Labels:                   convert.ConvertToMap(d.Get("labels")),
+		Annotations:              convert.ConvertToMap(d.Get("annotations")),
+		Subnet:                   &subnetId,
+		State:                    &state,
+		AvailabilityZone:         &availabilityZone,
+		MachineType:              &machineType,
+		DeleteProtection:         &deleteProtection,
+		SecurityGroupAttachments: convert.ConvertToStringSlice(d.Get("security_group_attachments")),
 	}
 
 	identity := d.Get("id").(string)
@@ -455,7 +468,13 @@ func resourceVirtualMachineInstanceUpdate(ctx context.Context, d *schema.Resourc
 		d.Set("delete_protection", virtualMachineInstance.DeleteProtection)
 		d.Set("cloud_init", virtualMachineInstance.CloudInit)
 		d.Set("cloud_init_template_id", cloudInitTemplateId)
-		d.Set("security_group_attachments", virtualMachineInstance.SecurityGroupAttachments)
+
+		securityGroupAttachments := make([]string, len(virtualMachineInstance.SecurityGroups))
+		for i, securityGroup := range virtualMachineInstance.SecurityGroups {
+			securityGroupAttachments[i] = securityGroup.Identity
+		}
+		d.Set("security_group_attachments", securityGroupAttachments)
+
 		if virtualMachineInstance.AvailabilityZone != nil {
 			d.Set("availability_zone", *virtualMachineInstance.AvailabilityZone)
 		} else {
