@@ -92,6 +92,15 @@ func resourceNatGateway() *schema.Resource {
 				Computed:    true,
 				Description: "V6 IP of the NatGateway",
 			},
+			"security_group_attachments": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "List identitties of security group that will be attached to the NAT Gateway",
+				Elem: &schema.Schema{
+					Type:        schema.TypeString,
+					Description: "The identity of the security group that will be attached to the NAT Gateway",
+				},
+			},
 		},
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -105,12 +114,15 @@ func resourceNatGatewayCreate(ctx context.Context, d *schema.ResourceData, m int
 		return diag.FromErr(err)
 	}
 
+	securityGroupAttachments := convert.ConvertToStringSlice(d.Get("security_group_attachments"))
+
 	createNatGateway := iaas.CreateVpcNatGateway{
-		Name:           d.Get("name").(string),
-		Description:    d.Get("description").(string),
-		Labels:         convert.ConvertToMap(d.Get("labels")),
-		Annotations:    convert.ConvertToMap(d.Get("annotations")),
-		SubnetIdentity: d.Get("subnet_id").(string),
+		Name:                     d.Get("name").(string),
+		Description:              d.Get("description").(string),
+		Labels:                   convert.ConvertToMap(d.Get("labels")),
+		Annotations:              convert.ConvertToMap(d.Get("annotations")),
+		SubnetIdentity:           d.Get("subnet_id").(string),
+		SecurityGroupAttachments: securityGroupAttachments,
 	}
 
 	natGateway, err := client.IaaS().CreateNatGateway(ctx, createNatGateway)
@@ -185,6 +197,13 @@ func resourceNatGatewayRead(ctx context.Context, d *schema.ResourceData, m inter
 	d.Set("status", natGateway.Status)
 	d.Set("v4_ip", natGateway.V4IP)
 	d.Set("v6_ip", natGateway.V6IP)
+
+	securityGroupAttachments := make([]string, len(natGateway.SecurityGroups))
+	for i, securityGroup := range natGateway.SecurityGroups {
+		securityGroupAttachments[i] = securityGroup.Identity
+	}
+	d.Set("security_group_attachments", securityGroupAttachments)
+
 	return nil
 }
 
@@ -195,10 +214,11 @@ func resourceNatGatewayUpdate(ctx context.Context, d *schema.ResourceData, m int
 	}
 
 	updateNatGateway := iaas.UpdateVpcNatGateway{
-		Name:        d.Get("name").(string),
-		Description: d.Get("description").(string),
-		Labels:      convert.ConvertToMap(d.Get("labels")),
-		Annotations: convert.ConvertToMap(d.Get("annotations")),
+		Name:                     d.Get("name").(string),
+		Description:              d.Get("description").(string),
+		Labels:                   convert.ConvertToMap(d.Get("labels")),
+		Annotations:              convert.ConvertToMap(d.Get("annotations")),
+		SecurityGroupAttachments: convert.ConvertToStringSlice(d.Get("security_group_attachments")),
 	}
 
 	slug := d.Get("slug").(string)

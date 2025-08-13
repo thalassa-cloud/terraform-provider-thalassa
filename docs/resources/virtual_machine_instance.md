@@ -144,7 +144,7 @@ output "load_balancer_port" {
 - `root_volume_id` (String) Root volume id of the virtual machine instance. Must be provided if root_volume_type is not set.
 - `root_volume_size_gb` (Number) Root volume size of the virtual machine instance. Must be provided if root_volume_id is not set.
 - `root_volume_type` (String) Root volume type of the virtual machine instance. Must be provided if root_volume_id is not set.
-- `security_group_attachments` (List of String) Security group attached to the virtual machine instance
+- `security_group_attachments` (List of String) List identitties of security group that will be attached to the Virtual Machine Instance
 
 ### Read-Only
 

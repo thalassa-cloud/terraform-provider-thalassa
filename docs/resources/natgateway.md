@@ -77,6 +77,7 @@ output "nat_gateway_endpoint_ip" {
 
 - `endpoint_ip` (String) Endpoint IP of the NatGateway
 - `id` (String) The ID of this resource.
+- `security_group_attachments` (List of String) List identitties of security group that will be attached to the NAT Gateway
 - `slug` (String)
 - `status` (String) Status of the NatGateway
 - `v4_ip` (String) V4 IP of the NatGateway
