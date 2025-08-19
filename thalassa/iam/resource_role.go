@@ -32,22 +32,26 @@ func ResourceRole() *schema.Resource {
 				Required:     true,
 				ValidateFunc: validate.StringLenBetween(1, 255),
 				Description:  "Name of the organisation role",
+				ForceNew:     true,
 			},
 			"description": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ValidateFunc: validate.StringLenBetween(0, 255),
 				Description:  "Description of the organisation role",
+				ForceNew:     true,
 			},
 			"labels": {
 				Type:        schema.TypeMap,
 				Optional:    true,
 				Description: "Labels for the organisation role",
+				ForceNew:    true,
 			},
 			"annotations": {
 				Type:        schema.TypeMap,
 				Optional:    true,
 				Description: "Annotations for the organisation role",
+				ForceNew:    true,
 			},
 			"slug": {
 				Type:        schema.TypeString,
@@ -149,26 +153,26 @@ func resourceRoleDelete(ctx context.Context, d *schema.ResourceData, m interface
 	return nil
 }
 
-// func resourceRoleUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-// 	client, err := provider.GetClient(provider.GetProvider(m), d)
-// 	if err != nil {
-// 		return diag.FromErr(err)
-// 	}
-// 	identity := d.Get("id").(string)
-// 	updateReq := iam.UpdateOrganisationRoleRequest{
-// 		Name:        d.Get("name").(string),
-// 		Description: d.Get("description").(string),
-// 		Labels:      convert.ConvertToMap(d.Get("labels")),
-// 		Annotations: convert.ConvertToMap(d.Get("annotations")),
-// 	}
-// 	role, err := client.IAM().UpdateOrganisationRole(ctx, identity, updateReq)
-// 	if err != nil {
-// 		return diag.FromErr(err)
-// 	}
-// 	if role != nil {
-// 		d.SetId(role.Identity)
-// 		return resourceRoleRead(ctx, d, m)
-// 	}
-// 	return diag.FromErr(fmt.Errorf("failed to update organisation role"))
-
-// }
+func resourceRoleUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	// client, err := provider.GetClient(provider.GetProvider(m), d)
+	// if err != nil {
+	// 	return diag.FromErr(err)
+	// }
+	// identity := d.Get("id").(string)
+	// updateReq := iam.UpdateOrganisationRole{
+	// 	Name:        d.Get("name").(string),
+	// 	Description: d.Get("description").(string),
+	// 	Labels:      convert.ConvertToMap(d.Get("labels")),
+	// 	Annotations: convert.ConvertToMap(d.Get("annotations")),
+	// }
+	// role, err := client.IAM().UpdateOrganisationRole(ctx, identity, updateReq)
+	// if err != nil {
+	// 	return diag.FromErr(err)
+	// }
+	// if role != nil {
+	// 	d.SetId(role.Identity)
+	// 	return resourceRoleRead(ctx, d, m)
+	// }
+	// return diag.FromErr(fmt.Errorf("failed to update organisation role"))
+	return nil
+}
