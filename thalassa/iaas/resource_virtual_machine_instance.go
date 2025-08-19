@@ -147,7 +147,7 @@ func resourceVirtualMachineInstance() *schema.Resource {
 			"security_group_attachments": {
 				Type:        schema.TypeList,
 				Optional:    true,
-				Description: "List identitties of security group that will be attached to the Virtual Machine Instance",
+				Description: "List identities of security group that will be attached to the Virtual Machine Instance",
 				Elem: &schema.Schema{
 					Type:        schema.TypeString,
 					Description: "The identity of the security group that will be attached to the Virtual Machine Instance",
