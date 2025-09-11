@@ -34,6 +34,7 @@ Create an Kubernetes Node Pool for a Kubernetes Cluster. This resource is only a
 - `node_taints` (Block List) Taints for the Kubernetes Node Pool (see [below for nested schema](#nestedblock--node_taints))
 - `organisation_id` (String) Reference to the Organisation of the Kubernetes Node Pool. If not provided, the organisation of the (Terraform) provider will be used.
 - `replicas` (Number) Number of replicas for the Kubernetes Node Pool. Do not set this when enable_autoscaling is true.
+- `security_group_attachments` (List of String) List identities of security group that will be attached to the machines in the Node Pool
 - `subnet_id` (String) Subnet of the Kubernetes Cluster. Required for managed Kubernetes Clusters.
 - `upgrade_strategy` (String) Upgrade strategy for the Kubernetes Node Pool
 
