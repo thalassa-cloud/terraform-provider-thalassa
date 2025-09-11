@@ -94,7 +94,7 @@ func resourceNatGateway() *schema.Resource {
 			},
 			"security_group_attachments": {
 				Type:        schema.TypeList,
-				Computed:    true,
+				Optional:    true,
 				Description: "List identities of security group that will be attached to the NAT Gateway",
 				Elem: &schema.Schema{
 					Type:        schema.TypeString,
