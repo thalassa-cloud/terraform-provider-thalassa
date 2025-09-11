@@ -18,7 +18,7 @@ import (
 
 func resourceKubernetesCluster() *schema.Resource {
 	return &schema.Resource{
-		Description:   "Create an Kubernetes Cluster",
+		Description:   "Manages a Kubernetes cluster in the Thalassa cloud platform. This resource supports both managed clusters and hosted control plane clusters, allowing you to deploy production-ready Kubernetes environments with configurable networking, security policies, and auto-upgrade capabilities. The cluster can be customized with specific CNI plugins (Cilium or custom), network CIDRs, pod security standards, audit logging, and API server access controls.",
 		CreateContext: resourceKubernetesClusterCreate,
 		ReadContext:   resourceKubernetesClusterRead,
 		UpdateContext: resourceKubernetesClusterUpdate,
@@ -190,6 +190,12 @@ func resourceKubernetesCluster() *schema.Resource {
 				ValidateFunc: validate.IntBetween(0, 1439),
 				Description:  "Time of day when the cluster will be upgraded in minutes from midnight (0-1439)",
 			},
+			"security_group_attachments": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: "List identities of security group that will be attached to the Kubernetes Cluster",
+				Elem:        &schema.Schema{Type: schema.TypeString},
+			},
 		},
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -266,6 +272,10 @@ func resourceKubernetesClusterCreate(ctx context.Context, d *schema.ResourceData
 		DefaultNetworkPolicy:        kubernetes.KubernetesDefaultNetworkPolicies(d.Get("default_network_policy").(string)),
 		ApiServerACLs:               convertApiServerACLs(d.Get("api_server_acls")),
 		AutoUpgradePolicy:           kubernetes.KubernetesClusterAutoUpgradePolicy(d.Get("auto_upgrade_policy").(string)),
+	}
+
+	if securityGroupAttachments, ok := d.GetOk("security_group_attachments"); ok {
+		createKubernetesCluster.SecurityGroupAttachments = convert.ConvertToStringSlice(securityGroupAttachments)
 	}
 
 	// Set maintenance settings if provided
@@ -370,6 +380,12 @@ func resourceKubernetesClusterRead(ctx context.Context, d *schema.ResourceData, 
 		}
 	}
 
+	securityGroupAttachments := []string{}
+	for _, sg := range kubernetesCluster.SecurityGroups {
+		securityGroupAttachments = append(securityGroupAttachments, sg.Identity)
+	}
+	d.Set("security_group_attachments", securityGroupAttachments)
+
 	// Set auto upgrade policy
 	d.Set("auto_upgrade_policy", kubernetesCluster.AutoUpgradePolicy)
 
@@ -430,6 +446,10 @@ func resourceKubernetesClusterUpdate(ctx context.Context, d *schema.ResourceData
 		DefaultNetworkPolicy:        convert.Ptr(kubernetes.KubernetesDefaultNetworkPolicies(d.Get("default_network_policy").(string))),
 		ApiServerACLs:               convertApiServerACLs(d.Get("api_server_acls")),
 		AutoUpgradePolicy:           kubernetes.KubernetesClusterAutoUpgradePolicy(d.Get("auto_upgrade_policy").(string)),
+	}
+
+	if securityGroupAttachments, ok := d.GetOk("security_group_attachments"); ok {
+		updateKubernetesCluster.SecurityGroupAttachments = convert.ConvertToStringSlice(securityGroupAttachments)
 	}
 
 	// Set maintenance settings if provided
