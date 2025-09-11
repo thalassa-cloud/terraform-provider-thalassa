@@ -74,13 +74,13 @@ output "loadbalancer_id" {
 - `internal` (Boolean) Internal loadbalancer
 - `labels` (Map of String) Labels for the Loadbalancer
 - `organisation_id` (String) Reference to the Organisation of the Loadbalancer. If not provided, the organisation of the (Terraform) provider will be used.
+- `security_group_attachments` (List of String) List identities of security group that will be attached to the Loadbalancer
 
 ### Read-Only
 
 - `external_ip_addresses` (List of String) The external IP addresses of the loadbalancer
 - `id` (String) The ID of this resource.
 - `ip_address` (String) The IP address of the loadbalancer
-- `security_group_attachments` (List of String) List identitties of security group that will be attached to the Loadbalancer
 - `slug` (String)
 - `vpc_id` (String) VPC of the Loadbalancer
 

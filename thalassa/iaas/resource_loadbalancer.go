@@ -103,7 +103,7 @@ func resourceLoadBalancer() *schema.Resource {
 			},
 			"security_group_attachments": {
 				Type:        schema.TypeList,
-				Computed:    true,
+				Optional:    true,
 				Description: "List identities of security group that will be attached to the Loadbalancer",
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},

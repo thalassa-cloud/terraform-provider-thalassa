@@ -10,6 +10,7 @@ var (
 
 	DataSourcesMap = map[string]*schema.Resource{
 		"thalassa_iam_team": DataSourceTeam(),
+		"thalassa_iam_role": DataSourceRole(),
 		// "thalassa_iam_user": DataSourceUser(),
 	}
 )

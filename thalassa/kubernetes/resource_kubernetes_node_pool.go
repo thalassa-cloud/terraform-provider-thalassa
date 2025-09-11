@@ -207,6 +207,12 @@ func resourceKubernetesNodePool() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
+			"security_group_attachments": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: "List identities of security group that will be attached to the machines in the Node Pool",
+				Elem:        &schema.Schema{Type: schema.TypeString},
+			},
 		},
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -286,6 +292,10 @@ func resourceKubernetesNodePoolCreate(ctx context.Context, d *schema.ResourceDat
 		KubernetesVersionIdentity: kubernetesVersionIdentity,
 	}
 
+	if securityGroupAttachments, ok := d.GetOk("security_group_attachments"); ok {
+		createKubernetesNodePool.SecurityGroupAttachments = convert.ConvertToStringSlice(securityGroupAttachments)
+	}
+
 	kubernetesClusterIdentity := d.Get("cluster_id").(string)
 	kubernetesNodePool, err := client.Kubernetes().CreateKubernetesNodePool(ctx, kubernetesClusterIdentity, createKubernetesNodePool)
 	if err != nil {
@@ -361,6 +371,12 @@ func resourceKubernetesNodePoolRead(ctx context.Context, d *schema.ResourceData,
 	if kubernetesNodePool.Subnet != nil {
 		d.Set("subnet_id", kubernetesNodePool.Subnet.Identity)
 	}
+
+	securityGroupAttachments := []string{}
+	for _, sg := range kubernetesNodePool.SecurityGroups {
+		securityGroupAttachments = append(securityGroupAttachments, sg.Identity)
+	}
+	d.Set("security_group_attachments", securityGroupAttachments)
 
 	return nil
 }
@@ -438,6 +454,9 @@ func resourceKubernetesNodePoolUpdate(ctx context.Context, d *schema.ResourceDat
 			Labels:      convert.ConvertToMap(d.Get("node_labels")),
 			Taints:      convertToNodeTaints(d.Get("node_taints").([]interface{})),
 		},
+	}
+	if securityGroupAttachments, ok := d.GetOk("security_group_attachments"); ok {
+		updateKubernetesNodePool.SecurityGroupAttachments = convert.ConvertToStringSlice(securityGroupAttachments)
 	}
 
 	kubernetesNodePool, err := client.Kubernetes().UpdateKubernetesNodePool(ctx, kubernetesClusterIdentity, nodePoolIdentity, updateKubernetesNodePool)

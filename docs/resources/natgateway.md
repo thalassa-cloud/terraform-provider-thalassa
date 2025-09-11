@@ -72,12 +72,12 @@ output "nat_gateway_endpoint_ip" {
 - `description` (String) A human readable description about the natGateway
 - `labels` (Map of String) Labels for the NatGateway
 - `organisation_id` (String) Reference to the Organisation of the NatGateway. If not provided, the organisation of the (Terraform) provider will be used.
+- `security_group_attachments` (List of String) List identities of security group that will be attached to the NAT Gateway
 
 ### Read-Only
 
 - `endpoint_ip` (String) Endpoint IP of the NatGateway
 - `id` (String) The ID of this resource.
-- `security_group_attachments` (List of String) List identitties of security group that will be attached to the NAT Gateway
 - `slug` (String)
 - `status` (String) Status of the NatGateway
 - `v4_ip` (String) V4 IP of the NatGateway
