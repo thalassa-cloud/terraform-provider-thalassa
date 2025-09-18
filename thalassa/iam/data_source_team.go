@@ -65,6 +65,64 @@ func DataSourceTeam() *schema.Resource {
 				Computed:    true,
 				Description: "Last update timestamp of the Team",
 			},
+			"members": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "List of team members",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"identity": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Identity of the team member",
+						},
+						"role": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Role of the team member",
+						},
+						"created_at": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Creation timestamp of the team member",
+						},
+						"updated_at": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Last update timestamp of the team member",
+						},
+						"user": {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "User information for the team member",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"subject": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Subject identifier of the user",
+									},
+									"name": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Name of the user",
+									},
+									"email": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Email address of the user",
+									},
+									"created_at": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Creation timestamp of the user",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -144,5 +202,31 @@ func dataSourceTeamRead(ctx context.Context, d *schema.ResourceData, m interface
 	if team.UpdatedAt != nil {
 		d.Set("updated_at", team.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"))
 	}
+
+	// Set members data
+	memberList := make([]map[string]interface{}, len(team.Members))
+	for i, member := range team.Members {
+		memberMap := map[string]interface{}{
+			"identity":   member.Identity,
+			"role":       member.Role,
+			"created_at": member.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		}
+		if member.UpdatedAt != nil {
+			memberMap["updated_at"] = member.UpdatedAt.Format("2006-01-02T15:04:05Z07:00")
+		}
+
+		// Add user information
+		userMap := map[string]interface{}{
+			"subject":    member.User.Subject,
+			"name":       member.User.Name,
+			"email":      member.User.Email,
+			"created_at": member.User.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		}
+		memberMap["user"] = []map[string]interface{}{userMap}
+
+		memberList[i] = memberMap
+	}
+	d.Set("members", memberList)
+
 	return diag.Diagnostics{}
 }

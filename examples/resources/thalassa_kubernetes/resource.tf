@@ -1,7 +1,7 @@
 terraform {
   required_providers {
     thalassa = {
-      source = "local/thalassa/thalassa"
+      source = "thalassa.cloud/thalassa/thalassa"
     }
   }
 }
@@ -31,7 +31,11 @@ resource "thalassa_kubernetes_cluster" "example" {
   name        = "example-kubernetes-cluster"
   description = "Example Kubernetes cluster"
   region      = "nl-01"
-  version     = "1.28"
+  # version     = "1.28"
+  cluster_version = "1.33"
+  api_server_acls = {
+    allowed_cidrs = ["10.0.0.0/16"]
+  }
 }
 
 # Create a Kubernetes node pool with Thalassa default values
@@ -40,7 +44,7 @@ resource "thalassa_kubernetes_node_pool" "example" {
   name                  = "example-node-pool"
   machine_type          = "pgp-small" # Available: pgp-small, pgp-medium, pgp-large, pgp-xlarge, pgp-2xlarge, pgp-4xlarge, dgp-small, dgp-medium, dgp-large, dgp-xlarge, dgp-2xlarge, dgp-4xlarge
   machine_image         = "ubuntu-22.04"
-  node_count            = 3
+  node_count            = 0
 }
 
 # Output the Kubernetes cluster details

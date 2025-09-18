@@ -1,19 +1,3 @@
-# Configure the Thalassa Cloud Provider
-terraform {
-  required_providers {
-    thalassa = {
-      source = "thalassa.cloud/thalassa/thalassa"
-    }
-  }
-}
-
-provider "thalassa" {
-  # Configure your provider here
-  # token = "your-api-token"
-  # api = "https://api.thalassa.cloud"
-  # organisation_id = "your-organisation-id"
-}
-
 # Create a team
 resource "thalassa_iam_team" "example" {
   name        = "example-team"
@@ -28,6 +12,11 @@ resource "thalassa_iam_team" "example" {
     contact = "team@example.com"
     owner   = "devops"
   }
+
+  # Add team members
+  # members {
+  #   email = "example@example.com"
+  # }
 }
 
 # Output the team details
@@ -45,4 +34,12 @@ output "team_slug" {
 
 output "team_description" {
   value = thalassa_iam_team.example.description
+}
+
+output "team_members" {
+  value = thalassa_iam_team.example.members
+}
+
+output "team_member_count" {
+  value = length(thalassa_iam_team.example.members)
 }
