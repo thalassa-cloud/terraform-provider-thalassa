@@ -47,6 +47,12 @@ Thalassa Cloud Terraform Provider
 - [Database Cluster](./examples/resources/thalassa_dbaas_db_cluster/) - Set up database clusters
 - [Database Backup Schedule](./examples/resources/thalassa_dbaas_db_backupschedule/) - Configure automated backup schedules
 
+#### Identity & Access Management (IAM)
+- [IAM Role](./examples/resources/thalassa_iam_role/) - Create and manage IAM roles
+- [IAM Role Binding](./examples/resources/thalassa_iam_role_binding/) - Bind roles to service accounts or users
+- [Service Account](./examples/resources/thalassa_iam_service_account/) - Create and manage IAM service accounts
+- [Service Account Access Credential](./examples/resources/thalassa_iam_service_account_access_credential/) - Manage access credentials for service accounts
+
 ## License
 
 [Apache 2.0 License 2.0](lICENSE)
