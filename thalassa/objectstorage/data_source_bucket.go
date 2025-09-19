@@ -7,6 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	validate "github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/thalassa-cloud/client-go/objectstorage"
 	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/provider"
 )
 
@@ -57,6 +58,16 @@ func DataSourceBucket() *schema.Resource {
 				Computed:    true,
 				Description: "The endpoint URL for the bucket",
 			},
+			"versioning": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Whether the bucket is versioned",
+			},
+			"object_lock_enabled": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Whether the bucket has object lock enabled",
+			},
 		},
 	}
 }
@@ -90,6 +101,8 @@ func dataSourceBucketRead(ctx context.Context, d *schema.ResourceData, m interfa
 	d.Set("public", bucket.Public)
 	d.Set("status", bucket.Status)
 	d.Set("endpoint", bucket.Endpoint)
+	d.Set("versioning", bucket.Versioning == objectstorage.ObjectStorageBucketVersioningEnabled)
+	d.Set("object_lock_enabled", bucket.ObjectLockEnabled)
 
 	if bucket.Region != nil {
 		d.Set("region", bucket.Region.Identity)

@@ -28,6 +28,8 @@ Get an object storage bucket
 
 - `endpoint` (String) The endpoint URL for the bucket
 - `id` (String) Identity of the bucket
+- `object_lock_enabled` (Boolean) Whether the bucket has object lock enabled
 - `policy` (String) The bucket policy as a JSON string
 - `public` (Boolean) Whether the bucket is publicly accessible
 - `status` (String) Status of the bucket
+- `versioning` (Boolean) Whether the bucket is versioned
