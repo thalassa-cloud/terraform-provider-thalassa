@@ -75,6 +75,49 @@ func DataSourceRole() *schema.Resource {
 				Computed:    true,
 				Description: "Whether the role is a system role",
 			},
+			"rules": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "Permission rules for the organisation role",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"identity": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Identity of the permission rule",
+						},
+						"resources": {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "List of resources this rule applies to",
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+						"resource_identities": {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "List of specific resource identities this rule applies to",
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+						"permissions": {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "List of permissions (create, read, update, delete, list, *)",
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+						"note": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Human-readable note for the permission rule",
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -150,9 +193,24 @@ func dataSourceRoleRead(ctx context.Context, d *schema.ResourceData, m interface
 	d.Set("description", role.Description)
 	d.Set("labels", role.Labels)
 	d.Set("annotations", role.Annotations)
-	d.Set("created_at", role.CreatedAt.Format("2006-01-02T15:04:05Z07:00"))
-	d.Set("updated_at", role.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"))
+	d.Set("created_at", role.CreatedAt.Format(TimeFormatRFC3339))
+	d.Set("updated_at", role.UpdatedAt.Format(TimeFormatRFC3339))
 	d.Set("role_is_read_only", role.IsReadOnly)
 	d.Set("system", role.System)
+
+	// Set rules
+	ruleList := make([]map[string]any, len(role.Rules))
+	for i, rule := range role.Rules {
+		ruleMap := map[string]any{
+			"identity":            rule.Identity,
+			"resources":           toListOfInterfaces(rule.Resources),
+			"resource_identities": toListOfInterfaces(rule.ResourceIdentities),
+			"permissions":         toListOfInterfaces(convertPermissionsToStrings(rule.Permissions)),
+			"note":                rule.Note,
+		}
+		ruleList[i] = ruleMap
+	}
+	d.Set("rules", ruleList)
+
 	return diag.Diagnostics{}
 }

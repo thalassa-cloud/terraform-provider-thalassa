@@ -1,15 +1,3 @@
-terraform {
-  required_providers {
-    thalassa = {
-      source = "thalassa-cloud/thalassa"
-    }
-  }
-}
-
-provider "thalassa" {
-  # Configuration options
-}
-
 # Create an organisation role
 resource "thalassa_iam_role" "example" {
   name        = "example-role"
@@ -22,6 +10,19 @@ resource "thalassa_iam_role" "example" {
   
   annotations = {
     "example.com/created-by" = "terraform"
+  }
+
+  # Define permission rules
+  rules {
+    resources   = ["cloud_vpc", "cloud_subnet"]
+    permissions = ["read", "list"]
+    note        = "Allow read access to VPCs and subnets"
+  }
+  rules {
+    resources           = ["cloud_vpc"]
+    resource_identities = ["vpc-123", "vpc-456"]
+    permissions         = ["update", "delete"]
+    note                = "Allow update/delete for specific VPCs"
   }
 }
 
@@ -40,5 +41,9 @@ output "role_slug" {
 
 output "role_description" {
   value = thalassa_iam_role.example.description
+}
+
+output "role_rules" {
+  value = thalassa_iam_role.example.rules
 }
 

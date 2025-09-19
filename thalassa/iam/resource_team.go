@@ -177,9 +177,9 @@ func resourceTeamRead(ctx context.Context, d *schema.ResourceData, m interface{}
 	d.Set("description", team.Description)
 	d.Set("labels", team.Labels)
 	d.Set("annotations", team.Annotations)
-	d.Set("created_at", team.CreatedAt.Format("2006-01-02T15:04:05Z07:00"))
+	d.Set("created_at", team.CreatedAt.Format(TimeFormatRFC3339))
 	if team.UpdatedAt != nil {
-		d.Set("updated_at", team.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"))
+		d.Set("updated_at", team.UpdatedAt.Format(TimeFormatRFC3339))
 	}
 
 	// Set members data
@@ -247,7 +247,7 @@ func resourceTeamUpdate(ctx context.Context, d *schema.ResourceData, m interface
 		d.Set("labels", team.Labels)
 		d.Set("annotations", team.Annotations)
 		if team.UpdatedAt != nil {
-			d.Set("updated_at", team.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"))
+			d.Set("updated_at", team.UpdatedAt.Format(TimeFormatRFC3339))
 		}
 	}
 

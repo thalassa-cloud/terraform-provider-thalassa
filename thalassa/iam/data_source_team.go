@@ -74,7 +74,7 @@ func DataSourceTeam() *schema.Resource {
 						"identity": {
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "Identity of the team member",
+							Description: "team membershhip identity",
 						},
 						"role": {
 							Type:        schema.TypeString,
@@ -91,34 +91,20 @@ func DataSourceTeam() *schema.Resource {
 							Computed:    true,
 							Description: "Last update timestamp of the team member",
 						},
-						"user": {
-							Type:        schema.TypeList,
+						"user_id": {
+							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "User information for the team member",
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"subject": {
-										Type:        schema.TypeString,
-										Computed:    true,
-										Description: "Subject identifier of the user",
-									},
-									"name": {
-										Type:        schema.TypeString,
-										Computed:    true,
-										Description: "Name of the user",
-									},
-									"email": {
-										Type:        schema.TypeString,
-										Computed:    true,
-										Description: "Email address of the user",
-									},
-									"created_at": {
-										Type:        schema.TypeString,
-										Computed:    true,
-										Description: "Creation timestamp of the user",
-									},
-								},
-							},
+							Description: "Subject identifier of the user",
+						},
+						"name": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Name of the user",
+						},
+						"email": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Email address of the user",
 						},
 					},
 				},
@@ -198,9 +184,9 @@ func dataSourceTeamRead(ctx context.Context, d *schema.ResourceData, m interface
 	d.Set("description", team.Description)
 	d.Set("labels", team.Labels)
 	d.Set("annotations", team.Annotations)
-	d.Set("created_at", team.CreatedAt.Format("2006-01-02T15:04:05Z07:00"))
+	d.Set("created_at", team.CreatedAt.Format(TimeFormatRFC3339))
 	if team.UpdatedAt != nil {
-		d.Set("updated_at", team.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"))
+		d.Set("updated_at", team.UpdatedAt.Format(TimeFormatRFC3339))
 	}
 
 	// Set members data
@@ -209,21 +195,12 @@ func dataSourceTeamRead(ctx context.Context, d *schema.ResourceData, m interface
 		memberMap := map[string]interface{}{
 			"identity":   member.Identity,
 			"role":       member.Role,
-			"created_at": member.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
-		}
-		if member.UpdatedAt != nil {
-			memberMap["updated_at"] = member.UpdatedAt.Format("2006-01-02T15:04:05Z07:00")
-		}
-
-		// Add user information
-		userMap := map[string]interface{}{
-			"subject":    member.User.Subject,
+			"created_at": member.CreatedAt.Format(TimeFormatRFC3339),
+			"updated_at": member.UpdatedAt.Format(TimeFormatRFC3339),
+			"user_id":    member.User.Subject,
 			"name":       member.User.Name,
 			"email":      member.User.Email,
-			"created_at": member.User.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
 		}
-		memberMap["user"] = []map[string]interface{}{userMap}
-
 		memberList[i] = memberMap
 	}
 	d.Set("members", memberList)
