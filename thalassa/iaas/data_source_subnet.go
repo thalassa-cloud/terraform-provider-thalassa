@@ -16,13 +16,15 @@ func dataSourceSubnet() *schema.Resource {
 		ReadContext: dataSourceSubnetRead,
 		Schema: map[string]*schema.Schema{
 			"id": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The unique identifier of the subnet",
 			},
 			"slug": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				Description: "The slug of the subnet. Required when multiple subnets exist with the same name in the VPC",
 			},
 			"organisation_id": {
 				Type:        schema.TypeString,
@@ -31,16 +33,19 @@ func dataSourceSubnet() *schema.Resource {
 				Description: "Reference to the Organisation of the Subnet. If not provided, the organisation of the (Terraform) provider will be used.",
 			},
 			"name": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "The name of the subnet to look up",
 			},
 			"vpc_id": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "The ID of the VPC that contains the subnet",
 			},
 			"cidr": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The CIDR block of the subnet",
 			},
 		},
 	}

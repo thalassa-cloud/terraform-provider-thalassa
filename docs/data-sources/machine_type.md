@@ -17,12 +17,12 @@ Get an machine type
 ### Optional
 
 - `organisation_id` (String) Reference to the Organisation of the Machine Type. If not provided, the organisation of the (Terraform) provider will be used.
-- `slug` (String)
+- `slug` (String) The slug of the machine type to look up
 
 ### Read-Only
 
-- `cpu_cores` (Number)
-- `description` (String)
-- `id` (String) The ID of this resource.
-- `name` (String)
-- `ram_mb` (Number)
+- `cpu_cores` (Number) The number of CPU cores available in this machine type
+- `description` (String) A description of the machine type and its specifications
+- `id` (String) The unique identifier of the machine type
+- `name` (String) The name of the machine type
+- `ram_mb` (Number) The amount of RAM in megabytes available in this machine type

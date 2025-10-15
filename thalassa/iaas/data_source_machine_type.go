@@ -16,12 +16,14 @@ func DataSourceMachineType() *schema.Resource {
 		ReadContext: dataSourceMachineTypeRead,
 		Schema: map[string]*schema.Schema{
 			"id": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The unique identifier of the machine type",
 			},
 			"name": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The name of the machine type",
 			},
 			"organisation_id": {
 				Type:        schema.TypeString,
@@ -30,20 +32,24 @@ func DataSourceMachineType() *schema.Resource {
 				Description: "Reference to the Organisation of the Machine Type. If not provided, the organisation of the (Terraform) provider will be used.",
 			},
 			"slug": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "The slug of the machine type to look up",
 			},
 			"description": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "A description of the machine type and its specifications",
 			},
 			"cpu_cores": {
-				Type:     schema.TypeInt,
-				Computed: true,
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "The number of CPU cores available in this machine type",
 			},
 			"ram_mb": {
-				Type:     schema.TypeInt,
-				Computed: true,
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "The amount of RAM in megabytes available in this machine type",
 			},
 		},
 	}

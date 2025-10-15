@@ -16,15 +16,15 @@ Get a subnet by name
 
 ### Required
 
-- `name` (String)
-- `vpc_id` (String)
+- `name` (String) The name of the subnet to look up
+- `vpc_id` (String) The ID of the VPC that contains the subnet
 
 ### Optional
 
 - `organisation_id` (String) Reference to the Organisation of the Subnet. If not provided, the organisation of the (Terraform) provider will be used.
-- `slug` (String)
+- `slug` (String) The slug of the subnet. Required when multiple subnets exist with the same name in the VPC
 
 ### Read-Only
 
-- `cidr` (String)
-- `id` (String) The ID of this resource. 
+- `cidr` (String) The CIDR block of the subnet
+- `id` (String) The unique identifier of the subnet 

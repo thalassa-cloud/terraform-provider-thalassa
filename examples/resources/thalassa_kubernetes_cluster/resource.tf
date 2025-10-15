@@ -21,21 +21,21 @@ resource "thalassa_kubernetes_cluster" "example" {
   region      = "nl-01"
   subnet_id   = thalassa_subnet.example.id
   api_server_acls {
-    allowed_cidrs = ["10.0.0.0/16", "178.85.83.115/32"]
+    allowed_cidrs = ["10.0.0.0/16", "10.0.1.0/24"]
   }
 }
 
 # Create a Kubernetes node pool with Thalassa default values
 resource "thalassa_kubernetes_node_pool" "example" {
-  name                  = "example-node-pool"
-  cluster_id = thalassa_kubernetes_cluster.example.id
-  subnet_id = thalassa_subnet.example.id
-  availability_zone     = "nl-01a"
-  machine_type          = "pgp-small"
+  name              = "example-node-pool"
+  cluster_id        = thalassa_kubernetes_cluster.example.id
+  subnet_id         = thalassa_subnet.example.id
+  availability_zone = "nl-01a"
+  machine_type      = "pgp-small"
   # replicas              = 2
-  enable_autoscaling    = true
-  min_replicas          = 1
-  max_replicas          = 2
+  enable_autoscaling = true
+  min_replicas       = 1
+  max_replicas       = 2
   # kubernetes_version    = "1-34-1"
 }
 
