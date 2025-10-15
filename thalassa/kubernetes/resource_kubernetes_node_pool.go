@@ -3,7 +3,6 @@ package kubernetes
 import (
 	"context"
 	"fmt"
-	"math"
 	"strings"
 	"time"
 
@@ -23,6 +22,26 @@ func resourceKubernetesNodePool() *schema.Resource {
 		ReadContext:   resourceKubernetesNodePoolRead,
 		UpdateContext: resourceKubernetesNodePoolUpdate,
 		DeleteContext: resourceKubernetesNodePoolDelete,
+		CustomizeDiff: func(ctx context.Context, d *schema.ResourceDiff, m interface{}) error {
+			// If autoscaling is enabled, replicas must be unset by the user
+			if d.Get("enable_autoscaling").(bool) {
+				if _, ok := d.GetOk("replicas"); ok {
+					return fmt.Errorf("replicas must be unset when enable_autoscaling is true")
+				}
+				if _, ok := d.GetOk("min_replicas"); !ok {
+					return fmt.Errorf("min_replicas must be set when enable_autoscaling is true")
+				}
+				if _, ok := d.GetOk("max_replicas"); !ok {
+					return fmt.Errorf("max_replicas must be set when enable_autoscaling is true")
+				}
+			} else {
+				// replicas must be set
+				if _, ok := d.GetOk("replicas"); !ok {
+					return fmt.Errorf("replicas must be set when enable_autoscaling is false")
+				}
+			}
+			return nil
+		},
 		Schema: map[string]*schema.Schema{
 			"id": {
 				Type:     schema.TypeString,
@@ -59,9 +78,9 @@ func resourceKubernetesNodePool() *schema.Resource {
 			},
 			"subnet_id": {
 				Type:        schema.TypeString,
-				Optional:    true,
+				Required:    true,
 				ForceNew:    true,
-				Description: "Subnet of the Kubernetes Cluster. Required for managed Kubernetes Clusters.",
+				Description: "Subnet ID where the Kubernetes node pool nodes will be deployed. This subnet must be in the same VPC as the Kubernetes cluster.",
 			},
 			"cluster_id": {
 				Type:        schema.TypeString,
@@ -88,13 +107,16 @@ func resourceKubernetesNodePool() *schema.Resource {
 			"kubernetes_version": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Kubernetes version for the Kubernetes Node Pool. Optional. Will use the Kubernetes Cluster version if not set.",
+				Description: "Kubernetes version for the node pool nodes. Optional - if not specified, the cluster's version will be used. Can be specified as version name, slug, or identity. Must be an enabled version.",
 			},
 			"upgrade_strategy": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Default:  string(kubernetes.KubernetesNodePoolUpgradeStrategyAlways),
 				ValidateFunc: validate.StringInSlice([]string{
+					string(kubernetes.KubernetesNodePoolUpgradeStrategyManual),
+					string(kubernetes.KubernetesNodePoolUpgradeStrategyAuto),
+					// Legacy options. Provided for backward compatibility.
 					string(kubernetes.KubernetesNodePoolUpgradeStrategyAlways),
 					string(kubernetes.KubernetesNodePoolUpgradeStrategyOnDelete),
 					string(kubernetes.KubernetesNodePoolUpgradeStrategyInplace),
@@ -102,13 +124,12 @@ func resourceKubernetesNodePool() *schema.Resource {
 				}, false),
 				Description: "Upgrade strategy for the Kubernetes Node Pool",
 			},
-			// TODO: add these back in when the API is updated
-			// "enable_autoscaling": {
-			// 	Type:        schema.TypeBool,
-			// 	Optional:    true,
-			// 	Default:     false,
-			// 	Description: "Enable autoscaling for the Kubernetes Node Pool",
-			// },
+			"enable_autoscaling": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "Enable autoscaling for the Kubernetes Node Pool",
+			},
 			"enable_autohealing": {
 				Type:        schema.TypeBool,
 				Optional:    true,
@@ -123,7 +144,6 @@ func resourceKubernetesNodePool() *schema.Resource {
 			"replicas": {
 				Type:        schema.TypeInt,
 				Optional:    true,
-				Default:     1,
 				Description: "Number of replicas for the Kubernetes Node Pool. Do not set this when enable_autoscaling is true.",
 			},
 			"min_replicas": {
@@ -249,38 +269,57 @@ func resourceKubernetesNodePoolCreate(ctx context.Context, d *schema.ResourceDat
 			}
 		}
 		if kubernetesVersionIdentity == nil {
-			return diag.FromErr(fmt.Errorf("kubernetes version not found"))
+			return diag.FromErr(fmt.Errorf("kubernetes version '%s' not found or not enabled. Please check available versions and ensure the version is enabled", kubernetesVersion))
+		}
+	} else {
+		// fetch the cluster's version
+		kubernetesClusterIdentity := d.Get("cluster_id").(string)
+		kubernetesCluster, err := client.Kubernetes().GetKubernetesCluster(ctx, kubernetesClusterIdentity)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		kubernetesVersionIdentity = convert.Ptr(kubernetesCluster.ClusterVersion.Identity)
+		if kubernetesVersionIdentity == nil {
+			return diag.FromErr(fmt.Errorf("kubernetes version not found for cluster '%s'", kubernetesClusterIdentity))
 		}
 	}
+	// If kubernetes_version is not provided, kubernetesVersionIdentity will be nil
+	// and the cluster's version will be used automatically
 
-	replicas, replicasOk := d.Get("replicas").(int)
+	enableAutoscaling := d.Get("enable_autoscaling").(bool)
+	var replicas int
 
-	// If autoscaling is enabled, we check the min max and replicas values
-	if _, ok := d.GetOk("enable_autoscaling"); ok && d.Get("enable_autoscaling").(bool) {
+	if enableAutoscaling {
 		minReplicas := d.Get("min_replicas").(int)
 		maxReplicas := d.Get("max_replicas").(int)
 		if minReplicas > maxReplicas {
-			return diag.FromErr(fmt.Errorf("min_replicas must be lower than max_replicas"))
+			return diag.FromErr(fmt.Errorf("autoscaling configuration error: min_replicas (%d) cannot be greater than max_replicas (%d). Please ensure min_replicas <= max_replicas", minReplicas, maxReplicas))
 		}
-		if !replicasOk {
-			replicas = int(math.Min(float64(minReplicas), float64(maxReplicas)))
+		if minReplicas < 0 {
+			return diag.FromErr(fmt.Errorf("autoscaling configuration error: min_replicas must be at least 0, got %d", minReplicas))
 		}
-		if replicasOk && replicas < minReplicas {
-			return diag.FromErr(fmt.Errorf("replicas must be higher or equal to min_replicas"))
+		// When autoscaling is enabled, start with min_replicas
+		replicas = minReplicas
+	} else {
+		// When autoscaling is disabled, replicas is required
+		if replicasVal, ok := d.GetOk("replicas"); ok {
+			replicas = replicasVal.(int)
+		} else {
+			return diag.FromErr(fmt.Errorf("replicas is required when enable_autoscaling is false. Set replicas to the desired number of nodes for this node pool"))
 		}
 	}
 
 	createKubernetesNodePool := kubernetes.CreateKubernetesNodePool{
-		Name:        d.Get("name").(string),
-		MachineType: d.Get("machine_type").(string), // TODO: check if machine type is valid
-		Replicas:    replicas,
-		Description: d.Get("description").(string),
-		Labels:      convert.ConvertToMap(d.Get("labels")),
-		Annotations: convert.ConvertToMap(d.Get("annotations")),
-		// EnableAutoscaling: d.Get("enable_autoscaling").(bool),
-		AvailabilityZone: d.Get("availability_zone").(string),
-		MinReplicas:      d.Get("min_replicas").(int),
-		MaxReplicas:      d.Get("max_replicas").(int),
+		Name:              d.Get("name").(string),
+		MachineType:       d.Get("machine_type").(string), // TODO: check if machine type is valid
+		Replicas:          replicas,
+		Description:       d.Get("description").(string),
+		Labels:            convert.ConvertToMap(d.Get("labels")),
+		Annotations:       convert.ConvertToMap(d.Get("annotations")),
+		EnableAutoscaling: enableAutoscaling,
+		AvailabilityZone:  d.Get("availability_zone").(string),
+		MinReplicas:       d.Get("min_replicas").(int),
+		MaxReplicas:       d.Get("max_replicas").(int),
 		NodeSettings: kubernetes.KubernetesNodeSettings{
 			Annotations: convert.ConvertToMap(d.Get("node_annotations")),
 			Labels:      convert.ConvertToMap(d.Get("node_labels")),
@@ -344,9 +383,11 @@ func resourceKubernetesNodePoolRead(ctx context.Context, d *schema.ResourceData,
 	}
 
 	currentlyConfiguredVersion, ok := d.GetOk("kubernetes_version")
-	if kubernetesNodePool.KubernetesVersion != nil {
-		if !ok || !(kubernetesNodePool.KubernetesVersion.Name == currentlyConfiguredVersion || kubernetesNodePool.KubernetesVersion.Slug == currentlyConfiguredVersion || kubernetesNodePool.KubernetesVersion.Identity == currentlyConfiguredVersion) {
-			d.Set("kubernetes_version", kubernetesNodePool.KubernetesVersion.Slug)
+	if ok {
+		if kubernetesNodePool.KubernetesVersion != nil {
+			if !(kubernetesNodePool.KubernetesVersion.Name == currentlyConfiguredVersion || kubernetesNodePool.KubernetesVersion.Slug == currentlyConfiguredVersion || kubernetesNodePool.KubernetesVersion.Identity == currentlyConfiguredVersion) {
+				d.Set("kubernetes_version", kubernetesNodePool.KubernetesVersion.Slug)
+			}
 		}
 	}
 
@@ -357,12 +398,20 @@ func resourceKubernetesNodePoolRead(ctx context.Context, d *schema.ResourceData,
 	d.Set("labels", convertFromNodeLabels(kubernetesNodePool.Labels))
 	d.Set("annotations", convertFromNodeLabels(kubernetesNodePool.Annotations))
 	d.Set("status", kubernetesNodePool.Status)
-	d.Set("replicas", kubernetesNodePool.Replicas)
+
+	// if replicas is set, set it in state
+	if _, ok := d.GetOk("replicas"); ok {
+		d.Set("replicas", kubernetesNodePool.Replicas)
+	}
 	d.Set("availability_zone", kubernetesNodePool.AvailabilityZone)
-	d.Set("min_replicas", kubernetesNodePool.MinReplicas)
-	d.Set("max_replicas", kubernetesNodePool.MaxReplicas)
+	if _, ok := d.GetOk("min_replicas"); ok {
+		d.Set("min_replicas", kubernetesNodePool.MinReplicas)
+	}
+	if _, ok := d.GetOk("max_replicas"); ok {
+		d.Set("max_replicas", kubernetesNodePool.MaxReplicas)
+	}
 	d.Set("machine_type", kubernetesNodePool.MachineType)
-	// d.Set("enable_autoscaling", kubernetesNodePool.EnableAutoscaling)
+	d.Set("enable_autoscaling", kubernetesNodePool.EnableAutoscaling)
 	d.Set("enable_autohealing", kubernetesNodePool.EnableAutoHealing)
 	d.Set("node_taints", convertFromNodeTaints(kubernetesNodePool.NodeSettings.Taints))
 	d.Set("node_labels", convertFromNodeLabels(kubernetesNodePool.NodeSettings.Labels))
@@ -410,40 +459,66 @@ func resourceKubernetesNodePoolUpdate(ctx context.Context, d *schema.ResourceDat
 			}
 		}
 		if kubernetesVersionIdentity == nil {
-			return diag.FromErr(fmt.Errorf("kubernetes version not found"))
+			return diag.FromErr(fmt.Errorf("kubernetes version '%s' not found or not enabled. Please check available versions and ensure the version is enabled", kubernetesVersion))
+		}
+	} else {
+		// fetch the cluster's version
+		kubernetesCluster, err := client.Kubernetes().GetKubernetesCluster(ctx, kubernetesClusterIdentity)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		kubernetesVersionIdentity = convert.Ptr(kubernetesCluster.ClusterVersion.Identity)
+		if kubernetesVersionIdentity == nil {
+			return diag.FromErr(fmt.Errorf("kubernetes version not found for cluster '%s'", kubernetesClusterIdentity))
 		}
 	}
+	// If kubernetes_version is not provided, kubernetesVersionIdentity will be nil
+	// and the cluster's version will be used automatically
 
-	replicas, replicasOk := d.Get("replicas").(int)
+	enableAutoscaling := d.Get("enable_autoscaling").(bool)
+	var replicas *int
 
-	if _, ok := d.GetOk("enable_autoscaling"); ok && d.Get("enable_autoscaling").(bool) {
-		if d.Get("min_replicas").(int) == 0 {
-			return diag.FromErr(fmt.Errorf("min_replicas must be higher than 0 when enable_autohealing is true"))
-		}
-
+	if enableAutoscaling {
 		minReplicas := d.Get("min_replicas").(int)
 		maxReplicas := d.Get("max_replicas").(int)
 		if minReplicas > maxReplicas {
-			return diag.FromErr(fmt.Errorf("min_replicas must be lower than max_replicas"))
+			return diag.FromErr(fmt.Errorf("autoscaling configuration error: min_replicas (%d) cannot be greater than max_replicas (%d). Please ensure min_replicas <= max_replicas", minReplicas, maxReplicas))
+		}
+		if minReplicas < 0 {
+			return diag.FromErr(fmt.Errorf("autoscaling configuration error: min_replicas must be at least 1, got %d", minReplicas))
 		}
 
-		if !replicasOk {
-			replicas = int(math.Min(float64(minReplicas), float64(maxReplicas)))
+		currentNodePool, err := client.Kubernetes().GetKubernetesNodePool(ctx, kubernetesClusterIdentity, nodePoolIdentity)
+		if err != nil {
+			return diag.FromErr(err)
 		}
 
-		if replicasOk && replicas < minReplicas {
-			return diag.FromErr(fmt.Errorf("replicas must be higher or equal to min_replicas"))
+		// When autoscaling is enabled, set replicas to the current value, with min_replicas as the minimum and max_replicas as the maximum
+		replicas = &currentNodePool.Replicas
+		if *replicas < minReplicas {
+			*replicas = minReplicas
+		}
+		if *replicas > maxReplicas {
+			*replicas = maxReplicas
+		}
+	} else {
+		// When autoscaling is disabled, replicas is required
+		if replicasVal, ok := d.GetOk("replicas"); ok {
+			replicasInt := replicasVal.(int)
+			replicas = &replicasInt
+		} else {
+			return diag.FromErr(fmt.Errorf("replicas is required when enable_autoscaling is false. Set replicas to the desired number of nodes for this node pool"))
 		}
 	}
 
 	updateKubernetesNodePool := kubernetes.UpdateKubernetesNodePool{
-		Description:      d.Get("description").(string),
-		Labels:           convert.ConvertToMap(d.Get("labels")),
-		Annotations:      convert.ConvertToMap(d.Get("annotations")),
-		MachineType:      d.Get("machine_type").(string),
-		Replicas:         convert.Ptr(replicas),
-		AvailabilityZone: d.Get("availability_zone").(string),
-		// EnableAutoscaling:         convert.Ptr(d.Get("enable_autoscaling").(bool)),
+		Description:               d.Get("description").(string),
+		Labels:                    convert.ConvertToMap(d.Get("labels")),
+		Annotations:               convert.ConvertToMap(d.Get("annotations")),
+		MachineType:               d.Get("machine_type").(string),
+		Replicas:                  replicas,
+		AvailabilityZone:          d.Get("availability_zone").(string),
+		EnableAutoscaling:         convert.Ptr(enableAutoscaling),
 		MinReplicas:               convert.Ptr(d.Get("min_replicas").(int)),
 		MaxReplicas:               convert.Ptr(d.Get("max_replicas").(int)),
 		EnableAutoHealing:         convert.Ptr(d.Get("enable_autohealing").(bool)),
@@ -478,13 +553,20 @@ func resourceKubernetesNodePoolUpdate(ctx context.Context, d *schema.ResourceDat
 			}
 			time.Sleep(1 * time.Second)
 		}
-		d.Set("replicas", kubernetesNodePool.Replicas)
-		d.Set("min_replicas", kubernetesNodePool.MinReplicas)
-		d.Set("max_replicas", kubernetesNodePool.MaxReplicas)
+		if _, ok := d.GetOk("replicas"); ok {
+			d.Set("replicas", kubernetesNodePool.Replicas)
+		}
+
+		if _, ok := d.GetOk("min_replicas"); ok {
+			d.Set("min_replicas", kubernetesNodePool.MinReplicas)
+		}
+		if _, ok := d.GetOk("max_replicas"); ok {
+			d.Set("max_replicas", kubernetesNodePool.MaxReplicas)
+		}
 		d.Set("machine_type", kubernetesNodePool.MachineType)
 		d.Set("labels", kubernetesNodePool.Labels)
 		d.Set("annotations", kubernetesNodePool.Annotations)
-		// d.Set("enable_autoscaling", kubernetesNodePool.EnableAutoscaling)
+		d.Set("enable_autoscaling", kubernetesNodePool.EnableAutoscaling)
 		d.Set("enable_autohealing", kubernetesNodePool.EnableAutoHealing)
 		d.Set("node_taints", convertFromNodeTaints(kubernetesNodePool.NodeSettings.Taints))
 		d.Set("node_labels", convertFromNodeLabels(kubernetesNodePool.NodeSettings.Labels))
