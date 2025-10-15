@@ -9,6 +9,31 @@ description: |-
 
 {{ .Description | trimspace }}
 
+## Cluster Types
+
+### Managed Clusters (Default)
+- **Requires**: `subnet_id` - Must specify a subnet for node deployment
+- **Use case**: Production workloads requiring full control
+- **Features**: Complete control over node pools and configuration
+
+### Hosted Control Plane Clusters
+- **Requires**: `region` - Must specify a region for deployment  
+- **Use case**: Development and testing environments
+- **Features**: Thalassa manages the control plane components
+
+## Important Notes
+
+- **`cluster_version` is optional** - If not specified, the latest stable version is used
+- **`networking_cni` defaults to "cilium"**
+- **Network CIDRs cannot be changed** after creation (ForceNew)
+- **Cluster type cannot be changed** after creation (ForceNew)
+
+## Security Configuration
+
+- **Pod Security Standards**: `restricted` (most secure), `baseline` (default), `privileged`
+- **Network Policies**: `deny-all` (default), `allow-all`, or custom policies
+- **API Server ACLs**: Restrict API server access to specific CIDR blocks
+
 {{ if .HasExample -}}
 ## Example Usage
 

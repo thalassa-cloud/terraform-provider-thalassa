@@ -9,6 +9,24 @@ description: |-
 
 {{ .Description | trimspace }}
 
+## Autoscaling Configuration
+
+### When Autoscaling is Enabled (`enable_autoscaling = true`)
+- **`replicas` must be unset** - The autoscaler manages the number of nodes
+- **`min_replicas` is required** - Minimum number of nodes (must be ≥ 0)
+- **`max_replicas` is required** - Maximum number of nodes
+- **Current replicas are computed** - Shows the current number of nodes managed by the autoscaler
+
+### When Autoscaling is Disabled (`enable_autoscaling = false`)
+- **`replicas` is required** - Fixed number of nodes for the pool
+- **`min_replicas` and `max_replicas` are ignored** - Not used in manual scaling mode
+
+## Important Notes
+
+- **Only available for managed clusters** - Not supported for hosted-control-plane clusters
+- **`kubernetes_version` is optional** - If not specified, the cluster's version is used during initial creation of the node pool
+
+
 {{ if .HasExample -}}
 ## Example Usage
 
