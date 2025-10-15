@@ -30,7 +30,7 @@ func resourceKubernetesCluster() *schema.Resource {
 			},
 			"organisation_id": {
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
 				ForceNew:    true,
 				Description: "Reference to the Organisation of the Kubernetes Cluster. If not provided, the organisation of the (Terraform) provider will be used.",
 			},
@@ -83,8 +83,8 @@ func resourceKubernetesCluster() *schema.Resource {
 			},
 			"cluster_version": {
 				Type:        schema.TypeString,
-				Required:    true,
-				Description: "Cluster version of the Kubernetes Cluster, can be a name, slug or identity",
+				Optional:    true,
+				Description: "Cluster version of the Kubernetes Cluster, can be a name, slug or identity of the Kubernetes version. If not provided, the latest stable version will be used for provisioning.",
 			},
 			"cluster_type": {
 				Type:         schema.TypeString,
@@ -101,8 +101,9 @@ func resourceKubernetesCluster() *schema.Resource {
 			},
 			"networking_cni": {
 				Type:         schema.TypeString,
-				Required:     true,
+				Optional:     true,
 				ForceNew:     true,
+				Default:      "cilium", // Default to Cilium
 				ValidateFunc: validate.StringInSlice([]string{"cilium", "custom"}, false),
 				Description:  "CNI of the Kubernetes Cluster",
 			},
@@ -345,11 +346,17 @@ func resourceKubernetesClusterRead(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(fmt.Errorf("kubernetesCluster was not found"))
 	}
 
-	currentlyConfiguredVersion := d.Get("cluster_version").(string)
-	if !(kubernetesCluster.ClusterVersion.Name == currentlyConfiguredVersion || kubernetesCluster.ClusterVersion.Slug == currentlyConfiguredVersion || kubernetesCluster.ClusterVersion.Identity == currentlyConfiguredVersion) {
-		d.Set("cluster_version", kubernetesCluster.ClusterVersion.Slug)
+	// Only set cluster_version in state if it was defined in the configuration.
+	// This avoids introducing a value into state that the user did not specify.
+	if _, hasVersion := d.GetOk("cluster_version"); hasVersion {
+		currentlyConfiguredVersion := d.Get("cluster_version").(string)
+		if !(kubernetesCluster.ClusterVersion.Name == currentlyConfiguredVersion || kubernetesCluster.ClusterVersion.Slug == currentlyConfiguredVersion || kubernetesCluster.ClusterVersion.Identity == currentlyConfiguredVersion) {
+			d.Set("cluster_version", kubernetesCluster.ClusterVersion.Slug)
+		} else {
+			d.Set("cluster_version", currentlyConfiguredVersion)
+		}
 	} else {
-		d.Set("cluster_version", currentlyConfiguredVersion)
+		d.Set("cluster_version", nil)
 	}
 
 	d.SetId(kubernetesCluster.Identity)
@@ -416,23 +423,32 @@ func resourceKubernetesClusterUpdate(ctx context.Context, d *schema.ResourceData
 		return diag.FromErr(err)
 	}
 
-	version := d.Get("cluster_version").(string)
-	// Get version from API
-	kubernetesVersions, err := client.Kubernetes().ListKubernetesVersions(ctx)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	for _, kv := range kubernetesVersions {
-		if !kv.Enabled { // skip disabled versions
-			continue
+	var versionPtr *string
+	if version, ok := d.GetOk("cluster_version"); ok && d.HasChange("cluster_version") {
+		versionStr := version.(string)
+		if versionStr != "" {
+			kubernetesVersions, err := client.Kubernetes().ListKubernetesVersions(ctx)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+			for _, kv := range kubernetesVersions {
+				if !kv.Enabled { // skip disabled versions
+					continue
+				}
+				if kv.Identity == versionStr || kv.Slug == versionStr || kv.Name == versionStr {
+					resolved := kv.Identity
+					versionPtr = &resolved
+					break
+				}
+			}
+			if versionPtr == nil {
+				// If we couldn't resolve, still honor the provided value
+				versionPtr = &versionStr
+			}
 		}
-
-		if kv.Identity == version || kv.Slug == version || kv.Name == version {
-			version = kv.Identity
-			break
-		}
 	}
+	// If cluster_version is not defined or hasn't changed, versionPtr remains nil
+	// and no version update will be sent to the API
 
 	updateKubernetesCluster := kubernetes.UpdateKubernetesCluster{
 		Name:                        convert.Ptr(d.Get("name").(string)),
@@ -440,7 +456,7 @@ func resourceKubernetesClusterUpdate(ctx context.Context, d *schema.ResourceData
 		Labels:                      convert.ConvertToMap(d.Get("labels")),
 		Annotations:                 convert.ConvertToMap(d.Get("annotations")),
 		DeleteProtection:            convert.Ptr(d.Get("delete_protection").(bool)),
-		KubernetesVersionIdentity:   convert.Ptr(version),
+		KubernetesVersionIdentity:   versionPtr,
 		PodSecurityStandardsProfile: convert.Ptr(kubernetes.KubernetesClusterPodSecurityStandards(d.Get("pod_security_standards_profile").(string))),
 		AuditLogProfile:             convert.Ptr(kubernetes.KubernetesClusterAuditLoggingProfile(d.Get("audit_log_profile").(string))),
 		DefaultNetworkPolicy:        convert.Ptr(kubernetes.KubernetesDefaultNetworkPolicies(d.Get("default_network_policy").(string))),
@@ -469,11 +485,14 @@ func resourceKubernetesClusterUpdate(ctx context.Context, d *schema.ResourceData
 	}
 	if kubernetesCluster != nil {
 
-		currentlyConfiguredVersion := d.Get("cluster_version").(string)
-		if !(kubernetesCluster.ClusterVersion.Name == currentlyConfiguredVersion || kubernetesCluster.ClusterVersion.Slug == currentlyConfiguredVersion || kubernetesCluster.ClusterVersion.Identity == currentlyConfiguredVersion) {
-			d.Set("cluster_version", kubernetesCluster.ClusterVersion.Slug)
-		} else {
-			d.Set("cluster_version", currentlyConfiguredVersion)
+		currentlyConfiguredVersionInt, ok := d.GetOk("cluster_version")
+		if ok {
+			currentlyConfiguredVersion := currentlyConfiguredVersionInt.(string)
+			if !(kubernetesCluster.ClusterVersion.Name == currentlyConfiguredVersion || kubernetesCluster.ClusterVersion.Slug == currentlyConfiguredVersion || kubernetesCluster.ClusterVersion.Identity == currentlyConfiguredVersion) {
+				d.Set("cluster_version", kubernetesCluster.ClusterVersion.Slug)
+			} else {
+				d.Set("cluster_version", currentlyConfiguredVersion)
+			}
 		}
 
 		d.Set("name", kubernetesCluster.Name)
@@ -575,13 +594,25 @@ func convertApiServerACLs(acls interface{}) kubernetes.KubernetesApiServerACLs {
 		return kubernetes.KubernetesApiServerACLs{}
 	}
 
-	aclsList := acls.([]interface{})
-	if len(aclsList) == 0 {
+	aclsList, ok := acls.([]interface{})
+	if !ok || len(aclsList) == 0 {
 		return kubernetes.KubernetesApiServerACLs{}
 	}
 
-	acl := aclsList[0].(map[string]interface{})
-	allowedCIDRs := convert.ConvertToStringSlice(acl["allowed_cidrs"])
+	first := aclsList[0]
+	if first == nil {
+		return kubernetes.KubernetesApiServerACLs{}
+	}
+
+	acl, ok := first.(map[string]interface{})
+	if !ok || acl == nil {
+		return kubernetes.KubernetesApiServerACLs{}
+	}
+
+	var allowedCIDRs []string
+	if v, exists := acl["allowed_cidrs"]; exists && v != nil {
+		allowedCIDRs = convert.ConvertToStringSlice(v)
+	}
 
 	return kubernetes.KubernetesApiServerACLs{
 		AllowedCIDRs: allowedCIDRs,
