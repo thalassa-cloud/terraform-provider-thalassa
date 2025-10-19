@@ -9,7 +9,8 @@ var (
 	}
 
 	DataSourcesMap = map[string]*schema.Resource{
-		"thalassa_kubernetes_version": DataSourceKubernetesVersion(),
-		"thalassa_kubernetes_cluster": DataSourceKubernetesCluster(),
+		"thalassa_kubernetes_version":               DataSourceKubernetesVersion(),
+		"thalassa_kubernetes_cluster":               DataSourceKubernetesCluster(),
+		"thalassa_kubernetes_cluster_session_token": dataSourceKubernetesClusterSessionToken(),
 	}
 )
