@@ -153,6 +153,11 @@ func DataSourceKubernetesCluster() *schema.Resource {
 				Computed:    true,
 				Description: "Time of day when the cluster will be upgraded in minutes from midnight",
 			},
+			"disable_public_endpoint": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Disable public endpoint of the Kubernetes Cluster",
+			},
 		},
 	}
 }
@@ -182,6 +187,7 @@ func dataSourceKubernetesClusterRead(ctx context.Context, d *schema.ResourceData
 			d.Set("pod_security_standards_profile", cluster.PodSecurityStandardsProfile)
 			d.Set("audit_log_profile", cluster.AuditLogProfile)
 			d.Set("default_network_policy", cluster.DefaultNetworkPolicy)
+			d.Set("disable_public_endpoint", cluster.DisablePublicEndpoint)
 			if cluster.Region != nil {
 				d.Set("region", cluster.Region.Identity)
 			}

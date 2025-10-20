@@ -197,6 +197,11 @@ func resourceKubernetesCluster() *schema.Resource {
 				Description: "List identities of security group that will be attached to the Kubernetes Cluster",
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
+			"disable_public_endpoint": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Description: "Disable public endpoint of the Kubernetes Cluster. When set to true, the Kubernetes Cluster will only be accessible via the private VPC endpoint and the user will need to provide a solution to access the Kubernetes API server.",
+			},
 		},
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -273,6 +278,7 @@ func resourceKubernetesClusterCreate(ctx context.Context, d *schema.ResourceData
 		DefaultNetworkPolicy:        kubernetes.KubernetesDefaultNetworkPolicies(d.Get("default_network_policy").(string)),
 		ApiServerACLs:               convertApiServerACLs(d.Get("api_server_acls")),
 		AutoUpgradePolicy:           kubernetes.KubernetesClusterAutoUpgradePolicy(d.Get("auto_upgrade_policy").(string)),
+		DisablePublicEndpoint:       d.Get("disable_public_endpoint").(bool),
 	}
 
 	if securityGroupAttachments, ok := d.GetOk("security_group_attachments"); ok {
@@ -376,6 +382,7 @@ func resourceKubernetesClusterRead(ctx context.Context, d *schema.ResourceData, 
 	d.Set("status", kubernetesCluster.Status)
 	d.Set("kubernetes_api_server_endpoint", kubernetesCluster.APIServerURL)
 	d.Set("kubernetes_api_server_ca_certificate", kubernetesCluster.APIServerCA)
+	d.Set("disable_public_endpoint", kubernetesCluster.DisablePublicEndpoint)
 
 	// Set API server ACLs
 	if len(kubernetesCluster.ApiServerACLs.AllowedCIDRs) > 0 {
@@ -462,6 +469,7 @@ func resourceKubernetesClusterUpdate(ctx context.Context, d *schema.ResourceData
 		DefaultNetworkPolicy:        convert.Ptr(kubernetes.KubernetesDefaultNetworkPolicies(d.Get("default_network_policy").(string))),
 		ApiServerACLs:               convertApiServerACLs(d.Get("api_server_acls")),
 		AutoUpgradePolicy:           kubernetes.KubernetesClusterAutoUpgradePolicy(d.Get("auto_upgrade_policy").(string)),
+		DisablePublicEndpoint:       convert.Ptr(d.Get("disable_public_endpoint").(bool)),
 	}
 
 	if securityGroupAttachments, ok := d.GetOk("security_group_attachments"); ok {
@@ -516,6 +524,7 @@ func resourceKubernetesClusterUpdate(ctx context.Context, d *schema.ResourceData
 		d.Set("pod_security_standards_profile", kubernetesCluster.PodSecurityStandardsProfile)
 		d.Set("audit_log_profile", kubernetesCluster.AuditLogProfile)
 		d.Set("default_network_policy", kubernetesCluster.DefaultNetworkPolicy)
+		d.Set("disable_public_endpoint", kubernetesCluster.DisablePublicEndpoint)
 
 		// Set API server ACLs
 		if len(kubernetesCluster.ApiServerACLs.AllowedCIDRs) > 0 {
