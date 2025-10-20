@@ -38,16 +38,23 @@ Thalassa Cloud Terraform Provider
 - [Target Group](./examples/resources/thalassa_target_group/) - Create target groups for load balancers
 - [Target Group Attachment](./examples/resources/thalassa_target_group_attachment/) - Attach resources to target groups
 
-#### Kubernetes
-- [Kubernetes Cluster](./examples/resources/thalassa_kubernetes/) - Deploy and manage Kubernetes clusters with node pools
+### Kubernetes (KaaS)
 
-#### Database as a Service (DBaaS)
+#### Cluster
+- [Kubernetes Cluster](./examples/resources/thalassa_kubernetes/) - Deploy and manage Kubernetes clusters with node pools
+- [Kubernetes Node Pool](./examples/resources/thalassa_kubernetes_node_pool/) - Deploy and manage Kubernetes clusters node pools
+
+#### Kubernetes IAM
+- [Kubernetes Cluster Role](./examples/resources/thalassa_kubernetes_cluster_role/) - Kubernetes Cluster Role
+- [Kubernetes Cluster Role](./examples/resources/thalassa_kubernetes_cluster_role_binding/) - Kubernetes Cluster Role Binding
+
+### Database as a Service (DBaaS)
 - [PostgreSQL Database](./examples/resources/thalassa_dbaas_pg_database/) - Create PostgreSQL databases
 - [PostgreSQL Roles](./examples/resources/thalassa_dbaas_pg_roles/) - Manage PostgreSQL database roles
 - [Database Cluster](./examples/resources/thalassa_dbaas_db_cluster/) - Set up database clusters
 - [Database Backup Schedule](./examples/resources/thalassa_dbaas_db_backupschedule/) - Configure automated backup schedules
 
-#### Identity & Access Management (IAM)
+### Identity & Access Management (IAM)
 - [IAM Role](./examples/resources/thalassa_iam_role/) - Create and manage IAM roles
 - [IAM Role Binding](./examples/resources/thalassa_iam_role_binding/) - Bind roles to service accounts or users
 - [Service Account](./examples/resources/thalassa_iam_service_account/) - Create and manage IAM service accounts
