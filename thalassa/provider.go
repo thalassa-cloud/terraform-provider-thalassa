@@ -36,6 +36,12 @@ func Provider() *schema.Provider {
 				Description: "The OIDC client secret for authentication. Can be set via the THALASSA_CLIENT_SECRET environment variable.",
 				DefaultFunc: schema.EnvDefaultFunc("THALASSA_CLIENT_SECRET", nil),
 			},
+			"allow_insecure_oidc": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Description: "Allow insecure OIDC authentication. Can be set via the THALASSA_ALLOW_INSECURE_OIDC environment variable.",
+				DefaultFunc: schema.EnvDefaultFunc("THALASSA_ALLOW_INSECURE_OIDC", false),
+			},
 			"api": {
 				Type:        schema.TypeString,
 				Optional:    true,

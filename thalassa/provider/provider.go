@@ -21,12 +21,13 @@ func GetProvider(m interface{}) ConfiguredProvider {
 }
 
 type ConfiguredProvider struct {
-	Client       thalassa.Client
-	Organisation string
-	token        string
-	apiEndpoint  string
-	clientID     string
-	clientSecret string
+	Client            thalassa.Client
+	Organisation      string
+	token             string
+	apiEndpoint       string
+	clientID          string
+	clientSecret      string
+	allowInsecureOIDC bool
 }
 
 func ProviderConfigure(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
@@ -35,6 +36,7 @@ func ProviderConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 	organisation := d.Get("organisation_id").(string)
 	clientID := d.Get("client_id").(string)
 	clientSecret := d.Get("client_secret").(string)
+	allowInsecureOIDC := d.Get("allow_insecure_oidc").(bool)
 
 	opts := []client.Option{
 		client.WithBaseURL(apiEndpoint),
@@ -49,7 +51,7 @@ func ProviderConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 	}
 
 	if clientID != "" && clientSecret != "" {
-		opts = append(opts, client.WithAuthOIDC(clientID, clientSecret, fmt.Sprintf("%s/oidc/token", apiEndpoint)))
+		opts = append(opts, client.WithAuthOIDCInsecure(clientID, clientSecret, fmt.Sprintf("%s/oidc/token", apiEndpoint), allowInsecureOIDC))
 		hasAuth = true
 	}
 
@@ -91,7 +93,7 @@ func GetClient(provider ConfiguredProvider, d *schema.ResourceData) (thalassa.Cl
 	}
 
 	if provider.clientID != "" && provider.clientSecret != "" {
-		opts = append(opts, client.WithAuthOIDC(provider.clientID, provider.clientSecret, fmt.Sprintf("%s/oidc/token", provider.apiEndpoint)))
+		opts = append(opts, client.WithAuthOIDCInsecure(provider.clientID, provider.clientSecret, fmt.Sprintf("%s/oidc/token", provider.apiEndpoint), provider.allowInsecureOIDC))
 		hasAuth = true
 	}
 
