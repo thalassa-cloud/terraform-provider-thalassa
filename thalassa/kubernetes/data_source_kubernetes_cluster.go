@@ -159,7 +159,7 @@ func DataSourceKubernetesCluster() *schema.Resource {
 
 func dataSourceKubernetesClusterRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	provider := provider.GetProvider(m)
-	slug := d.Get("slug").(string)
+	name := d.Get("name").(string)
 
 	clusters, err := provider.Client.Kubernetes().ListKubernetesClusters(ctx, &kubernetes.ListKubernetesClustersRequest{})
 	if err != nil {
@@ -167,7 +167,7 @@ func dataSourceKubernetesClusterRead(ctx context.Context, d *schema.ResourceData
 	}
 
 	for _, cluster := range clusters {
-		if slug != "" && cluster.Slug == slug {
+		if cluster.Name == name {
 			d.SetId(cluster.Identity)
 			d.Set("id", cluster.Identity)
 			d.Set("name", cluster.Name)
