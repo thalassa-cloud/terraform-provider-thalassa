@@ -28,7 +28,7 @@ provider "thalassa" {
 resource "thalassa_iam_service_account" "example" {
   name        = "example-service-account"
   description = "An example service account for demonstration purposes"
-  
+
   labels = {
     environment = "development"
     project     = "example"
@@ -41,7 +41,7 @@ resource "thalassa_iam_service_account_access_credential" "api_credential" {
   service_account_id = thalassa_iam_service_account.example.id
   name               = "api-access-credential"
   description        = "API access credential for automation"
-  
+
   scopes = [
     "api:read",
     "api:write"
@@ -53,7 +53,7 @@ resource "thalassa_iam_service_account_access_credential" "storage_credential" {
   service_account_id = thalassa_iam_service_account.example.id
   name               = "object-storage-credential"
   description        = "Object storage access credential"
-  
+
   scopes = [
     "objectStorage"
   ]

@@ -28,13 +28,13 @@ provider "thalassa" {
 resource "thalassa_iam_service_account" "example" {
   name        = "example-service-account"
   description = "An example service account for demonstration purposes"
-  
+
   labels = {
     environment = "development"
     project     = "example"
     type        = "automation"
   }
-  
+
   annotations = {
     "example.com/created-by" = "terraform"
     "example.com/purpose"    = "ci-cd"

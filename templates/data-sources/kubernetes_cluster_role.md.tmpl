@@ -1,0 +1,91 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.RenderedProviderName}}"
+subcategory: "Kubernetes IAM"
+description: |-
+{{ .Description | plainmarkdown | trimspace | prefixlines "  " }}
+---
+
+# {{.Name}} ({{.Type}})
+
+{{ .Description | trimspace }}
+
+## Important Notes
+
+- **Lookup Methods**: You can find cluster roles by either `name` or `slug`
+- **Unique Results**: The lookup will return an error if multiple roles match the criteria
+- **System Roles**: System roles are included in the results and can be identified by the `system` field
+- **Permission Rules**: All permission rules are included in the results for inspection
+
+## Common Use Cases
+
+### Lookup by Name
+```hcl
+data "thalassa_kubernetes_cluster_role" "developer" {
+  name = "app-developer"
+}
+```
+
+### Lookup by Slug
+```hcl
+data "thalassa_kubernetes_cluster_role" "monitoring" {
+  slug = "monitoring-readonly"
+}
+```
+
+### Use in Role Binding
+```hcl
+# Lookup existing role
+data "thalassa_kubernetes_cluster_role" "existing_role" {
+  name = "app-developer"
+}
+
+# Create binding using the looked up role
+resource "thalassa_kubernetes_cluster_role_binding" "binding" {
+  name           = "user-binding"
+  cluster_role_id = data.thalassa_kubernetes_cluster_role.existing_role.id
+  user_id        = "user-123"
+}
+```
+
+### Conditional Logic Based on Role Type
+```hcl
+data "thalassa_kubernetes_cluster_role" "role" {
+  name = "some-role"
+}
+
+# Only create binding if role is not a system role
+resource "thalassa_kubernetes_cluster_role_binding" "conditional_binding" {
+  count = data.thalassa_kubernetes_cluster_role.role.system ? 0 : 1
+
+  name           = "conditional-binding"
+  cluster_role_id = data.thalassa_kubernetes_cluster_role.role.id
+  team_id        = "team-456"
+}
+```
+
+### Inspect Role Permissions
+```hcl
+data "thalassa_kubernetes_cluster_role" "role" {
+  name = "app-developer"
+}
+
+output "role_permissions" {
+  value = {
+    role_name = data.thalassa_kubernetes_cluster_role.role.name
+    rules_count = length(data.thalassa_kubernetes_cluster_role.role.rules)
+    resources = [
+      for rule in data.thalassa_kubernetes_cluster_role.role.rules : rule.resources
+    ]
+    verbs = [
+      for rule in data.thalassa_kubernetes_cluster_role.role.rules : rule.verbs
+    ]
+  }
+}
+```
+
+{{ if .HasExample -}}
+## Example Usage
+
+{{codefile "terraform" .ExampleFile}}
+{{- end }}
+{{ .SchemaMarkdown | trimspace }}

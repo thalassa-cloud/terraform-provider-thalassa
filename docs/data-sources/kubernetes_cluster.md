@@ -30,6 +30,7 @@ Get an Kubernetes cluster
 - `default_network_policy` (String) Default network policy of the Kubernetes Cluster
 - `delete_protection` (Boolean) Delete protection of the Kubernetes Cluster
 - `description` (String) A human readable description about the Kubernetes Cluster
+- `disable_public_endpoint` (Boolean) Disable public endpoint of the Kubernetes Cluster
 - `id` (String) The ID of this resource.
 - `kubernetes_api_server_ca_certificate` (String) Kubernetes API server CA certificate of the Kubernetes Cluster
 - `kubernetes_api_server_endpoint` (String) Kubernetes API server endpoint of the Kubernetes Cluster

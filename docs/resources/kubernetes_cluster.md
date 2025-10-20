@@ -114,6 +114,7 @@ output "node_pool_name" {
 - `default_network_policy` (String) Default network policy of the Kubernetes Cluster. Must be one of: allow-all, deny-all. Default: deny-all.
 - `delete_protection` (Boolean) Delete protection of the Kubernetes Cluster
 - `description` (String) A human readable description about the Kubernetes Cluster
+- `disable_public_endpoint` (Boolean) Disable public endpoint of the Kubernetes Cluster. When set to true, the Kubernetes Cluster will only be accessible via the private VPC endpoint and the user will need to provide a solution to access the Kubernetes API server.
 - `labels` (Map of String) Labels for the Kubernetes Cluster
 - `maintenance_day` (Number) Day of the week when the cluster will be upgraded (0-6, where 0 is Sunday)
 - `maintenance_start_at` (Number) Time of day when the cluster will be upgraded in minutes from midnight (0-1439)

@@ -122,11 +122,11 @@ data "thalassa_machine_image" "ubuntu_22_04_01" {
 }
 
 resource "thalassa_virtual_machine_instance" "testvm" {
-  name                = "testvm"
-  organisation_id     = data.thalassa_organisation.this.id
-  machine_type        = "pgp-xlarge"
-  machine_image       = data.thalassa_machine_image.ubuntu_22_04_01.id
-  subnet_id           = thalassa_subnet.subnet.id
+  name            = "testvm"
+  organisation_id = data.thalassa_organisation.this.id
+  machine_type    = "pgp-xlarge"
+  machine_image   = data.thalassa_machine_image.ubuntu_22_04_01.id
+  subnet_id       = thalassa_subnet.subnet.id
   # root_volume_id      = thalassa_block_volume.example.id
   root_volume_type    = "10b8e6d0-bb52-40b4-be2c-012a05058064"
   availability_zone   = "nl-01a"

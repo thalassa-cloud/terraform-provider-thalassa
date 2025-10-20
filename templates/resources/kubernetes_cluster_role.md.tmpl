@@ -1,0 +1,33 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.RenderedProviderName}}"
+subcategory: "Kubernetes IAM"
+description: |-
+{{ .Description | plainmarkdown | trimspace | prefixlines "  " }}
+---
+
+# {{.Name}} ({{.Type}})
+
+{{ .Description | trimspace }}
+
+## Important Notes
+
+- **Permission Rules**: Each rule defines access to specific Kubernetes resources with specific verbs (actions)
+- **API Groups**: Rules can target specific API groups (e.g., `apps`, `extensions`) or all groups with `*`
+- **Resource Names**: You can restrict access to specific named resources using the `resource_names` field
+- **Non-Resource URLs**: For non-resource endpoints like `/healthz`, use the `non_resource_urls` field
+- **System Roles**: System roles are managed by Thalassa Cloud and cannot be modified
+
+{{ if .HasExample -}}
+## Example Usage
+
+{{codefile "terraform" .ExampleFile}}
+{{- end }}
+{{ .SchemaMarkdown | trimspace }}
+
+{{ if .HasImport -}}
+## Import
+
+Import is supported using the following syntax:
+
+{{codefile "shell" .ImportFile}}
+{{- end }}

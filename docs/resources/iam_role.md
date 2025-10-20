@@ -16,12 +16,12 @@ Manage an organisation role in Thalassa Cloud
 resource "thalassa_iam_role" "example" {
   name        = "example-role"
   description = "An example organisation role for demonstration purposes"
-  
+
   labels = {
     environment = "development"
     project     = "example"
   }
-  
+
   annotations = {
     "example.com/created-by" = "terraform"
   }

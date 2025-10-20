@@ -14,12 +14,12 @@ provider "thalassa" {
 resource "thalassa_iam_role" "example" {
   name        = "example-role"
   description = "An example organisation role for demonstration purposes"
-  
+
   labels = {
     environment = "development"
     project     = "example"
   }
-  
+
   annotations = {
     "example.com/created-by" = "terraform"
   }
@@ -36,15 +36,15 @@ resource "thalassa_iam_role" "example" {
 
 # Create a role binding for a user
 resource "thalassa_iam_role_binding" "user_binding" {
-  role_id = thalassa_iam_role.example.id
-  name          = "admin-user-binding"
-  description   = "Bind admin user to the example role"
-  user_id = "user-id-123"
-  
+  role_id     = thalassa_iam_role.example.id
+  name        = "admin-user-binding"
+  description = "Bind admin user to the example role"
+  user_id     = "user-id-123"
+
   labels = {
     purpose = "admin-access"
   }
-  
+
   annotations = {
     "example.com/binding-type" = "user"
   }
@@ -52,15 +52,15 @@ resource "thalassa_iam_role_binding" "user_binding" {
 
 # Create a role binding for a team
 resource "thalassa_iam_role_binding" "team_binding" {
-  role_id = thalassa_iam_role.example.id
-  name          = "devops-team-binding"
-  description   = "Bind devops team to the example role"
-  team_id = "team-id-456"
-  
+  role_id     = thalassa_iam_role.example.id
+  name        = "devops-team-binding"
+  description = "Bind devops team to the example role"
+  team_id     = "team-id-456"
+
   labels = {
     purpose = "team-access"
   }
-  
+
   annotations = {
     "example.com/binding-type" = "team"
   }

@@ -2,12 +2,12 @@
 resource "thalassa_iam_team" "example" {
   name        = "example-team"
   description = "An example team for demonstration purposes"
-  
+
   labels = {
     environment = "development"
     project     = "example"
   }
-  
+
   annotations = {
     contact = "team@example.com"
     owner   = "devops"

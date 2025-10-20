@@ -31,13 +31,13 @@ resource "thalassa_objectstorage_bucket" "with_policy" {
   name   = "my-policy-bucket"
   region = "nl-01"
   public = false
-  
+
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
-        Sid       = "AllowReadAccess"
-        Effect    = "Allow"
+        Sid    = "AllowReadAccess"
+        Effect = "Allow"
         Principal = {
           Thalassa = "*"
         }
