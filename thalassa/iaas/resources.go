@@ -30,5 +30,7 @@ var (
 		"thalassa_security_group": DataSourceSecurityGroup(),
 		"thalassa_volume_type":    DataSourceVolumeType(),
 		"thalassa_subnet":         dataSourceSubnet(),
+		"thalassa_natgateway":     DataSourceNatGateway(),
+		"thalassa_loadbalancer":   DataSourceLoadBalancer(),
 	}
 )
