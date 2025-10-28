@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -75,6 +77,12 @@ func resourceBucket() *schema.Resource {
 				Optional:    true,
 				Description: "Whether the bucket has object lock enabled",
 			},
+			"wait_for_ready": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "Whether to wait for the bucket to be ready",
+			},
 		},
 	}
 }
@@ -120,8 +128,29 @@ func resourceBucketCreate(ctx context.Context, d *schema.ResourceData, m interfa
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error creating bucket: %w", err))
 	}
-
 	d.SetId(bucket.Identity)
+
+	if v, ok := d.GetOk("wait_for_ready"); ok && v.(bool) {
+		// wait until the bucket is ready
+		ctxWithTimeout, cancel := context.WithTimeout(ctx, 5*time.Minute)
+		defer cancel()
+		for {
+			select {
+			case <-ctxWithTimeout.Done():
+				return diag.FromErr(fmt.Errorf("timeout waiting for bucket to be ready"))
+			default:
+			}
+			bucket, err := client.ObjectStorage().GetBucket(ctxWithTimeout, bucket.Identity)
+			if err != nil {
+				return diag.FromErr(fmt.Errorf("error getting bucket: %w", err))
+			}
+			if strings.EqualFold(bucket.Status, "ready") {
+				break
+			}
+			time.Sleep(1 * time.Second)
+		}
+	}
+
 	return resourceBucketRead(ctx, d, m)
 }
 
@@ -147,7 +176,17 @@ func resourceBucketRead(ctx context.Context, d *schema.ResourceData, m interface
 	d.Set("status", bucket.Status)
 	d.Set("endpoint", bucket.Endpoint)
 	if bucket.Region != nil {
-		d.Set("region", bucket.Region.Identity)
+		currentRegion := d.Get("region").(string)
+		switch currentRegion {
+		case "":
+			d.Set("region", bucket.Region.Slug)
+		case bucket.Region.Slug:
+			d.Set("region", bucket.Region.Slug)
+		case bucket.Region.Identity:
+			d.Set("region", bucket.Region.Identity)
+		default:
+			d.Set("region", bucket.Region.Slug)
+		}
 	}
 	d.Set("policy", bucket.Policy)
 	d.Set("versioning", bucket.Versioning == objectstorage.ObjectStorageBucketVersioningEnabled)
