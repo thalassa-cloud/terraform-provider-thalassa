@@ -122,7 +122,10 @@ resource "thalassa_objectstorage_bucket" "cluster_bucket" {
 - `policy` (String) The bucket policy as a JSON string
 - `public` (Boolean) Whether the bucket is publicly accessible
 - `versioning` (Boolean) Whether the bucket is versioned
+- `wait_for_deleted` (Boolean) Whether to wait for the bucket to be deleted
+- `wait_for_deleted_timeout` (Number) The timeout in minutes to wait for the bucket to be deleted. Only used if wait_for_deleted is true
 - `wait_for_ready` (Boolean) Whether to wait for the bucket to be ready
+- `wait_for_ready_timeout` (Number) The timeout in minutes to wait for the bucket to be ready. Only used if wait_for_ready is true
 
 ### Read-Only
 

@@ -10,7 +10,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	validate "github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+
 	"github.com/thalassa-cloud/client-go/objectstorage"
+	tcclient "github.com/thalassa-cloud/client-go/pkg/client"
+
 	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/convert"
 	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/provider"
 )
@@ -83,6 +86,26 @@ func resourceBucket() *schema.Resource {
 				Default:     false,
 				Description: "Whether to wait for the bucket to be ready",
 			},
+			"wait_for_ready_timeout": {
+				Type:         schema.TypeInt,
+				Optional:     true,
+				Default:      5,
+				Description:  "The timeout in minutes to wait for the bucket to be ready. Only used if wait_for_ready is true",
+				ValidateFunc: validate.IntAtLeast(1),
+			},
+			"wait_for_deleted": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     true,
+				Description: "Whether to wait for the bucket to be deleted",
+			},
+			"wait_for_deleted_timeout": {
+				Type:         schema.TypeInt,
+				Optional:     true,
+				Default:      5,
+				Description:  "The timeout in minutes to wait for the bucket to be deleted. Only used if wait_for_deleted is true",
+				ValidateFunc: validate.IntAtLeast(1),
+			},
 		},
 	}
 }
@@ -132,7 +155,7 @@ func resourceBucketCreate(ctx context.Context, d *schema.ResourceData, m interfa
 
 	if v, ok := d.GetOk("wait_for_ready"); ok && v.(bool) {
 		// wait until the bucket is ready
-		ctxWithTimeout, cancel := context.WithTimeout(ctx, 5*time.Minute)
+		ctxWithTimeout, cancel := context.WithTimeout(ctx, time.Duration(d.Get("wait_for_ready_timeout").(int))*time.Minute)
 		defer cancel()
 		for {
 			select {
@@ -259,6 +282,31 @@ func resourceBucketDelete(ctx context.Context, d *schema.ResourceData, m interfa
 	if err := client.ObjectStorage().DeleteBucket(ctx, name); err != nil {
 		return diag.FromErr(fmt.Errorf("error deleting bucket: %w", err))
 	}
+
+	// wait until the bucket is deleted
+	if v, ok := d.GetOk("wait_for_deleted"); ok && v.(bool) {
+		ctxWithTimeout, cancel := context.WithTimeout(ctx, time.Duration(d.Get("wait_for_deleted_timeout").(int))*time.Minute)
+		defer cancel()
+		for {
+			select {
+			case <-ctxWithTimeout.Done():
+				return diag.FromErr(fmt.Errorf("timeout waiting for bucket to be deleted"))
+			default:
+			}
+			bucket, err := client.ObjectStorage().GetBucket(ctxWithTimeout, name)
+			if err != nil {
+				if tcclient.IsNotFound(err) {
+					break
+				}
+				return diag.FromErr(fmt.Errorf("error getting bucket: %w", err))
+			}
+			if bucket == nil {
+				break
+			}
+			time.Sleep(1 * time.Second)
+		}
+	}
+
 	d.SetId("")
 	return nil
 }
