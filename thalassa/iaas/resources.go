@@ -18,19 +18,22 @@ var (
 		"thalassa_target_group":             resourceTargetGroup(),
 		"thalassa_virtual_machine_instance": resourceVirtualMachineInstance(),
 		"thalassa_vpc":                      resourceVpc(),
+		"thalassa_vpc_firewall_rule":        resourceVpcFirewallRule(),
 		"thalassa_cloud_init_template":      resourceCloudInitTemplate(),
 	}
 
 	DataSourcesMap = map[string]*schema.Resource{
-		"thalassa_region":         DataSourceRegion(),
-		"thalassa_regions":        DataSourceRegions(),
-		"thalassa_machine_image":  DataSourceMachineImage(),
-		"thalassa_machine_type":   DataSourceMachineType(),
-		"thalassa_vpc":            DataSourceVpc(),
-		"thalassa_security_group": DataSourceSecurityGroup(),
-		"thalassa_volume_type":    DataSourceVolumeType(),
-		"thalassa_subnet":         dataSourceSubnet(),
-		"thalassa_natgateway":     DataSourceNatGateway(),
-		"thalassa_loadbalancer":   DataSourceLoadBalancer(),
+		"thalassa_region":             DataSourceRegion(),
+		"thalassa_regions":            DataSourceRegions(),
+		"thalassa_machine_image":      DataSourceMachineImage(),
+		"thalassa_machine_type":       DataSourceMachineType(),
+		"thalassa_vpc":                DataSourceVpc(),
+		"thalassa_vpc_firewall_rule":  DataSourceVpcFirewallRule(),
+		"thalassa_vpc_firewall_rules": DataSourceVpcFirewallRules(),
+		"thalassa_security_group":     DataSourceSecurityGroup(),
+		"thalassa_volume_type":        DataSourceVolumeType(),
+		"thalassa_subnet":             dataSourceSubnet(),
+		"thalassa_natgateway":         DataSourceNatGateway(),
+		"thalassa_loadbalancer":       DataSourceLoadBalancer(),
 	}
 )

@@ -83,12 +83,10 @@ output "storage_credential_id" {
 
 ### Required
 
-- `name` (String) Name of the access credential
 - `service_account_id` (String) Identity of the service account
 
 ### Optional
 
-- `description` (String) Description of the access credential
 - `expires_at` (String) Expiration timestamp of the access credential (RFC3339 format)
 - `scopes` (List of String) List of scopes for the access credential
 
