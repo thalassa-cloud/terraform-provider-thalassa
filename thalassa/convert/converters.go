@@ -29,3 +29,16 @@ func ConvertToMap(v interface{}) map[string]string {
 
 	return result
 }
+
+func ConvertToInt32Slice(v interface{}) []int32 {
+	if v == nil {
+		return []int32{}
+	}
+
+	result := []int32{}
+	for _, item := range v.([]interface{}) {
+		result = append(result, int32(item.(int)))
+	}
+
+	return result
+}
