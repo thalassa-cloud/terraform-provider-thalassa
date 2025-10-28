@@ -8,7 +8,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	validate "github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/convert"
 	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/provider"
 
 	iam "github.com/thalassa-cloud/client-go/iam"
@@ -31,20 +30,6 @@ func ResourceServiceAccountAccessCredential() *schema.Resource {
 				Required:    true,
 				ForceNew:    true,
 				Description: "Identity of the service account",
-			},
-			"name": {
-				Type:         schema.TypeString,
-				Required:     true,
-				ForceNew:     true,
-				ValidateFunc: validate.StringLenBetween(1, 255),
-				Description:  "Name of the access credential",
-			},
-			"description": {
-				Type:         schema.TypeString,
-				Optional:     true,
-				ForceNew:     true,
-				ValidateFunc: validate.StringLenBetween(0, 255),
-				Description:  "Description of the access credential",
 			},
 			"expires_at": {
 				Type:        schema.TypeString,
@@ -120,10 +105,8 @@ func resourceServiceAccountAccessCredentialCreate(ctx context.Context, d *schema
 	}
 
 	createReq := iam.CreateServiceAccountAccessCredentialRequest{
-		Name:        d.Get("name").(string),
-		Description: convert.Ptr(d.Get("description").(string)),
-		ExpiresAt:   expiresAt,
-		Scopes:      scopes,
+		ExpiresAt: expiresAt,
+		Scopes:    scopes,
 	}
 
 	credential, err := client.IAM().CreateServiceAccountAccessCredentials(ctx, serviceAccountID, createReq)
@@ -175,8 +158,6 @@ func resourceServiceAccountAccessCredentialRead(ctx context.Context, d *schema.R
 	}
 
 	d.SetId(credential.Identity)
-	d.Set("name", credential.Name)
-	d.Set("description", credential.Description)
 	d.Set("access_key", credential.AccessKey)
 	d.Set("created_at", credential.CreatedAt.Format(TimeFormatRFC3339))
 

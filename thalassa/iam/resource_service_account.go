@@ -126,7 +126,7 @@ func resourceServiceAccountCreate(ctx context.Context, d *schema.ResourceData, m
 
 	account, err := client.IAM().CreateServiceAccount(ctx, createReq)
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("failed to create service account: %w", err))
 	}
 
 	if account != nil {
@@ -140,7 +140,7 @@ func resourceServiceAccountCreate(ctx context.Context, d *schema.ResourceData, m
 func resourceServiceAccountRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("failed to get service account: %w", err))
 	}
 
 	identity := d.Get("id").(string)
@@ -150,7 +150,7 @@ func resourceServiceAccountRead(ctx context.Context, d *schema.ResourceData, m i
 			d.SetId("")
 			return nil
 		}
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("failed to get service account: %w", err))
 	}
 
 	if account == nil {
@@ -196,7 +196,7 @@ func resourceServiceAccountRead(ctx context.Context, d *schema.ResourceData, m i
 func resourceServiceAccountUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("failed to update service account: %w", err))
 	}
 
 	identity := d.Get("id").(string)
@@ -210,7 +210,7 @@ func resourceServiceAccountUpdate(ctx context.Context, d *schema.ResourceData, m
 
 	account, err := client.IAM().UpdateServiceAccount(ctx, identity, updateReq)
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("failed to update service account: %w", err))
 	}
 
 	if account != nil {
@@ -223,13 +223,13 @@ func resourceServiceAccountUpdate(ctx context.Context, d *schema.ResourceData, m
 func resourceServiceAccountDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("failed to get client: %w", err))
 	}
 
 	identity := d.Get("id").(string)
 	err = client.IAM().DeleteServiceAccount(ctx, identity)
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("failed to delete service account: %w", err))
 	}
 
 	d.SetId("")
