@@ -149,7 +149,7 @@ func resourceKubernetesNodePool() *schema.Resource {
 			"min_replicas": {
 				Type:        schema.TypeInt,
 				Optional:    true,
-				Default:     1,
+				Default:     0,
 				Description: "Minimum number of replicas for the Kubernetes Node Pool. May only be set when enable_autoscaling is true.",
 			},
 			"max_replicas": {

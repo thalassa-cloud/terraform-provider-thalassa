@@ -72,6 +72,7 @@ output "route_destination" {
 - `organisation_id` (String) Organisation of the RouteTable
 - `target_gateway` (String) Target Gateway of the Route
 - `target_natgateway` (String) Target NAT Gateway of the Route
+- `target_vpc_peering_connection` (String) Target VPC Peering Connection ID of the Route
 
 ### Read-Only
 
