@@ -55,6 +55,12 @@ func resourceVpcPeeringConnectionAcceptance() *schema.Resource {
 				Default:     10,
 				Description: "The timeout in minutes to wait for the VPC peering connection to be active",
 			},
+			"wait_for_deleted_timeout": {
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Default:     5,
+				Description: "The timeout in minutes to wait for the VPC peering connection to be deleted. Set to 0 to disable waiting.",
+			},
 		},
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -159,6 +165,27 @@ func resourceVpcPeeringConnectionAcceptanceDelete(ctx context.Context, d *schema
 	if err := client.IaaS().DeleteVpcPeeringConnection(ctx, peeringConnectionId); err != nil {
 		if !tcclient.IsNotFound(err) {
 			return diag.FromErr(fmt.Errorf("failed to reject VPC peering connection %s: %w", peeringConnectionId, err))
+		}
+	}
+
+	// wait until the peering connection is deleted
+	timeout := d.Get("wait_for_deleted_timeout").(int)
+	if timeout > 0 {
+		ctxWithTimeout, cancel := context.WithTimeout(ctx, time.Duration(timeout)*time.Minute)
+		defer cancel()
+		for {
+			select {
+			case <-ctxWithTimeout.Done():
+				return diag.FromErr(fmt.Errorf("timeout while waiting for peering connection to be deleted"))
+			case <-time.After(1 * time.Second):
+			}
+			_, err := client.IaaS().GetVpcPeeringConnection(ctxWithTimeout, peeringConnectionId)
+			if err != nil {
+				if tcclient.IsNotFound(err) {
+					break
+				}
+				return diag.FromErr(err)
+			}
 		}
 	}
 
