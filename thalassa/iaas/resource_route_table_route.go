@@ -59,6 +59,11 @@ func resourceRouteTableRoute() *schema.Resource {
 				Optional:    true,
 				Description: "Target NAT Gateway of the Route",
 			},
+			"target_vpc_peering_connection": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Target VPC Peering Connection ID of the Route",
+			},
 			"gateway_address": {
 				Type:         schema.TypeString,
 				Optional:     true,
@@ -80,10 +85,11 @@ func resourceRouteTableRouteCreate(ctx context.Context, d *schema.ResourceData, 
 
 	targetGateway := d.Get("target_gateway").(string)
 	targetNatGateway := d.Get("target_natgateway").(string)
+	targetVpcPeering := d.Get("target_vpc_peering_connection").(string)
 	gatewayAddress := d.Get("gateway_address").(string)
 
-	if targetGateway == "" && targetNatGateway == "" && gatewayAddress == "" {
-		return diag.FromErr(fmt.Errorf("target_gateway, target_natgateway or gateway_address is required"))
+	if targetGateway == "" && targetNatGateway == "" && targetVpcPeering == "" && gatewayAddress == "" {
+		return diag.FromErr(fmt.Errorf("one of target_gateway, target_natgateway, target_vpc_peering_connection or gateway_address is required"))
 	}
 	if targetNatGateway != "" {
 		natGateway, err := client.IaaS().GetNatGateway(ctx, targetNatGateway)
@@ -98,11 +104,17 @@ func resourceRouteTableRouteCreate(ctx context.Context, d *schema.ResourceData, 
 		}
 	}
 
+	var targetVpcPeeringPtr *string
+	if targetVpcPeering != "" {
+		targetVpcPeeringPtr = &targetVpcPeering
+	}
+
 	createRouteTableRoute := iaas.CreateRouteTableRoute{
-		DestinationCidrBlock:     d.Get("destination_cidr").(string),
-		TargetGatewayIdentity:    targetGateway,
-		TargetNatGatewayIdentity: targetNatGateway,
-		GatewayAddress:           gatewayAddress,
+		DestinationCidrBlock:         d.Get("destination_cidr").(string),
+		TargetGatewayIdentity:        targetGateway,
+		TargetNatGatewayIdentity:     targetNatGateway,
+		TargetVpcPeeringConnectionId: targetVpcPeeringPtr,
+		GatewayAddress:               gatewayAddress,
 	}
 	route, err := client.IaaS().CreateRouteTableRoute(ctx, d.Get("route_table_id").(string), createRouteTableRoute)
 
@@ -144,6 +156,9 @@ func resourceRouteTableRouteRead(ctx context.Context, d *schema.ResourceData, m 
 	if route.TargetNatGateway != nil {
 		d.Set("target_natgateway", route.TargetNatGateway.Identity)
 	}
+	if route.TargetVpcPeeringConnection != nil {
+		d.Set("target_vpc_peering_connection", route.TargetVpcPeeringConnection.Identity)
+	}
 	if route.GatewayAddress != nil {
 		d.Set("gateway_address", route.GatewayAddress)
 	}
@@ -158,10 +173,11 @@ func resourceRouteTableRouteUpdate(ctx context.Context, d *schema.ResourceData, 
 
 	targetGateway := d.Get("target_gateway").(string)
 	targetNatGateway := d.Get("target_natgateway").(string)
+	targetVpcPeering := d.Get("target_vpc_peering_connection").(string)
 	gatewayAddress := d.Get("gateway_address").(string)
 
-	if targetGateway == "" && targetNatGateway == "" && gatewayAddress == "" {
-		return diag.FromErr(fmt.Errorf("target_gateway, target_natgateway or gateway_address is required"))
+	if targetGateway == "" && targetNatGateway == "" && targetVpcPeering == "" && gatewayAddress == "" {
+		return diag.FromErr(fmt.Errorf("one of target_gateway, target_natgateway, target_vpc_peering_connection or gateway_address is required"))
 	}
 	if targetNatGateway != "" {
 		natGateway, err := client.IaaS().GetNatGateway(ctx, targetNatGateway)
@@ -176,11 +192,17 @@ func resourceRouteTableRouteUpdate(ctx context.Context, d *schema.ResourceData, 
 		}
 	}
 
+	var targetVpcPeeringPtr *string
+	if targetVpcPeering != "" {
+		targetVpcPeeringPtr = &targetVpcPeering
+	}
+
 	updateRouteTableRoute := iaas.UpdateRouteTableRoute{
-		DestinationCidrBlock:     d.Get("destination_cidr").(string),
-		TargetGatewayIdentity:    targetGateway,
-		TargetNatGatewayIdentity: targetNatGateway,
-		GatewayAddress:           gatewayAddress,
+		DestinationCidrBlock:         d.Get("destination_cidr").(string),
+		TargetGatewayIdentity:        targetGateway,
+		TargetNatGatewayIdentity:     targetNatGateway,
+		TargetVpcPeeringConnectionId: targetVpcPeeringPtr,
+		GatewayAddress:               gatewayAddress,
 	}
 
 	id := d.Get("id").(string)
