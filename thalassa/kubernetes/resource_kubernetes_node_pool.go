@@ -28,9 +28,6 @@ func resourceKubernetesNodePool() *schema.Resource {
 				if _, ok := d.GetOk("replicas"); ok {
 					return fmt.Errorf("replicas must be unset when enable_autoscaling is true")
 				}
-				if _, ok := d.GetOk("min_replicas"); !ok {
-					return fmt.Errorf("min_replicas must be set when enable_autoscaling is true")
-				}
 				if _, ok := d.GetOk("max_replicas"); !ok {
 					return fmt.Errorf("max_replicas must be set when enable_autoscaling is true")
 				}
