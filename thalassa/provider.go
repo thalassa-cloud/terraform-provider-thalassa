@@ -22,6 +22,13 @@ func Provider() *schema.Provider {
 				Description: "The API token for authentication. Can be set via the THALASSA_API_TOKEN environment variable.",
 				DefaultFunc: schema.EnvDefaultFunc("THALASSA_API_TOKEN", nil),
 			},
+			"access_token": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Sensitive:   true,
+				Description: "The access token for authentication. Can be set via the THALASSA_ACCESS_TOKEN environment variable.",
+				DefaultFunc: schema.EnvDefaultFunc("THALASSA_ACCESS_TOKEN", nil),
+			},
 			"client_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
