@@ -24,6 +24,7 @@ type ConfiguredProvider struct {
 	Client            thalassa.Client
 	Organisation      string
 	token             string
+	accessToken       string
 	apiEndpoint       string
 	clientID          string
 	clientSecret      string
@@ -32,6 +33,7 @@ type ConfiguredProvider struct {
 
 func ProviderConfigure(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
 	token := d.Get("token").(string)
+	accessToken := d.Get("access_token").(string)
 	apiEndpoint := d.Get("api").(string)
 	organisation := d.Get("organisation_id").(string)
 	clientID := d.Get("client_id").(string)
@@ -47,6 +49,11 @@ func ProviderConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 	hasAuth := false
 	if token != "" {
 		opts = append(opts, client.WithAuthPersonalToken(token))
+		hasAuth = true
+	}
+
+	if accessToken != "" {
+		opts = append(opts, client.WithToken(accessToken))
 		hasAuth = true
 	}
 
@@ -89,6 +96,11 @@ func GetClient(provider ConfiguredProvider, d *schema.ResourceData) (thalassa.Cl
 	hasAuth := false
 	if provider.token != "" {
 		opts = append(opts, client.WithAuthPersonalToken(provider.token))
+		hasAuth = true
+	}
+
+	if provider.accessToken != "" {
+		opts = append(opts, client.WithToken(provider.accessToken))
 		hasAuth = true
 	}
 

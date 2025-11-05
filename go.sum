@@ -101,8 +101,8 @@ github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UV
 github.com/stretchr/testify v1.7.2/go.mod h1:R6va5+xMeoiuVRoj+gSkQ7d3FALtqAAGI1FQKckRals=
 github.com/stretchr/testify v1.11.1 h1:7s2iGBzp5EwR7/aIZr8ao5+dra3wiQyKjjFuvgVKu7U=
 github.com/stretchr/testify v1.11.1/go.mod h1:wZwfW3scLgRK+23gO65QZefKpKQRnfz6sD981Nm4B6U=
-github.com/thalassa-cloud/client-go v0.24.0 h1:Q/cRh+3gi4uiZPU6kggmHPksDnpcSbO62S9G/t2RzY0=
-github.com/thalassa-cloud/client-go v0.24.0/go.mod h1:FXOcCo5/Kv8wVCXgwyfbj3An4VeK9Y21NIISQiGT2hA=
+github.com/thalassa-cloud/client-go v0.25.0 h1:AkuBTckX4kbucGSN1Zxw5/3OVNA+3IW0EGqQEoyfm90=
+github.com/thalassa-cloud/client-go v0.25.0/go.mod h1:FXOcCo5/Kv8wVCXgwyfbj3An4VeK9Y21NIISQiGT2hA=
 github.com/vmihailenco/msgpack v3.3.3+incompatible/go.mod h1:fy3FlTQTDXWkZ7Bh6AcGMlsjHatGryHQYUTf1ShIgkk=
 github.com/vmihailenco/msgpack v4.0.4+incompatible h1:dSLoQfGFAo3F6OoNhwUmLwVgaUXK79GlxNBwueZn0xI=
 github.com/vmihailenco/msgpack v4.0.4+incompatible/go.mod h1:fy3FlTQTDXWkZ7Bh6AcGMlsjHatGryHQYUTf1ShIgkk=
