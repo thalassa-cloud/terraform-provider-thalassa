@@ -82,6 +82,7 @@ resource "thalassa_route_table_route" "accepter_vpc" {
 - `labels` (Map of String) Labels for the VPC peering connection
 - `wait_for_active` (Boolean) Whether to wait for the VPC peering connection to be active (requires acceptance by the accepter VPC owner). If false, the resource will be marked as created, but the peering connection may not be active yet.
 - `wait_for_active_timeout` (Number) The timeout in minutes to wait for the VPC peering connection to be active
+- `wait_for_deleted_timeout` (Number) The timeout in minutes to wait for the VPC peering connection to be deleted. Set to 0 to disable waiting.
 
 ### Read-Only
 

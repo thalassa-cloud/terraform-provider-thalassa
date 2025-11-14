@@ -21,10 +21,12 @@ Get an Kubernetes cluster
 
 ### Read-Only
 
+- `advertise_port` (Number) Advertise port for the Kubernetes Cluster within the VPC
 - `annotations` (Map of String) Annotations for the Kubernetes Cluster
 - `api_server_acls` (List of Object) API server ACLs for the Kubernetes Cluster (see [below for nested schema](#nestedatt--api_server_acls))
 - `audit_log_profile` (String) Audit log profile of the Kubernetes Cluster
 - `auto_upgrade_policy` (String) Auto upgrade policy of the Kubernetes Cluster
+- `autoscaler_config` (List of Object) Configuration for the cluster autoscaler (see [below for nested schema](#nestedatt--autoscaler_config))
 - `cluster_type` (String) Cluster type of the Kubernetes Cluster
 - `cluster_version` (String) Cluster version of the Kubernetes Cluster
 - `default_network_policy` (String) Default network policy of the Kubernetes Cluster
@@ -32,6 +34,8 @@ Get an Kubernetes cluster
 - `description` (String) A human readable description about the Kubernetes Cluster
 - `disable_public_endpoint` (Boolean) Disable public endpoint of the Kubernetes Cluster
 - `id` (String) The ID of this resource.
+- `internal_endpoint` (String) VPC-internal endpoint for the Kubernetes Cluster
+- `konnectivity_port` (Number) Konnectivity port for the Kubernetes Cluster within the VPC
 - `kubernetes_api_server_ca_certificate` (String) Kubernetes API server CA certificate of the Kubernetes Cluster
 - `kubernetes_api_server_endpoint` (String) Kubernetes API server endpoint of the Kubernetes Cluster
 - `labels` (Map of String) Labels for the Kubernetes Cluster
@@ -52,3 +56,21 @@ Get an Kubernetes cluster
 Read-Only:
 
 - `allowed_cidrs` (List of String)
+
+
+<a id="nestedatt--autoscaler_config"></a>
+### Nested Schema for `autoscaler_config`
+
+Read-Only:
+
+- `balance_similar_node_groups` (Boolean)
+- `enable_proactive_scale_up` (Boolean)
+- `estimator` (String)
+- `expander` (String)
+- `expendable_pods_priority_cutoff` (Number)
+- `ignore_daemonsets_utilization` (Boolean)
+- `max_graceful_termination_sec` (Number)
+- `scale_down_delay_after_add` (String)
+- `scale_down_disabled` (Boolean)
+- `scale_down_unneeded_time` (String)
+- `scale_down_utilization_threshold` (Number)

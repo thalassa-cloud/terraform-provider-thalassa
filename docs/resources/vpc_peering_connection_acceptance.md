@@ -75,6 +75,7 @@ resource "thalassa_route_table_route" "accepter_vpc" {
 
 - `wait_for_active` (Boolean) Whether to wait for the VPC peering connection to be active
 - `wait_for_active_timeout` (Number) The timeout in minutes to wait for the VPC peering connection to be active
+- `wait_for_deleted_timeout` (Number) The timeout in minutes to wait for the VPC peering connection to be deleted. Set to 0 to disable waiting.
 
 ### Read-Only
 

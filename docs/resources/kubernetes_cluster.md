@@ -109,6 +109,7 @@ output "node_pool_name" {
 - `api_server_acls` (Block List, Max: 10) API server ACLs for the Kubernetes Cluster (see [below for nested schema](#nestedblock--api_server_acls))
 - `audit_log_profile` (String) Audit log profile of the Kubernetes Cluster. Must be one of: none, basic, advanced. Default: none.
 - `auto_upgrade_policy` (String) Auto upgrade policy of the Kubernetes Cluster. Must be one of: none, latest-version, latest-stable. Default: none.
+- `autoscaler_config` (Block List, Max: 1) Configuration for the cluster autoscaler. These values can also be configured using annotations on a KubernetesNodePool object. (see [below for nested schema](#nestedblock--autoscaler_config))
 - `cluster_type` (String) Cluster type of the Kubernetes Cluster. Must be one of: managed, hosted-control-plane. Default: managed.
 - `cluster_version` (String) Cluster version of the Kubernetes Cluster, can be a name, slug or identity of the Kubernetes version. If not provided, the latest stable version will be used for provisioning.
 - `default_network_policy` (String) Default network policy of the Kubernetes Cluster. Must be one of: allow-all, deny-all. Default: deny-all.
@@ -129,7 +130,10 @@ output "node_pool_name" {
 
 ### Read-Only
 
+- `advertise_port` (Number) Advertise port for the Kubernetes Cluster within the VPC
 - `id` (String) The ID of this resource.
+- `internal_endpoint` (String) VPC-internal endpoint for the Kubernetes Cluster
+- `konnectivity_port` (Number) Konnectivity port for the Kubernetes Cluster within the VPC
 - `kubernetes_api_server_ca_certificate` (String) Kubernetes API server CA certificate of the Kubernetes Cluster
 - `kubernetes_api_server_endpoint` (String) Kubernetes API server endpoint of the Kubernetes Cluster
 - `slug` (String)
@@ -142,5 +146,23 @@ output "node_pool_name" {
 Optional:
 
 - `allowed_cidrs` (List of String) List of allowed CIDRs for API server access
+
+
+<a id="nestedblock--autoscaler_config"></a>
+### Nested Schema for `autoscaler_config`
+
+Optional:
+
+- `balance_similar_node_groups` (Boolean) Flag to balance the utilization of similar node groups by the cluster autoscaler
+- `enable_proactive_scale_up` (Boolean) Flag to enable the proactive scale up of the cluster autoscaler. Whether to enable/disable proactive scale-ups, defaults to false
+- `estimator` (String) Estimator to use for the cluster autoscaler. Available values: binpacking
+- `expander` (String) Expander to use for the cluster autoscaler
+- `expendable_pods_priority_cutoff` (Number) Priority cutoff for the expendable pods by the cluster autoscaler
+- `ignore_daemonsets_utilization` (Boolean) Flag to ignore the utilization of daemonsets by the cluster autoscaler
+- `max_graceful_termination_sec` (Number) Maximum graceful termination time for the cluster autoscaler. If the pod is not stopped within this time then the node is terminated anyway.
+- `scale_down_delay_after_add` (String) Delay after adding a node to the node pool by the cluster autoscaler
+- `scale_down_disabled` (Boolean) Flag to disable the scale down of node pools by the cluster autoscaler
+- `scale_down_unneeded_time` (String) Time after which a node can be scaled down by the cluster autoscaler
+- `scale_down_utilization_threshold` (Number) Utilization threshold for the cluster autoscaler. The autoscaler might scale down non-empty nodes with utilization below a threshold. To prevent this behavior, set the utilization threshold to 0
 
 

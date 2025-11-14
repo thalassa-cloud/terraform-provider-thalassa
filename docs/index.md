@@ -16,6 +16,7 @@ description: |-
 
 ### Optional
 
+- `access_token` (String, Sensitive) The access token for authentication. Can be set via the THALASSA_ACCESS_TOKEN environment variable.
 - `allow_insecure_oidc` (Boolean) Allow insecure OIDC authentication. Can be set via the THALASSA_ALLOW_INSECURE_OIDC environment variable.
 - `api` (String) The API endpoint URL. Can be set via the THALASSA_API_ENDPOINT environment variable.
 - `client_id` (String, Sensitive) The OIDC client ID for authentication. Can be set via the THALASSA_CLIENT_ID environment variable.

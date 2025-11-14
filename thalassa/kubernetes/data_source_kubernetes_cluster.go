@@ -158,6 +158,85 @@ func DataSourceKubernetesCluster() *schema.Resource {
 				Computed:    true,
 				Description: "Disable public endpoint of the Kubernetes Cluster",
 			},
+			"autoscaler_config": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "Configuration for the cluster autoscaler",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"scale_down_disabled": {
+							Type:        schema.TypeBool,
+							Computed:    true,
+							Description: "Flag to disable the scale down of node pools by the cluster autoscaler",
+						},
+						"scale_down_delay_after_add": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Delay after adding a node to the node pool by the cluster autoscaler",
+						},
+						"estimator": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Estimator to use for the cluster autoscaler",
+						},
+						"expander": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Expander to use for the cluster autoscaler",
+						},
+						"ignore_daemonsets_utilization": {
+							Type:        schema.TypeBool,
+							Computed:    true,
+							Description: "Flag to ignore the utilization of daemonsets by the cluster autoscaler",
+						},
+						"balance_similar_node_groups": {
+							Type:        schema.TypeBool,
+							Computed:    true,
+							Description: "Flag to balance the utilization of similar node groups by the cluster autoscaler",
+						},
+						"expendable_pods_priority_cutoff": {
+							Type:        schema.TypeInt,
+							Computed:    true,
+							Description: "Priority cutoff for the expendable pods by the cluster autoscaler",
+						},
+						"scale_down_unneeded_time": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Time after which a node can be scaled down by the cluster autoscaler",
+						},
+						"scale_down_utilization_threshold": {
+							Type:        schema.TypeFloat,
+							Computed:    true,
+							Description: "Utilization threshold for the cluster autoscaler",
+						},
+						"max_graceful_termination_sec": {
+							Type:        schema.TypeInt,
+							Computed:    true,
+							Description: "Maximum graceful termination time for the cluster autoscaler",
+						},
+						"enable_proactive_scale_up": {
+							Type:        schema.TypeBool,
+							Computed:    true,
+							Description: "Flag to enable the proactive scale up of the cluster autoscaler",
+						},
+					},
+				},
+			},
+			"internal_endpoint": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "VPC-internal endpoint for the Kubernetes Cluster",
+			},
+			"advertise_port": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Advertise port for the Kubernetes Cluster within the VPC",
+			},
+			"konnectivity_port": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Konnectivity port for the Kubernetes Cluster within the VPC",
+			},
 		},
 	}
 }
@@ -199,6 +278,15 @@ func dataSourceKubernetesClusterRead(ctx context.Context, d *schema.ResourceData
 			}
 			d.Set("kubernetes_api_server_endpoint", cluster.APIServerURL)
 			d.Set("kubernetes_api_server_ca_certificate", cluster.APIServerCA)
+			if cluster.InternalEndpoint != nil {
+				d.Set("internal_endpoint", *cluster.InternalEndpoint)
+			}
+			if cluster.AdvertisePort != nil {
+				d.Set("advertise_port", *cluster.AdvertisePort)
+			}
+			if cluster.KonnectivityPort != nil {
+				d.Set("konnectivity_port", *cluster.KonnectivityPort)
+			}
 
 			// Set API server ACLs
 			if cluster.ApiServerACLs.AllowedCIDRs != nil {
@@ -219,6 +307,26 @@ func dataSourceKubernetesClusterRead(ctx context.Context, d *schema.ResourceData
 			}
 			if cluster.MaintenanceStartAt != nil {
 				d.Set("maintenance_start_at", int(*cluster.MaintenanceStartAt))
+			}
+
+			// Set autoscaler config
+			if cluster.AutoscalerConfig != nil {
+				autoscalerConfig := map[string]interface{}{
+					"scale_down_disabled":              cluster.AutoscalerConfig.ScaleDownDisabled,
+					"scale_down_delay_after_add":       cluster.AutoscalerConfig.ScaleDownDelayAfterAdd,
+					"estimator":                        cluster.AutoscalerConfig.Estimator,
+					"expander":                         cluster.AutoscalerConfig.Expander,
+					"ignore_daemonsets_utilization":    cluster.AutoscalerConfig.IgnoreDaemonsetsUtilization,
+					"balance_similar_node_groups":      cluster.AutoscalerConfig.BalanceSimilarNodeGroups,
+					"expendable_pods_priority_cutoff":  cluster.AutoscalerConfig.ExpendablePodsPriorityCutoff,
+					"scale_down_unneeded_time":         cluster.AutoscalerConfig.ScaleDownUnneededTime,
+					"scale_down_utilization_threshold": cluster.AutoscalerConfig.ScaleDownUtilizationThreshold,
+					"max_graceful_termination_sec":     cluster.AutoscalerConfig.MaxGracefulTerminationSec,
+					"enable_proactive_scale_up":        cluster.AutoscalerConfig.EnableProactiveScaleUp,
+				}
+				if err := d.Set("autoscaler_config", []interface{}{autoscalerConfig}); err != nil {
+					return diag.FromErr(fmt.Errorf("error setting autoscaler_config: %s", err))
+				}
 			}
 
 			// Set labels and annotations directly
