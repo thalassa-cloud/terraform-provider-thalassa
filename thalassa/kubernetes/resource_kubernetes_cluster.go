@@ -123,6 +123,75 @@ func resourceKubernetesCluster() *schema.Resource {
 				Default:      "192.168.0.0/16",
 				Description:  "Pod CIDR of the Kubernetes Cluster. Must be a valid CIDR block.",
 			},
+			"autoscaler_config": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				MaxItems:    1,
+				Description: "Configuration for the cluster autoscaler. These values can also be configured using annotations on a KubernetesNodePool object.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"scale_down_disabled": {
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Default:     false,
+							Description: "Flag to disable the scale down of node pools by the cluster autoscaler",
+						},
+						"scale_down_delay_after_add": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "Delay after adding a node to the node pool by the cluster autoscaler",
+						},
+						"estimator": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "Estimator to use for the cluster autoscaler. Available values: binpacking",
+						},
+						"expander": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "Expander to use for the cluster autoscaler",
+						},
+						"ignore_daemonsets_utilization": {
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Default:     false,
+							Description: "Flag to ignore the utilization of daemonsets by the cluster autoscaler",
+						},
+						"balance_similar_node_groups": {
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Default:     false,
+							Description: "Flag to balance the utilization of similar node groups by the cluster autoscaler",
+						},
+						"expendable_pods_priority_cutoff": {
+							Type:        schema.TypeInt,
+							Optional:    true,
+							Description: "Priority cutoff for the expendable pods by the cluster autoscaler",
+						},
+						"scale_down_unneeded_time": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "Time after which a node can be scaled down by the cluster autoscaler",
+						},
+						"scale_down_utilization_threshold": {
+							Type:        schema.TypeFloat,
+							Optional:    true,
+							Description: "Utilization threshold for the cluster autoscaler. The autoscaler might scale down non-empty nodes with utilization below a threshold. To prevent this behavior, set the utilization threshold to 0",
+						},
+						"max_graceful_termination_sec": {
+							Type:        schema.TypeInt,
+							Optional:    true,
+							Description: "Maximum graceful termination time for the cluster autoscaler. If the pod is not stopped within this time then the node is terminated anyway.",
+						},
+						"enable_proactive_scale_up": {
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Default:     false,
+							Description: "Flag to enable the proactive scale up of the cluster autoscaler. Whether to enable/disable proactive scale-ups, defaults to false",
+						},
+					},
+				},
+			},
 			"pod_security_standards_profile": {
 				Type:         schema.TypeString,
 				Optional:     true,
@@ -153,6 +222,21 @@ func resourceKubernetesCluster() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Kubernetes API server CA certificate of the Kubernetes Cluster",
+			},
+			"internal_endpoint": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "VPC-internal endpoint for the Kubernetes Cluster",
+			},
+			"advertise_port": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Advertise port for the Kubernetes Cluster within the VPC",
+			},
+			"konnectivity_port": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Konnectivity port for the Kubernetes Cluster within the VPC",
 			},
 			"api_server_acls": {
 				Type:        schema.TypeList,
@@ -285,6 +369,12 @@ func resourceKubernetesClusterCreate(ctx context.Context, d *schema.ResourceData
 		createKubernetesCluster.SecurityGroupAttachments = convert.ConvertToStringSlice(securityGroupAttachments)
 	}
 
+	// Set autoscaler config if provided
+	if autoscalerConfig, ok := d.GetOk("autoscaler_config"); ok {
+		config := convertAutoscalerConfig(autoscalerConfig)
+		createKubernetesCluster.AutoscalerConfig = config
+	}
+
 	// Set maintenance settings if provided
 	if maintenanceDay, ok := d.GetOk("maintenance_day"); ok {
 		day := uint(maintenanceDay.(int))
@@ -382,6 +472,15 @@ func resourceKubernetesClusterRead(ctx context.Context, d *schema.ResourceData, 
 	d.Set("status", kubernetesCluster.Status)
 	d.Set("kubernetes_api_server_endpoint", kubernetesCluster.APIServerURL)
 	d.Set("kubernetes_api_server_ca_certificate", kubernetesCluster.APIServerCA)
+	if kubernetesCluster.InternalEndpoint != nil {
+		d.Set("internal_endpoint", *kubernetesCluster.InternalEndpoint)
+	}
+	if kubernetesCluster.AdvertisePort != nil {
+		d.Set("advertise_port", *kubernetesCluster.AdvertisePort)
+	}
+	if kubernetesCluster.KonnectivityPort != nil {
+		d.Set("konnectivity_port", *kubernetesCluster.KonnectivityPort)
+	}
 	d.Set("disable_public_endpoint", kubernetesCluster.DisablePublicEndpoint)
 
 	// Set API server ACLs
@@ -411,8 +510,28 @@ func resourceKubernetesClusterRead(ctx context.Context, d *schema.ResourceData, 
 		d.Set("maintenance_start_at", int(*kubernetesCluster.MaintenanceStartAt))
 	}
 
+	// Set autoscaler config
+	if kubernetesCluster.AutoscalerConfig != nil {
+		autoscalerConfig := map[string]interface{}{
+			"scale_down_disabled":              kubernetesCluster.AutoscalerConfig.ScaleDownDisabled,
+			"scale_down_delay_after_add":       kubernetesCluster.AutoscalerConfig.ScaleDownDelayAfterAdd,
+			"estimator":                        kubernetesCluster.AutoscalerConfig.Estimator,
+			"expander":                         kubernetesCluster.AutoscalerConfig.Expander,
+			"ignore_daemonsets_utilization":    kubernetesCluster.AutoscalerConfig.IgnoreDaemonsetsUtilization,
+			"balance_similar_node_groups":      kubernetesCluster.AutoscalerConfig.BalanceSimilarNodeGroups,
+			"expendable_pods_priority_cutoff":  kubernetesCluster.AutoscalerConfig.ExpendablePodsPriorityCutoff,
+			"scale_down_unneeded_time":         kubernetesCluster.AutoscalerConfig.ScaleDownUnneededTime,
+			"scale_down_utilization_threshold": kubernetesCluster.AutoscalerConfig.ScaleDownUtilizationThreshold,
+			"max_graceful_termination_sec":     kubernetesCluster.AutoscalerConfig.MaxGracefulTerminationSec,
+			"enable_proactive_scale_up":        kubernetesCluster.AutoscalerConfig.EnableProactiveScaleUp,
+		}
+		if err := d.Set("autoscaler_config", []interface{}{autoscalerConfig}); err != nil {
+			return diag.FromErr(fmt.Errorf("error setting autoscaler_config: %s", err))
+		}
+	}
+
 	if kubernetesCluster.VPC != nil {
-		d.Set("vpc", kubernetesCluster.VPC.Identity)
+		d.Set("vpc_id", kubernetesCluster.VPC.Identity)
 	}
 	if kubernetesCluster.Subnet != nil {
 		d.Set("subnet_id", kubernetesCluster.Subnet.Identity)
@@ -474,6 +593,12 @@ func resourceKubernetesClusterUpdate(ctx context.Context, d *schema.ResourceData
 
 	if securityGroupAttachments, ok := d.GetOk("security_group_attachments"); ok {
 		updateKubernetesCluster.SecurityGroupAttachments = convert.ConvertToStringSlice(securityGroupAttachments)
+	}
+
+	// Set autoscaler config if provided
+	if autoscalerConfig, ok := d.GetOk("autoscaler_config"); ok {
+		config := convertAutoscalerConfig(autoscalerConfig)
+		updateKubernetesCluster.AutoscalerConfig = config
 	}
 
 	// Set maintenance settings if provided
@@ -545,6 +670,37 @@ func resourceKubernetesClusterUpdate(ctx context.Context, d *schema.ResourceData
 		}
 		if kubernetesCluster.MaintenanceStartAt != nil {
 			d.Set("maintenance_start_at", int(*kubernetesCluster.MaintenanceStartAt))
+		}
+
+		// Set autoscaler config
+		if kubernetesCluster.AutoscalerConfig != nil {
+			autoscalerConfig := map[string]interface{}{
+				"scale_down_disabled":              kubernetesCluster.AutoscalerConfig.ScaleDownDisabled,
+				"scale_down_delay_after_add":       kubernetesCluster.AutoscalerConfig.ScaleDownDelayAfterAdd,
+				"estimator":                        kubernetesCluster.AutoscalerConfig.Estimator,
+				"expander":                         kubernetesCluster.AutoscalerConfig.Expander,
+				"ignore_daemonsets_utilization":    kubernetesCluster.AutoscalerConfig.IgnoreDaemonsetsUtilization,
+				"balance_similar_node_groups":      kubernetesCluster.AutoscalerConfig.BalanceSimilarNodeGroups,
+				"expendable_pods_priority_cutoff":  kubernetesCluster.AutoscalerConfig.ExpendablePodsPriorityCutoff,
+				"scale_down_unneeded_time":         kubernetesCluster.AutoscalerConfig.ScaleDownUnneededTime,
+				"scale_down_utilization_threshold": kubernetesCluster.AutoscalerConfig.ScaleDownUtilizationThreshold,
+				"max_graceful_termination_sec":     kubernetesCluster.AutoscalerConfig.MaxGracefulTerminationSec,
+				"enable_proactive_scale_up":        kubernetesCluster.AutoscalerConfig.EnableProactiveScaleUp,
+			}
+			if err := d.Set("autoscaler_config", []interface{}{autoscalerConfig}); err != nil {
+				return diag.FromErr(fmt.Errorf("error setting autoscaler_config: %s", err))
+			}
+		}
+
+		// Set computed fields
+		if kubernetesCluster.InternalEndpoint != nil {
+			d.Set("internal_endpoint", *kubernetesCluster.InternalEndpoint)
+		}
+		if kubernetesCluster.AdvertisePort != nil {
+			d.Set("advertise_port", *kubernetesCluster.AdvertisePort)
+		}
+		if kubernetesCluster.KonnectivityPort != nil {
+			d.Set("konnectivity_port", *kubernetesCluster.KonnectivityPort)
 		}
 
 		return nil
@@ -626,4 +782,64 @@ func convertApiServerACLs(acls interface{}) kubernetes.KubernetesApiServerACLs {
 	return kubernetes.KubernetesApiServerACLs{
 		AllowedCIDRs: allowedCIDRs,
 	}
+}
+
+// convertAutoscalerConfig converts the autoscaler config from Terraform schema to the API format
+func convertAutoscalerConfig(config interface{}) *kubernetes.AutoscalerConfig {
+	if config == nil {
+		return nil
+	}
+
+	configList, ok := config.([]interface{})
+	if !ok || len(configList) == 0 {
+		return nil
+	}
+
+	first := configList[0]
+	if first == nil {
+		return nil
+	}
+
+	cfg, ok := first.(map[string]interface{})
+	if !ok || cfg == nil {
+		return nil
+	}
+
+	result := &kubernetes.AutoscalerConfig{}
+
+	if v, exists := cfg["scale_down_disabled"]; exists && v != nil {
+		result.ScaleDownDisabled = v.(bool)
+	}
+	if v, exists := cfg["scale_down_delay_after_add"]; exists && v != nil {
+		result.ScaleDownDelayAfterAdd = v.(string)
+	}
+	if v, exists := cfg["estimator"]; exists && v != nil {
+		result.Estimator = v.(string)
+	}
+	if v, exists := cfg["expander"]; exists && v != nil {
+		result.Expander = v.(string)
+	}
+	if v, exists := cfg["ignore_daemonsets_utilization"]; exists && v != nil {
+		result.IgnoreDaemonsetsUtilization = v.(bool)
+	}
+	if v, exists := cfg["balance_similar_node_groups"]; exists && v != nil {
+		result.BalanceSimilarNodeGroups = v.(bool)
+	}
+	if v, exists := cfg["expendable_pods_priority_cutoff"]; exists && v != nil {
+		result.ExpendablePodsPriorityCutoff = v.(int)
+	}
+	if v, exists := cfg["scale_down_unneeded_time"]; exists && v != nil {
+		result.ScaleDownUnneededTime = v.(string)
+	}
+	if v, exists := cfg["scale_down_utilization_threshold"]; exists && v != nil {
+		result.ScaleDownUtilizationThreshold = v.(float64)
+	}
+	if v, exists := cfg["max_graceful_termination_sec"]; exists && v != nil {
+		result.MaxGracefulTerminationSec = v.(int)
+	}
+	if v, exists := cfg["enable_proactive_scale_up"]; exists && v != nil {
+		result.EnableProactiveScaleUp = v.(bool)
+	}
+
+	return result
 }
