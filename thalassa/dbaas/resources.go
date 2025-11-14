@@ -7,6 +7,7 @@ var (
 		"thalassa_dbaas_db_cluster":        resourceDbCluster(),
 		"thalassa_dbaas_pg_database":       resourcePgDatabase(),
 		"thalassa_dbaas_pg_roles":          resourcePgRoles(),
+		"thalassa_dbaas_pg_grant":          resourcePgGrant(),
 		"thalassa_dbaas_db_backupschedule": resourceDbBackupSchedule(),
 	}
 
