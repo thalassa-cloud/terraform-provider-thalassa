@@ -6,6 +6,7 @@ var (
 	ResourcesMap = map[string]*schema.Resource{
 		"thalassa_iam_team":                              ResourceTeam(),
 		"thalassa_iam_role":                              ResourceRole(),
+		"thalassa_iam_role_rule":                         ResourceRoleRule(),
 		"thalassa_iam_role_binding":                      ResourceRoleBinding(),
 		"thalassa_iam_service_account":                   ResourceServiceAccount(),
 		"thalassa_iam_service_account_access_credential": ResourceServiceAccountAccessCredential(),
