@@ -81,9 +81,11 @@ output "security_group_name" {
 ### Optional
 
 - `allow_same_group_traffic` (Boolean) Flag that indicates if the security group allows traffic between instances in the same security group
+- `annotations` (Map of String) Annotations of the security group
 - `description` (String) Description of the security group
 - `egress_rule` (Block List) List of egress rules for the security group (see [below for nested schema](#nestedblock--egress_rule))
 - `ingress_rule` (Block List) List of ingress rules for the security group (see [below for nested schema](#nestedblock--ingress_rule))
+- `labels` (Map of String) Labels of the security group
 - `organisation_id` (String) Reference to the Organisation of the Security Group. If not provided, the organisation of the (Terraform) provider will be used.
 
 ### Read-Only

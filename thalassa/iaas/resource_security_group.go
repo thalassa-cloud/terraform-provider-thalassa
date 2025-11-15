@@ -10,6 +10,7 @@ import (
 	validate "github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	iaas "github.com/thalassa-cloud/client-go/iaas"
 	tcclient "github.com/thalassa-cloud/client-go/pkg/client"
+	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/convert"
 	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/provider"
 )
 
@@ -34,6 +35,16 @@ func ResourceSecurityGroup() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Description of the security group",
+			},
+			"labels": {
+				Type:        schema.TypeMap,
+				Optional:    true,
+				Description: "Labels of the security group",
+			},
+			"annotations": {
+				Type:        schema.TypeMap,
+				Optional:    true,
+				Description: "Annotations of the security group",
 			},
 			"organisation_id": {
 				Type:        schema.TypeString,
@@ -224,6 +235,8 @@ func resourceSecurityGroupCreate(ctx context.Context, d *schema.ResourceData, me
 		Description:           d.Get("description").(string),
 		VpcIdentity:           d.Get("vpc_id").(string),
 		AllowSameGroupTraffic: d.Get("allow_same_group_traffic").(bool),
+		Labels:                convert.ConvertToMap(d.Get("labels")),
+		Annotations:           convert.ConvertToMap(d.Get("annotations")),
 	}
 
 	if v, ok := d.GetOk("ingress_rule"); ok {
@@ -262,6 +275,12 @@ func resourceSecurityGroupRead(ctx context.Context, d *schema.ResourceData, meta
 		return diag.FromErr(err)
 	}
 	if err := d.Set("description", securityGroup.Description); err != nil {
+		return diag.FromErr(err)
+	}
+	if err := d.Set("labels", securityGroup.Labels); err != nil {
+		return diag.FromErr(err)
+	}
+	if err := d.Set("annotations", securityGroup.Annotations); err != nil {
 		return diag.FromErr(err)
 	}
 	if err := d.Set("vpc_id", securityGroup.Vpc.Identity); err != nil {
@@ -310,6 +329,8 @@ func resourceSecurityGroupUpdate(ctx context.Context, d *schema.ResourceData, me
 		Name:                  d.Get("name").(string),
 		Description:           d.Get("description").(string),
 		AllowSameGroupTraffic: allowSameGroupTraffic,
+		Labels:                convert.ConvertToMap(d.Get("labels")),
+		Annotations:           convert.ConvertToMap(d.Get("annotations")),
 		ObjectVersion:         securityGroup.ObjectVersion,
 	}
 
