@@ -123,6 +123,20 @@ func resourceKubernetesCluster() *schema.Resource {
 				Default:      "192.168.0.0/16",
 				Description:  "Pod CIDR of the Kubernetes Cluster. Must be a valid CIDR block.",
 			},
+			"networking_kube_proxy_mode": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				Default:      "ipvs",
+				ValidateFunc: validate.StringInSlice([]string{"ipvs", "iptables"}, false),
+				Description:  "Mode of the kube proxy. Must be one of: ipvs, iptables. Default: ipvs.",
+			},
+			"networking_kube_proxy_deployment": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				Default:      "managed",
+				ValidateFunc: validate.StringInSlice([]string{"custom", "managed", "disabled"}, false),
+				Description:  "Deployment mode of the kube proxy. Must be one of: custom, managed, disabled. Default: managed.",
+			},
 			"autoscaler_config": {
 				Type:        schema.TypeList,
 				Optional:    true,
@@ -369,6 +383,14 @@ func resourceKubernetesClusterCreate(ctx context.Context, d *schema.ResourceData
 		createKubernetesCluster.SecurityGroupAttachments = convert.ConvertToStringSlice(securityGroupAttachments)
 	}
 
+	// Set kube proxy mode (has default, so always set)
+	mode := kubernetes.KubernetesClusterKubeProxyMode(d.Get("networking_kube_proxy_mode").(string))
+	createKubernetesCluster.KubeProxyMode = &mode
+
+	// Set kube proxy deployment (has default, so always set)
+	deployment := kubernetes.KubeProxyDeployment(d.Get("networking_kube_proxy_deployment").(string))
+	createKubernetesCluster.KubeProxyDeployment = &deployment
+
 	// Set autoscaler config if provided
 	if autoscalerConfig, ok := d.GetOk("autoscaler_config"); ok {
 		config := convertAutoscalerConfig(autoscalerConfig)
@@ -466,6 +488,12 @@ func resourceKubernetesClusterRead(ctx context.Context, d *schema.ResourceData, 
 	d.Set("networking_cni", kubernetesCluster.Configuration.Networking.CNI)
 	d.Set("networking_service_cidr", kubernetesCluster.Configuration.Networking.ServiceCIDR)
 	d.Set("networking_pod_cidr", kubernetesCluster.Configuration.Networking.PodCIDR)
+	if kubernetesCluster.Configuration.Networking.KubeProxyMode != nil {
+		d.Set("networking_kube_proxy_mode", string(*kubernetesCluster.Configuration.Networking.KubeProxyMode))
+	}
+	if kubernetesCluster.Configuration.Networking.KubeProxyDeployment != nil {
+		d.Set("networking_kube_proxy_deployment", string(*kubernetesCluster.Configuration.Networking.KubeProxyDeployment))
+	}
 	d.Set("pod_security_standards_profile", kubernetesCluster.PodSecurityStandardsProfile)
 	d.Set("audit_log_profile", kubernetesCluster.AuditLogProfile)
 	d.Set("default_network_policy", kubernetesCluster.DefaultNetworkPolicy)
@@ -589,6 +617,8 @@ func resourceKubernetesClusterUpdate(ctx context.Context, d *schema.ResourceData
 		ApiServerACLs:               convertApiServerACLs(d.Get("api_server_acls")),
 		AutoUpgradePolicy:           kubernetes.KubernetesClusterAutoUpgradePolicy(d.Get("auto_upgrade_policy").(string)),
 		DisablePublicEndpoint:       convert.Ptr(d.Get("disable_public_endpoint").(bool)),
+		KubeProxyMode:               convert.Ptr(kubernetes.KubernetesClusterKubeProxyMode(d.Get("networking_kube_proxy_mode").(string))),
+		KubeProxyDeployment:         convert.Ptr(kubernetes.KubeProxyDeployment(d.Get("networking_kube_proxy_deployment").(string))),
 	}
 
 	if securityGroupAttachments, ok := d.GetOk("security_group_attachments"); ok {
@@ -646,6 +676,12 @@ func resourceKubernetesClusterUpdate(ctx context.Context, d *schema.ResourceData
 		d.Set("networking_cni", kubernetesCluster.Configuration.Networking.CNI)
 		d.Set("networking_service_cidr", kubernetesCluster.Configuration.Networking.ServiceCIDR)
 		d.Set("networking_pod_cidr", kubernetesCluster.Configuration.Networking.PodCIDR)
+		if kubernetesCluster.Configuration.Networking.KubeProxyMode != nil {
+			d.Set("networking_kube_proxy_mode", string(*kubernetesCluster.Configuration.Networking.KubeProxyMode))
+		}
+		if kubernetesCluster.Configuration.Networking.KubeProxyDeployment != nil {
+			d.Set("networking_kube_proxy_deployment", string(*kubernetesCluster.Configuration.Networking.KubeProxyDeployment))
+		}
 		d.Set("pod_security_standards_profile", kubernetesCluster.PodSecurityStandardsProfile)
 		d.Set("audit_log_profile", kubernetesCluster.AuditLogProfile)
 		d.Set("default_network_policy", kubernetesCluster.DefaultNetworkPolicy)

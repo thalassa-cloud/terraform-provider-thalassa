@@ -96,6 +96,16 @@ func DataSourceKubernetesCluster() *schema.Resource {
 				Computed:    true,
 				Description: "Pod CIDR of the Kubernetes Cluster",
 			},
+			"networking_kube_proxy_mode": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Mode of the kube proxy",
+			},
+			"networking_kube_proxy_deployment": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Deployment mode of the kube proxy",
+			},
 			"pod_security_standards_profile": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -263,6 +273,12 @@ func dataSourceKubernetesClusterRead(ctx context.Context, d *schema.ResourceData
 			d.Set("networking_cni", cluster.Configuration.Networking.CNI)
 			d.Set("networking_service_cidr", cluster.Configuration.Networking.ServiceCIDR)
 			d.Set("networking_pod_cidr", cluster.Configuration.Networking.PodCIDR)
+			if cluster.Configuration.Networking.KubeProxyMode != nil {
+				d.Set("networking_kube_proxy_mode", string(*cluster.Configuration.Networking.KubeProxyMode))
+			}
+			if cluster.Configuration.Networking.KubeProxyDeployment != nil {
+				d.Set("networking_kube_proxy_deployment", string(*cluster.Configuration.Networking.KubeProxyDeployment))
+			}
 			d.Set("pod_security_standards_profile", cluster.PodSecurityStandardsProfile)
 			d.Set("audit_log_profile", cluster.AuditLogProfile)
 			d.Set("default_network_policy", cluster.DefaultNetworkPolicy)

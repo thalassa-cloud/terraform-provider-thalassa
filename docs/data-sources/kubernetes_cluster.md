@@ -42,6 +42,8 @@ Get an Kubernetes cluster
 - `maintenance_day` (Number) Day of the week when the cluster will be upgraded (0-6, where 0 is Sunday)
 - `maintenance_start_at` (Number) Time of day when the cluster will be upgraded in minutes from midnight
 - `networking_cni` (String) CNI of the Kubernetes Cluster
+- `networking_kube_proxy_deployment` (String) Deployment mode of the kube proxy
+- `networking_kube_proxy_mode` (String) Mode of the kube proxy
 - `networking_pod_cidr` (String) Pod CIDR of the Kubernetes Cluster
 - `networking_service_cidr` (String) Service CIDR of the Kubernetes Cluster
 - `pod_security_standards_profile` (String) Pod security standards profile of the Kubernetes Cluster

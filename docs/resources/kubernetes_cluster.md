@@ -132,6 +132,8 @@ output "node_pool_name" {
 - `maintenance_day` (Number) Day of the week when the cluster will be upgraded (0-6, where 0 is Sunday)
 - `maintenance_start_at` (Number) Time of day when the cluster will be upgraded in minutes from midnight (0-1439)
 - `networking_cni` (String) CNI of the Kubernetes Cluster
+- `networking_kube_proxy_deployment` (String) Deployment mode of the kube proxy. Must be one of: custom, managed, disabled. Default: managed.
+- `networking_kube_proxy_mode` (String) Mode of the kube proxy. Must be one of: ipvs, iptables. Default: ipvs.
 - `networking_pod_cidr` (String) Pod CIDR of the Kubernetes Cluster. Must be a valid CIDR block.
 - `networking_service_cidr` (String) Service CIDR of the Kubernetes Cluster. Must be a valid CIDR block.
 - `organisation_id` (String) Reference to the Organisation of the Kubernetes Cluster. If not provided, the organisation of the (Terraform) provider will be used.
