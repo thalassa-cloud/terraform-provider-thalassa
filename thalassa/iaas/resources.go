@@ -13,6 +13,8 @@ var (
 		"thalassa_route_table_route":                 resourceRouteTableRoute(),
 		"thalassa_route_table":                       resourceRouteTable(),
 		"thalassa_security_group":                    ResourceSecurityGroup(),
+		"thalassa_security_group_ingress_rule":       resourceSecurityGroupIngressRule(),
+		"thalassa_security_group_egress_rule":        resourceSecurityGroupEgressRule(),
 		"thalassa_subnet":                            resourceSubnet(),
 		"thalassa_target_group_attachment":           resourceTargetGroupAttachment(),
 		"thalassa_target_group":                      resourceTargetGroup(),

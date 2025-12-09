@@ -135,7 +135,7 @@ func ResourceSecurityGroup() *schema.Resource {
 			"egress_rule": {
 				Type:        schema.TypeList,
 				Optional:    true,
-				Description: "List of egress rules for the security group",
+				Description: "List of egress rules for the security group. Alternatively, you can use the thalassa_security_group_egress_rule resource for more flexibility.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": {
@@ -175,7 +175,7 @@ func ResourceSecurityGroup() *schema.Resource {
 						"remote_security_group_identity": {
 							Type:        schema.TypeString,
 							Optional:    true,
-							Description: "Identity of the security group that the rule applies to",
+							Description: "ID of the Security Group that the rule applies to",
 						},
 						"port_range_min": {
 							Type:         schema.TypeInt,
@@ -289,12 +289,18 @@ func resourceSecurityGroupRead(ctx context.Context, d *schema.ResourceData, meta
 	if err := d.Set("allow_same_group_traffic", securityGroup.AllowSameGroupTraffic); err != nil {
 		return diag.FromErr(err)
 	}
-	if err := d.Set("ingress_rule", flattenSecurityGroupRules(securityGroup.IngressRules)); err != nil {
-		return diag.FromErr(err)
+	if _, ok := d.GetOk("ingress_rule"); ok {
+		if err := d.Set("ingress_rule", flattenSecurityGroupRules(securityGroup.IngressRules)); err != nil {
+			return diag.FromErr(err)
+		}
 	}
-	if err := d.Set("egress_rule", flattenSecurityGroupRules(securityGroup.EgressRules)); err != nil {
-		return diag.FromErr(err)
+
+	if _, ok := d.GetOk("egress_rule"); ok {
+		if err := d.Set("egress_rule", flattenSecurityGroupRules(securityGroup.EgressRules)); err != nil {
+			return diag.FromErr(err)
+		}
 	}
+
 	if err := d.Set("identity", securityGroup.Identity); err != nil {
 		return diag.FromErr(err)
 	}
@@ -325,6 +331,7 @@ func resourceSecurityGroupUpdate(ctx context.Context, d *schema.ResourceData, me
 		return diag.FromErr(fmt.Errorf("error getting security group for object version: %w", err))
 	}
 
+	// Update security group including rules
 	updateReq := iaas.UpdateSecurityGroupRequest{
 		Name:                  d.Get("name").(string),
 		Description:           d.Get("description").(string),
@@ -334,12 +341,19 @@ func resourceSecurityGroupUpdate(ctx context.Context, d *schema.ResourceData, me
 		ObjectVersion:         securityGroup.ObjectVersion,
 	}
 
+	skip := true
 	if v, ok := d.GetOk("ingress_rule"); ok {
 		updateReq.IngressRules = expandSecurityGroupRules(v.([]interface{}))
+		skip = false
 	}
 
 	if v, ok := d.GetOk("egress_rule"); ok {
 		updateReq.EgressRules = expandSecurityGroupRules(v.([]interface{}))
+		skip = false
+	}
+
+	if skip {
+		updateReq.SkipRulesUpdate = true
 	}
 
 	_, err = client.IaaS().UpdateSecurityGroup(ctx, d.Id(), updateReq)
