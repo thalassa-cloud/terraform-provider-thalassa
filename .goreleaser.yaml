@@ -50,3 +50,47 @@ release:
   extra_files:
     - glob: 'terraform-registry-manifest.json'
       name_template: '{{ .ProjectName }}_{{ .Version }}_manifest.json'
+
+# Documentation: https://goreleaser.com/customization/changelog/
+changelog:
+  use: gitlab
+  sort: asc
+  # Group commits messages by given regex and title.
+  # Order value defines the order of the groups.
+  # Proving no regex means all commits will be grouped under the default group.
+  # Groups are disabled when using github-native, as it already groups things by itself.
+  groups:
+    - title: 'Features'
+      regexp: "^feat\\(.*\\):"
+      order: 1
+    - title: 'Bug Fixes'
+      regexp: "^fix\\(.*\\):"
+      order: 2
+    - title: 'Documentation'
+      regexp: "^docs\\(.*\\):"
+      order: 3
+    - title: 'Style'
+      regexp: "^style\\(.*\\):"
+      order: 4
+    - title: 'Refactoring'
+      regexp: "^refactor\\(.*\\):"
+      order: 5
+    - title: 'Performance'
+      regexp: "^perf\\(.*\\):"
+      order: 6
+    - title: 'Tests'
+      regexp: "^test\\(.*\\):"
+      order: 7
+    - title: 'Chores'
+      regexp: "^chore\\(.*\\):"
+      order: 8
+    - title: 'Dependencies'
+      regexp: "^(deps\\(.*\\):|chore\\(deps\\).*:)"
+      order: 9
+    - title: 'Other'
+      regexp: "^.*:"
+      order: 999
+  filters:
+    # Commit messages matching the regexp listed here will be removed from the changelog
+    exclude:
+      - '^Merge branch'
