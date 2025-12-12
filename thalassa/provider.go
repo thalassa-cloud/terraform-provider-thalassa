@@ -10,6 +10,7 @@ import (
 	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/objectstorage"
 	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/organisation"
 	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/provider"
+	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/tfs"
 )
 
 func Provider() *schema.Provider {
@@ -69,6 +70,7 @@ func Provider() *schema.Provider {
 			dbaas.ResourcesMap,
 			iam.ResourcesMap,
 			objectstorage.ResourcesMap,
+			tfs.ResourcesMap,
 		),
 		DataSourcesMap: JoinMaps(
 			iaas.DataSourcesMap,
@@ -77,6 +79,7 @@ func Provider() *schema.Provider {
 			dbaas.DataSourcesMap,
 			iam.DataSourcesMap,
 			objectstorage.DataSourcesMap,
+			tfs.DataSourcesMap,
 		),
 		ConfigureContextFunc: provider.ProviderConfigure,
 	}

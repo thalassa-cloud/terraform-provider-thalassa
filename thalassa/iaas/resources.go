@@ -6,6 +6,8 @@ var (
 	ResourcesMap = map[string]*schema.Resource{
 		"thalassa_block_volume":            resourceBlockVolume(),
 		"thalassa_block_volume_attachment": resourceBlockVolumeAttachment(),
+		"thalassa_snapshot":                resourceSnapshot(),
+		"thalassa_snapshot_policy":         resourceSnapshotPolicy(),
 
 		"thalassa_loadbalancer_listener":             resourceLoadBalancerListener(),
 		"thalassa_loadbalancer":                      resourceLoadBalancer(),
@@ -43,5 +45,7 @@ var (
 		"thalassa_subnet":                  dataSourceSubnet(),
 		"thalassa_natgateway":              DataSourceNatGateway(),
 		"thalassa_loadbalancer":            DataSourceLoadBalancer(),
+		"thalassa_snapshot":                DataSourceSnapshot(),
+		"thalassa_snapshot_policy":         DataSourceSnapshotPolicy(),
 	}
 )
