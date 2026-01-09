@@ -83,7 +83,6 @@ func DataSourceSnapshotPolicy() *schema.Resource {
 				Type:        schema.TypeList,
 				Computed:    true,
 				Description: "Target configuration for the snapshot policy",
-				MaxItems:    1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"type": {
