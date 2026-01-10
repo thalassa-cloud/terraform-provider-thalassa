@@ -153,6 +153,7 @@ func resourceKubernetesCluster() *schema.Resource {
 						"scale_down_delay_after_add": {
 							Type:        schema.TypeString,
 							Optional:    true,
+							Default:     "10m",
 							Description: "Delay after adding a node to the node pool by the cluster autoscaler",
 						},
 						"estimator": {
@@ -163,6 +164,7 @@ func resourceKubernetesCluster() *schema.Resource {
 						"expander": {
 							Type:        schema.TypeString,
 							Optional:    true,
+							Default:     "binpacking",
 							Description: "Expander to use for the cluster autoscaler",
 						},
 						"ignore_daemonsets_utilization": {
@@ -180,20 +182,24 @@ func resourceKubernetesCluster() *schema.Resource {
 						"expendable_pods_priority_cutoff": {
 							Type:        schema.TypeInt,
 							Optional:    true,
+							Default:     -10,
 							Description: "Priority cutoff for the expendable pods by the cluster autoscaler",
 						},
 						"scale_down_unneeded_time": {
 							Type:        schema.TypeString,
 							Optional:    true,
+							Default:     "10m",
 							Description: "Time after which a node can be scaled down by the cluster autoscaler",
 						},
 						"scale_down_utilization_threshold": {
 							Type:        schema.TypeFloat,
+							Default:     0.5,
 							Optional:    true,
 							Description: "Utilization threshold for the cluster autoscaler. The autoscaler might scale down non-empty nodes with utilization below a threshold. To prevent this behavior, set the utilization threshold to 0",
 						},
 						"max_graceful_termination_sec": {
 							Type:        schema.TypeInt,
+							Default:     600,
 							Optional:    true,
 							Description: "Maximum graceful termination time for the cluster autoscaler. If the pod is not stopped within this time then the node is terminated anyway.",
 						},
@@ -822,26 +828,39 @@ func convertApiServerACLs(acls interface{}) kubernetes.KubernetesApiServerACLs {
 
 // convertAutoscalerConfig converts the autoscaler config from Terraform schema to the API format
 func convertAutoscalerConfig(config interface{}) *kubernetes.AutoscalerConfig {
+	// Initialize with default values
+	result := &kubernetes.AutoscalerConfig{
+		ScaleDownDisabled:             false,
+		ScaleDownDelayAfterAdd:        "10m",
+		Estimator:                     "binpacking",
+		Expander:                      "binpacking",
+		IgnoreDaemonsetsUtilization:   false,
+		BalanceSimilarNodeGroups:      false,
+		ExpendablePodsPriorityCutoff:  -10,
+		ScaleDownUnneededTime:         "10m",
+		ScaleDownUtilizationThreshold: 0.5,
+		MaxGracefulTerminationSec:     600,
+		EnableProactiveScaleUp:        false,
+	}
+
 	if config == nil {
-		return nil
+		return result
 	}
 
 	configList, ok := config.([]interface{})
 	if !ok || len(configList) == 0 {
-		return nil
+		return result
 	}
 
 	first := configList[0]
 	if first == nil {
-		return nil
+		return result
 	}
 
 	cfg, ok := first.(map[string]interface{})
 	if !ok || cfg == nil {
-		return nil
+		return result
 	}
-
-	result := &kubernetes.AutoscalerConfig{}
 
 	if v, exists := cfg["scale_down_disabled"]; exists && v != nil {
 		result.ScaleDownDisabled = v.(bool)
