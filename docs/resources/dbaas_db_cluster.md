@@ -81,14 +81,19 @@ output "db_cluster_port" {
 
 - `annotations` (Map of String) Annotations of the DB Cluster
 - `auto_minor_version_upgrade` (Boolean) Flag indicating if the cluster should automatically upgrade to the latest minor version
+- `auto_upgrade_policy` (String) Auto upgrade policy for the cluster. Options: 'none', 'latest-version', 'latest-stable', 'latest-patch', 'latest-minor', 'latest-major'
 - `delete_protection` (Boolean) Flag indicating if the cluster should be protected from deletion
 - `description` (String) Description of the DB Cluster
 - `init_db` (Map of String) Map of init db parameters
 - `labels` (Map of String) Labels of the DB Cluster
+- `maintenance_day` (Number) Day of the week for the maintenance window. 0 is Sunday, 6 is Saturday
+- `maintenance_start_at` (Number) Start time of the maintenance window on the maintenance day in UTC. 0 is 00:00, 23 is 23:00
 - `organisation_id` (String) Reference to the Organisation of the Db Cluster. If not provided, the organisation of the (Terraform) provider will be used.
 - `parameters` (Map of String) Map of parameter name to database engine specific parameter value
+- `provision_db_object_store` (Boolean) Flag to indicate if the DB object store should be provisioned for the cluster. If true, restore_from_backup_id will be ignored.
 - `replicas` (Number) Number of instances in the cluster
-- `restore_from_backup_identity` (String) Identity of the backup to restore from
+- `restore_from_backup_id` (String) Identity of the DB object store used for barman backups (optional). Ignored if provision_db_object_store is true.
+- `restore_recovery_target` (Block List, Max: 1) Recovery target for Point-In-Time Recovery (PITR). Only used when restore_from_backup_id is specified. (see [below for nested schema](#nestedblock--restore_recovery_target))
 - `security_groups` (List of String) List of security groups associated with the cluster
 
 ### Read-Only
@@ -98,5 +103,13 @@ output "db_cluster_port" {
 - `id` (String) The ID of this resource.
 - `port` (Number) Port of the cluster endpoint
 - `status` (String) Status of the cluster
+
+<a id="nestedblock--restore_recovery_target"></a>
+### Nested Schema for `restore_recovery_target`
+
+Optional:
+
+- `target_lsn` (String) Log Sequence Number to restore to. Example: '0/1234567'
+- `target_time` (String) Timestamp to restore to (RFC3339 format). Example: '2023-12-25T10:00:00Z'
 
  

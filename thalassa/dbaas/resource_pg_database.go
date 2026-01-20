@@ -60,6 +60,12 @@ func resourcePgDatabase() *schema.Resource {
 				Default:     -1,
 				Description: "The connection limit of the database",
 			},
+			"allow_connections": {
+				Type:        schema.TypeBool,
+				Default:     true,
+				Optional:    true,
+				Description: "If false then no one can connect to this database. Defaults to true.",
+			},
 		},
 	}
 }
@@ -132,6 +138,11 @@ func resourcePgDatabaseCreate(ctx context.Context, d *schema.ResourceData, m int
 		Name:            d.Get("name").(string),
 		Owner:           ownerRoleName,
 		ConnectionLimit: &connectionLimit,
+	}
+
+	if allowConnections, ok := d.GetOk("allow_connections"); ok {
+		allowConnectionsBool := allowConnections.(bool)
+		createDatabase.AllowConnections = &allowConnectionsBool
 	}
 
 	err = client.DBaaS().CreatePgDatabase(ctx, dbCluster.Identity, createDatabase)
@@ -248,6 +259,11 @@ func resourcePgDatabaseUpdate(ctx context.Context, d *schema.ResourceData, m int
 
 	updateDatabase := dbaas.UpdatePgDatabaseRequest{
 		ConnectionLimit: &connectionLimit,
+	}
+
+	if allowConnections, ok := d.GetOk("allow_connections"); ok {
+		allowConnectionsBool := allowConnections.(bool)
+		updateDatabase.AllowConnections = &allowConnectionsBool
 	}
 
 	err = client.DBaaS().UpdatePgDatabase(ctx, dbCluster.Identity, d.Get("id").(string), updateDatabase)

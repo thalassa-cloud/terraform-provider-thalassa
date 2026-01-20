@@ -67,7 +67,11 @@ output "backup_schedule_name" {
 
 ### Optional
 
+- `annotations` (Map of String) The annotations of the database backup schedule
 - `backup_target` (String) The backup target of the database backup schedule (primary, prefer-standby)
+- `description` (String) The description of the database backup schedule
+- `labels` (Map of String) The labels of the database backup schedule
+- `method` (String) The method of the backup schedule (barman)
 - `organisation_id` (String) Reference to the Organisation of the Db Backup Schedule. If not provided, the organisation of the (Terraform) provider will be used.
 - `retention_policy` (String) The retention policy of the database backup schedule (7d, 14d, 30d, 90d, 180d, 365d, 730d)
 - `schedule` (String) The cron schedule of the database backup schedule (0 0 * * *)

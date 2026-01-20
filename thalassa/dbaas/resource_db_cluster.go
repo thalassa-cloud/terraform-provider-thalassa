@@ -181,10 +181,83 @@ func resourceDbCluster() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
-			"restore_from_backup_identity": {
+			"restore_recovery_target": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				MaxItems:    1,
+				Description: "Recovery target for Point-In-Time Recovery (PITR). Only used when restore_from_backup_id is specified.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"target_time": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "Timestamp to restore to (RFC3339 format). Example: '2023-12-25T10:00:00Z'",
+						},
+						"target_lsn": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "Log Sequence Number to restore to. Example: '0/1234567'",
+						},
+					},
+				},
+			},
+			"auto_upgrade_policy": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Identity of the backup to restore from",
+				Description: "Auto upgrade policy for the cluster. Options: 'none', 'latest-version', 'latest-stable', 'latest-patch', 'latest-minor', 'latest-major'",
+				ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
+					validPolicies := []string{"none", "latest-version", "latest-stable", "latest-patch", "latest-minor", "latest-major"}
+					policy := val.(string)
+					valid := false
+					for _, p := range validPolicies {
+						if policy == p {
+							valid = true
+							break
+						}
+					}
+					if !valid {
+						errs = append(errs, fmt.Errorf("auto_upgrade_policy must be one of: %v", validPolicies))
+					}
+					warns = []string{}
+					return
+				},
+			},
+			"maintenance_day": {
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Description: "Day of the week for the maintenance window. 0 is Sunday, 6 is Saturday",
+				ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
+					day := val.(int)
+					if day < 0 || day > 6 {
+						errs = append(errs, fmt.Errorf("maintenance_day must be between 0 (Sunday) and 6 (Saturday)"))
+					}
+					warns = []string{}
+					return
+				},
+			},
+			"maintenance_start_at": {
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Description: "Start time of the maintenance window on the maintenance day in UTC. 0 is 00:00, 23 is 23:00",
+				ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
+					hour := val.(int)
+					if hour < 0 || hour > 23 {
+						errs = append(errs, fmt.Errorf("maintenance_start_at must be between 0 and 23"))
+					}
+					warns = []string{}
+					return
+				},
+			},
+			"restore_from_backup_id": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Identity of the DB object store used for barman backups (optional). Ignored if provision_db_object_store is true.",
+			},
+			"provision_db_object_store": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "Flag to indicate if the DB object store should be provisioned for the cluster. If true, restore_from_backup_id will be ignored.",
 			},
 		},
 		Importer: &schema.ResourceImporter{
@@ -413,9 +486,65 @@ func resourceDbClusterCreate(ctx context.Context, d *schema.ResourceData, m inte
 		}
 	}
 
-	if restoreFromBackupIdentity := d.Get("restore_from_backup_identity"); restoreFromBackupIdentity != nil && restoreFromBackupIdentity != "" {
+	if restoreFromBackupIdentity := d.Get("restore_from_backup_id"); restoreFromBackupIdentity != nil && restoreFromBackupIdentity != "" {
 		if strVal, ok := restoreFromBackupIdentity.(string); ok {
 			createDbCluster.RestoreFromBackupIdentity = convert.Ptr(strVal)
+		}
+	}
+
+	// Handle restore recovery target
+	if restoreRecoveryTargetRaw := d.Get("restore_recovery_target"); restoreRecoveryTargetRaw != nil {
+		if restoreRecoveryTargetList, ok := restoreRecoveryTargetRaw.([]interface{}); ok && len(restoreRecoveryTargetList) > 0 {
+			if restoreRecoveryTargetMap, ok := restoreRecoveryTargetList[0].(map[string]interface{}); ok {
+				recoveryTarget := &dbaas.RestoreRecoveryTarget{}
+				if targetTime, exists := restoreRecoveryTargetMap["target_time"]; exists && targetTime != nil {
+					if strVal, ok := targetTime.(string); ok && strVal != "" {
+						recoveryTarget.TargetTime = convert.Ptr(strVal)
+					}
+				}
+				if targetLSN, exists := restoreRecoveryTargetMap["target_lsn"]; exists && targetLSN != nil {
+					if strVal, ok := targetLSN.(string); ok && strVal != "" {
+						recoveryTarget.TargetLSN = convert.Ptr(strVal)
+					}
+				}
+				if recoveryTarget.TargetTime != nil || recoveryTarget.TargetLSN != nil {
+					createDbCluster.RestoreRecoveryTarget = recoveryTarget
+				}
+			}
+		}
+	}
+
+	// Handle auto upgrade policy
+	if autoUpgradePolicy := d.Get("auto_upgrade_policy"); autoUpgradePolicy != nil && autoUpgradePolicy != "" {
+		if strVal, ok := autoUpgradePolicy.(string); ok {
+			policy := dbaas.DbClusterAutoUpgradePolicy(strVal)
+			createDbCluster.AutoUpgradePolicy = &policy
+		}
+	}
+
+	// Handle maintenance window
+	if maintenanceDay := d.Get("maintenance_day"); maintenanceDay != nil {
+		if intVal, ok := maintenanceDay.(int); ok {
+			day := uint(intVal)
+			createDbCluster.MaintenanceDay = &day
+		}
+	}
+	if maintenanceStartAt := d.Get("maintenance_start_at"); maintenanceStartAt != nil {
+		if intVal, ok := maintenanceStartAt.(int); ok {
+			hour := uint(intVal)
+			createDbCluster.MaintenanceStartAt = &hour
+		}
+	}
+
+	// Handle DB object store
+	if dbObjectStoreIdentity := d.Get("restore_from_backup_id"); dbObjectStoreIdentity != nil && dbObjectStoreIdentity != "" {
+		if strVal, ok := dbObjectStoreIdentity.(string); ok {
+			createDbCluster.DbObjectStoreIdentity = convert.Ptr(strVal)
+		}
+	}
+	if provisionDbObjectStore := d.Get("provision_db_object_store"); provisionDbObjectStore != nil {
+		if boolVal, ok := provisionDbObjectStore.(bool); ok {
+			createDbCluster.ProvisionDbObjectStore = boolVal
 		}
 	}
 
@@ -589,6 +718,35 @@ func resourceDbClusterUpdate(ctx context.Context, d *schema.ResourceData, m inte
 		AllocatedStorage:             uint64(d.Get("allocated_storage").(int)),
 		Replicas:                     d.Get("replicas").(int),
 		DatabaseInstanceTypeIdentity: convert.Ptr(d.Get("database_instance_type").(string)),
+	}
+
+	// Handle auto upgrade policy
+	if autoUpgradePolicy := d.Get("auto_upgrade_policy"); autoUpgradePolicy != nil && autoUpgradePolicy != "" {
+		if strVal, ok := autoUpgradePolicy.(string); ok {
+			policy := dbaas.DbClusterAutoUpgradePolicy(strVal)
+			updateDbCluster.AutoUpgradePolicy = &policy
+		}
+	}
+
+	// Handle maintenance window
+	if maintenanceDay := d.Get("maintenance_day"); maintenanceDay != nil {
+		if intVal, ok := maintenanceDay.(int); ok {
+			day := uint(intVal)
+			updateDbCluster.MaintenanceDay = &day
+		}
+	}
+	if maintenanceStartAt := d.Get("maintenance_start_at"); maintenanceStartAt != nil {
+		if intVal, ok := maintenanceStartAt.(int); ok {
+			hour := uint(intVal)
+			updateDbCluster.MaintenanceStartAt = &hour
+		}
+	}
+
+	// Handle DB object store
+	if dbObjectStoreIdentity := d.Get("restore_from_backup_id"); dbObjectStoreIdentity != nil && dbObjectStoreIdentity != "" {
+		if strVal, ok := dbObjectStoreIdentity.(string); ok {
+			updateDbCluster.DbObjectStoreIdentity = convert.Ptr(strVal)
+		}
 	}
 
 	_, err = client.DBaaS().UpdateDbCluster(ctx, id, updateDbCluster)

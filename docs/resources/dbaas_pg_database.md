@@ -74,6 +74,7 @@ output "pg_database_name" {
 
 ### Optional
 
+- `allow_connections` (Boolean) If false then no one can connect to this database. Defaults to true.
 - `connection_limit` (Number) The connection limit of the database
 - `organisation_id` (String) Reference to the Organisation of the Db Cluster. If not provided, the organisation of the (Terraform) provider will be used.
 

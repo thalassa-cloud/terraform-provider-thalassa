@@ -272,8 +272,14 @@ func resourcePgRolesUpdate(ctx context.Context, d *schema.ResourceData, m interf
 
 	updateRole := dbaas.UpdatePgRoleRequest{
 		ConnectionLimit: int64(d.Get("connection_limit").(int)),
-		ValidUntil:      d.Get("valid_until").(*time.Time),
-		Password:        convert.Ptr(d.Get("password").(string)),
+	}
+
+	if d.HasChange("password") {
+		if password, ok := d.GetOk("password"); ok {
+			if strVal, ok := password.(string); ok && strVal != "" {
+				updateRole.Password = convert.Ptr(strVal)
+			}
+		}
 	}
 
 	err = client.DBaaS().UpdatePgRole(ctx, dbCluster.Identity, d.Get("id").(string), updateRole)

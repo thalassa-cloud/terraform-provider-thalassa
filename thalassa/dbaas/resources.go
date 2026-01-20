@@ -16,5 +16,6 @@ var (
 		"thalassa_dbaas_pg_database":       dataSourcePgDatabase(),
 		"thalassa_dbaas_pg_roles":          dataSourcePgRoles(),
 		"thalassa_dbaas_db_backupschedule": dataSourceDbBackupSchedule(),
+		"thalassa_dbaas_db_backup":         dataSourceDbBackup(),
 	}
 )

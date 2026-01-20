@@ -37,31 +37,27 @@ func resourceDbBackupSchedule() *schema.Resource {
 				ForceNew:    true,
 				Description: "Reference to the Organisation of the Db Backup Schedule. If not provided, the organisation of the (Terraform) provider will be used.",
 			},
-			// TODO: missing api implementation
-			// "description": {
-			// 	Type:        schema.TypeString,
-			// 	Optional:    true,
-			// 	Description: "The description of the database backup schedule",
-			// },
-			// TODO: missing api implementation
-			// "labels": {
-			// 	Type:        schema.TypeMap,
-			// 	Optional:    true,
-			// 	Description: "The labels of the database backup schedule",
-			// 	Default:     map[string]string{},
-			// 	Elem: &schema.Schema{
-			// 		Type: schema.TypeString,
-			// 	},
-			// },
-			// "annotations": {
-			// 	Type:        schema.TypeMap,
-			// 	Optional:    true,
-			// 	Description: "The annotations of the database backup schedule",
-			// 	Default:     map[string]string{},
-			// 	Elem: &schema.Schema{
-			// 		Type: schema.TypeString,
-			// 	},
-			// },
+			"description": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "The description of the database backup schedule",
+			},
+			"labels": {
+				Type:        schema.TypeMap,
+				Optional:    true,
+				Description: "The labels of the database backup schedule",
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
+			"annotations": {
+				Type:        schema.TypeMap,
+				Optional:    true,
+				Description: "The annotations of the database backup schedule",
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
 			"db_cluster_id": {
 				Type:        schema.TypeString,
 				Required:    true,
@@ -112,6 +108,20 @@ func resourceDbBackupSchedule() *schema.Resource {
 					return
 				},
 			},
+			"method": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Default:     "barman",
+				ForceNew:    true,
+				Description: "The method of the backup schedule (barman)",
+				ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
+					if val.(string) != "barman" {
+						errs = append(errs, fmt.Errorf("method must be 'barman'"))
+					}
+					warns = []string{}
+					return
+				},
+			},
 		},
 	}
 }
@@ -141,13 +151,24 @@ func resourceDbBackupScheduleCreate(ctx context.Context, d *schema.ResourceData,
 
 	backupTarget := d.Get("backup_target").(string)
 	retentionPolicy := d.Get("retention_policy").(string)
+	method := d.Get("method").(string)
+	if method == "" {
+		method = "barman"
+	}
+
 	createBackupSchedule := dbaas.CreatePgBackupScheduleRequest{
 		Name:            d.Get("name").(string),
 		Schedule:        d.Get("schedule").(string),
 		RetentionPolicy: retentionPolicy,
 		Target:          dbaas.DbClusterBackupScheduleTarget(backupTarget),
+		Method:          dbaas.DbClusterBackupScheduleMethod(method),
 	}
 
+	if description, ok := d.GetOk("description"); ok {
+		if strVal, ok := description.(string); ok && strVal != "" {
+			createBackupSchedule.Description = convert.Ptr(strVal)
+		}
+	}
 	if labels, ok := d.GetOk("labels"); ok {
 		createBackupSchedule.Labels = dbaas.Labels(convert.ConvertToMap(labels))
 	}
@@ -198,7 +219,10 @@ func resourceDbBackupScheduleRead(ctx context.Context, d *schema.ResourceData, m
 			d.Set("backup_target", backupSchedule.Target)
 			d.Set("suspended", backupSchedule.Suspended)
 			d.Set("id", backupSchedule.Identity)
-			d.Set("description", backupSchedule.Description)
+			d.Set("method", backupSchedule.Method)
+			if backupSchedule.Description != nil {
+				d.Set("description", *backupSchedule.Description)
+			}
 			d.Set("labels", backupSchedule.Labels)
 			d.Set("annotations", backupSchedule.Annotations)
 			return nil
@@ -220,8 +244,16 @@ func resourceDbBackupScheduleUpdate(ctx context.Context, d *schema.ResourceData,
 	retentionPolicy := d.Get("retention_policy").(string)
 	backupTarget := d.Get("backup_target").(string)
 
+	description := ""
+	if desc, ok := d.GetOk("description"); ok {
+		if strVal, ok := desc.(string); ok {
+			description = strVal
+		}
+	}
+
 	updateBackupSchedule := dbaas.UpdatePgBackupScheduleRequest{
 		Name:            name,
+		Description:     description,
 		Schedule:        schedule,
 		RetentionPolicy: retentionPolicy,
 		Target:          dbaas.DbClusterBackupScheduleTarget(backupTarget),
