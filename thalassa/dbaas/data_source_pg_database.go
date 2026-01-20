@@ -58,7 +58,7 @@ func dataSourcePgDatabaseRead(ctx context.Context, d *schema.ResourceData, m int
 
 	dbClusterId := d.Get("db_cluster_id").(string)
 
-	dbCluster, err := client.DbaaSAlphaV1().GetDbCluster(ctx, dbClusterId)
+	dbCluster, err := client.DBaaS().GetDbCluster(ctx, dbClusterId)
 	if err != nil {
 		return diag.FromErr(err)
 	}

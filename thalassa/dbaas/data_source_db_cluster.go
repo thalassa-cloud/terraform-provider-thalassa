@@ -8,7 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	"github.com/thalassa-cloud/client-go/dbaas/dbaasalphav1"
+	"github.com/thalassa-cloud/client-go/dbaas"
 	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/provider"
 )
 
@@ -150,14 +150,14 @@ func dataSourceDbClusterRead(ctx context.Context, d *schema.ResourceData, m inte
 	id := d.Get("id").(string)
 	name := d.Get("name").(string)
 	slug := d.Get("slug").(string)
-	var DbCluster *dbaasalphav1.DbCluster
-	dbClusters, err := client.DbaaSAlphaV1().ListDbClusters(ctx, &dbaasalphav1.ListDbClustersRequest{})
+	var DbCluster *dbaas.DbCluster
+	dbClusters, err := client.DBaaS().ListDbClusters(ctx, &dbaas.ListDbClustersRequest{})
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	// Track if we found multiple matches to provide better error messages
-	var matchingClusters []*dbaasalphav1.DbCluster
+	var matchingClusters []*dbaas.DbCluster
 
 	for _, dbCluster := range dbClusters {
 		if dbCluster.Identity == id {

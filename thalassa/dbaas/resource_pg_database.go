@@ -8,7 +8,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/thalassa-cloud/client-go/dbaas/dbaasalphav1"
+	"github.com/thalassa-cloud/client-go/dbaas"
 	tcclient "github.com/thalassa-cloud/client-go/pkg/client"
 	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/provider"
 )
@@ -71,7 +71,7 @@ func resourcePgDatabaseCreate(ctx context.Context, d *schema.ResourceData, m int
 	}
 
 	dbClusterId := d.Get("db_cluster_id").(string)
-	var dbCluster *dbaasalphav1.DbCluster
+	var dbCluster *dbaas.DbCluster
 
 	for {
 		select {
@@ -80,7 +80,7 @@ func resourcePgDatabaseCreate(ctx context.Context, d *schema.ResourceData, m int
 		default:
 			time.Sleep(1 * time.Second)
 		}
-		dbCluster, err = client.DbaaSAlphaV1().GetDbCluster(ctx, dbClusterId)
+		dbCluster, err = client.DBaaS().GetDbCluster(ctx, dbClusterId)
 		if err != nil {
 			if tcclient.IsNotFound(err) {
 				return diag.FromErr(fmt.Errorf("db cluster not found: %w", err))
@@ -90,7 +90,7 @@ func resourcePgDatabaseCreate(ctx context.Context, d *schema.ResourceData, m int
 		if dbCluster == nil {
 			return diag.FromErr(fmt.Errorf("db cluster not found"))
 		}
-		if dbCluster.Status == dbaasalphav1.DbClusterStatusReady {
+		if dbCluster.Status == dbaas.DbClusterStatusReady {
 			break
 		}
 	}
@@ -128,19 +128,19 @@ func resourcePgDatabaseCreate(ctx context.Context, d *schema.ResourceData, m int
 		}
 	}
 
-	createDatabase := dbaasalphav1.CreatePgDatabaseRequest{
+	createDatabase := dbaas.CreatePgDatabaseRequest{
 		Name:            d.Get("name").(string),
 		Owner:           ownerRoleName,
 		ConnectionLimit: &connectionLimit,
 	}
 
-	err = client.DbaaSAlphaV1().CreatePgDatabase(ctx, dbCluster.Identity, createDatabase)
+	err = client.DBaaS().CreatePgDatabase(ctx, dbCluster.Identity, createDatabase)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error creating pg database: %w", err))
 	}
 
 	// Get the database
-	dbCluster, err = client.DbaaSAlphaV1().GetDbCluster(ctx, dbClusterId)
+	dbCluster, err = client.DBaaS().GetDbCluster(ctx, dbClusterId)
 	if err != nil {
 		if tcclient.IsNotFound(err) {
 			return diag.FromErr(fmt.Errorf("db cluster not found: %w", err))
@@ -170,7 +170,7 @@ func resourcePgDatabaseRead(ctx context.Context, d *schema.ResourceData, m inter
 	}
 
 	dbClusterId := d.Get("db_cluster_id").(string)
-	var dbCluster *dbaasalphav1.DbCluster
+	var dbCluster *dbaas.DbCluster
 
 	for {
 		select {
@@ -179,7 +179,7 @@ func resourcePgDatabaseRead(ctx context.Context, d *schema.ResourceData, m inter
 		default:
 			time.Sleep(1 * time.Second)
 		}
-		dbCluster, err = client.DbaaSAlphaV1().GetDbCluster(ctx, dbClusterId)
+		dbCluster, err = client.DBaaS().GetDbCluster(ctx, dbClusterId)
 		if err != nil {
 			if tcclient.IsNotFound(err) {
 				d.SetId("")
@@ -191,7 +191,7 @@ func resourcePgDatabaseRead(ctx context.Context, d *schema.ResourceData, m inter
 			return diag.FromErr(fmt.Errorf("db cluster not found"))
 		}
 
-		if dbCluster.Status == dbaasalphav1.DbClusterStatusReady {
+		if dbCluster.Status == dbaas.DbClusterStatusReady {
 			break
 		}
 	}
@@ -218,7 +218,7 @@ func resourcePgDatabaseUpdate(ctx context.Context, d *schema.ResourceData, m int
 	}
 
 	dbClusterId := d.Get("db_cluster_id").(string)
-	var dbCluster *dbaasalphav1.DbCluster
+	var dbCluster *dbaas.DbCluster
 
 	for {
 		select {
@@ -227,7 +227,7 @@ func resourcePgDatabaseUpdate(ctx context.Context, d *schema.ResourceData, m int
 		default:
 			time.Sleep(1 * time.Second)
 		}
-		dbCluster, err = client.DbaaSAlphaV1().GetDbCluster(ctx, dbClusterId)
+		dbCluster, err = client.DBaaS().GetDbCluster(ctx, dbClusterId)
 		if err != nil {
 			if tcclient.IsNotFound(err) {
 				return diag.FromErr(fmt.Errorf("db cluster not found: %w", err))
@@ -239,18 +239,18 @@ func resourcePgDatabaseUpdate(ctx context.Context, d *schema.ResourceData, m int
 			return diag.FromErr(fmt.Errorf("db cluster not found"))
 		}
 
-		if dbCluster.Status == dbaasalphav1.DbClusterStatusReady {
+		if dbCluster.Status == dbaas.DbClusterStatusReady {
 			break
 		}
 	}
 
 	connectionLimit := d.Get("connection_limit").(int)
 
-	updateDatabase := dbaasalphav1.UpdatePgDatabaseRequest{
+	updateDatabase := dbaas.UpdatePgDatabaseRequest{
 		ConnectionLimit: &connectionLimit,
 	}
 
-	err = client.DbaaSAlphaV1().UpdatePgDatabase(ctx, dbCluster.Identity, d.Get("id").(string), updateDatabase)
+	err = client.DBaaS().UpdatePgDatabase(ctx, dbCluster.Identity, d.Get("id").(string), updateDatabase)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error updating pg database: %w", err))
 	}
@@ -277,7 +277,7 @@ func resourcePgDatabaseDelete(ctx context.Context, d *schema.ResourceData, m int
 	}
 
 	dbClusterId := d.Get("db_cluster_id").(string)
-	var dbCluster *dbaasalphav1.DbCluster
+	var dbCluster *dbaas.DbCluster
 
 	for {
 		select {
@@ -286,7 +286,7 @@ func resourcePgDatabaseDelete(ctx context.Context, d *schema.ResourceData, m int
 		default:
 			time.Sleep(1 * time.Second)
 		}
-		dbCluster, err = client.DbaaSAlphaV1().GetDbCluster(ctx, dbClusterId)
+		dbCluster, err = client.DBaaS().GetDbCluster(ctx, dbClusterId)
 		if err != nil {
 			if tcclient.IsNotFound(err) {
 				d.SetId("")
@@ -299,7 +299,7 @@ func resourcePgDatabaseDelete(ctx context.Context, d *schema.ResourceData, m int
 			return diag.FromErr(fmt.Errorf("db cluster not found"))
 		}
 
-		if dbCluster.Status == dbaasalphav1.DbClusterStatusReady {
+		if dbCluster.Status == dbaas.DbClusterStatusReady {
 			break
 		}
 	}
@@ -314,7 +314,7 @@ func resourcePgDatabaseDelete(ctx context.Context, d *schema.ResourceData, m int
 		}
 	}
 
-	err = client.DbaaSAlphaV1().DeletePgDatabase(ctx, dbCluster.Identity, d.Get("id").(string))
+	err = client.DBaaS().DeletePgDatabase(ctx, dbCluster.Identity, d.Get("id").(string), true)
 	if err != nil {
 		if tcclient.IsNotFound(err) {
 			d.SetId("")

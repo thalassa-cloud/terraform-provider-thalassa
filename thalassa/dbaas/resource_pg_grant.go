@@ -8,7 +8,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/thalassa-cloud/client-go/dbaas/dbaasalphav1"
+	"github.com/thalassa-cloud/client-go/dbaas"
 	tcclient "github.com/thalassa-cloud/client-go/pkg/client"
 	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/convert"
 	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/provider"
@@ -78,7 +78,7 @@ func resourcePgGrantCreate(ctx context.Context, d *schema.ResourceData, m interf
 	}
 
 	dbClusterId := d.Get("db_cluster_id").(string)
-	dbCluster, err := client.DbaaSAlphaV1().GetDbCluster(ctx, dbClusterId)
+	dbCluster, err := client.DBaaS().GetDbCluster(ctx, dbClusterId)
 	if err != nil {
 		if tcclient.IsNotFound(err) {
 			d.SetId("")
@@ -113,7 +113,7 @@ func resourcePgGrantCreate(ctx context.Context, d *schema.ResourceData, m interf
 		return diag.FromErr(fmt.Errorf("database %s not found in database cluster", databaseName))
 	}
 
-	createGrant := dbaasalphav1.CreatePgGrantRequest{
+	createGrant := dbaas.CreatePgGrantRequest{
 		Name:         d.Get("name").(string),
 		RoleName:     roleName,
 		DatabaseName: databaseName,
@@ -121,7 +121,7 @@ func resourcePgGrantCreate(ctx context.Context, d *schema.ResourceData, m interf
 		Write:        d.Get("write").(bool),
 	}
 
-	err = client.DbaaSAlphaV1().CreatePgGrant(ctx, dbCluster.Identity, createGrant)
+	err = client.DBaaS().CreatePgGrant(ctx, dbCluster.Identity, createGrant)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error creating pg grant: %w", err))
 	}
@@ -148,7 +148,7 @@ func resourcePgGrantRead(ctx context.Context, d *schema.ResourceData, m interfac
 	// We'll verify the cluster exists and that the role and database still exist.
 	// The grant itself is managed by the API and we trust the state.
 	dbClusterId := d.Get("db_cluster_id").(string)
-	dbCluster, err := client.DbaaSAlphaV1().GetDbCluster(ctx, dbClusterId)
+	dbCluster, err := client.DBaaS().GetDbCluster(ctx, dbClusterId)
 	if err != nil {
 		if tcclient.IsNotFound(err) {
 			d.SetId("")
@@ -199,7 +199,7 @@ func resourcePgGrantUpdate(ctx context.Context, d *schema.ResourceData, m interf
 	}
 
 	dbClusterId := d.Get("db_cluster_id").(string)
-	dbCluster, err := client.DbaaSAlphaV1().GetDbCluster(ctx, dbClusterId)
+	dbCluster, err := client.DBaaS().GetDbCluster(ctx, dbClusterId)
 	if err != nil {
 		if tcclient.IsNotFound(err) {
 			d.SetId("")
@@ -209,12 +209,12 @@ func resourcePgGrantUpdate(ctx context.Context, d *schema.ResourceData, m interf
 	}
 
 	grantName := d.Get("name").(string)
-	updateGrant := dbaasalphav1.UpdatePgGrantRequest{
+	updateGrant := dbaas.UpdatePgGrantRequest{
 		Read:  convert.Ptr(d.Get("read").(bool)),
 		Write: convert.Ptr(d.Get("write").(bool)),
 	}
 
-	err = client.DbaaSAlphaV1().UpdatePgGrant(ctx, dbCluster.Identity, grantName, updateGrant)
+	err = client.DBaaS().UpdatePgGrant(ctx, dbCluster.Identity, grantName, updateGrant)
 	if err != nil {
 		if tcclient.IsNotFound(err) {
 			d.SetId("")
@@ -233,7 +233,7 @@ func resourcePgGrantDelete(ctx context.Context, d *schema.ResourceData, m interf
 	}
 
 	dbClusterId := d.Get("db_cluster_id").(string)
-	var dbCluster *dbaasalphav1.DbCluster
+	var dbCluster *dbaas.DbCluster
 
 	for {
 		select {
@@ -242,7 +242,7 @@ func resourcePgGrantDelete(ctx context.Context, d *schema.ResourceData, m interf
 		default:
 			time.Sleep(1 * time.Second)
 		}
-		dbCluster, err = client.DbaaSAlphaV1().GetDbCluster(ctx, dbClusterId)
+		dbCluster, err = client.DBaaS().GetDbCluster(ctx, dbClusterId)
 		if err != nil {
 			if tcclient.IsNotFound(err) {
 				d.SetId("")
@@ -254,13 +254,13 @@ func resourcePgGrantDelete(ctx context.Context, d *schema.ResourceData, m interf
 		if dbCluster == nil {
 			return diag.FromErr(fmt.Errorf("db cluster not found"))
 		}
-		if dbCluster.Status == dbaasalphav1.DbClusterStatusReady {
+		if dbCluster.Status == dbaas.DbClusterStatusReady {
 			break
 		}
 	}
 
 	grantName := d.Get("name").(string)
-	err = client.DbaaSAlphaV1().DeletePgGrant(ctx, dbCluster.Identity, grantName)
+	err = client.DBaaS().DeletePgGrant(ctx, dbCluster.Identity, grantName)
 	if err != nil {
 		if tcclient.IsNotFound(err) {
 			d.SetId("")

@@ -7,7 +7,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/thalassa-cloud/client-go/dbaas/dbaasalphav1"
+	"github.com/thalassa-cloud/client-go/dbaas"
 	tcclient "github.com/thalassa-cloud/client-go/pkg/client"
 	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/convert"
 	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/provider"
@@ -122,10 +122,10 @@ func resourceDbBackupScheduleCreate(ctx context.Context, d *schema.ResourceData,
 		return diag.FromErr(err)
 	}
 
-	var dbCluster *dbaasalphav1.DbCluster
+	var dbCluster *dbaas.DbCluster
 	dbClusterId := d.Get("db_cluster_id").(string)
 
-	dbCluster, err = client.DbaaSAlphaV1().GetDbCluster(ctx, dbClusterId)
+	dbCluster, err = client.DBaaS().GetDbCluster(ctx, dbClusterId)
 	if err != nil {
 		if tcclient.IsNotFound(err) {
 			return diag.FromErr(fmt.Errorf("db cluster not found: %w", err))
@@ -133,7 +133,7 @@ func resourceDbBackupScheduleCreate(ctx context.Context, d *schema.ResourceData,
 		return diag.FromErr(fmt.Errorf("error getting db cluster: %w", err))
 	}
 	switch dbCluster.Status {
-	case dbaasalphav1.DbClusterStatusReady, dbaasalphav1.DbClusterStatusUpdating, dbaasalphav1.DbClusterStatusCreating:
+	case dbaas.DbClusterStatusReady, dbaas.DbClusterStatusUpdating, dbaas.DbClusterStatusCreating:
 		break
 	default:
 		return diag.FromErr(fmt.Errorf("db cluster is not ready: %s", dbCluster.Status))
@@ -141,21 +141,21 @@ func resourceDbBackupScheduleCreate(ctx context.Context, d *schema.ResourceData,
 
 	backupTarget := d.Get("backup_target").(string)
 	retentionPolicy := d.Get("retention_policy").(string)
-	createBackupSchedule := dbaasalphav1.CreatePgBackupScheduleRequest{
+	createBackupSchedule := dbaas.CreatePgBackupScheduleRequest{
 		Name:            d.Get("name").(string),
 		Schedule:        d.Get("schedule").(string),
 		RetentionPolicy: retentionPolicy,
-		Target:          dbaasalphav1.DbClusterBackupScheduleTarget(backupTarget),
+		Target:          dbaas.DbClusterBackupScheduleTarget(backupTarget),
 	}
 
 	if labels, ok := d.GetOk("labels"); ok {
-		createBackupSchedule.Labels = dbaasalphav1.Labels(convert.ConvertToMap(labels))
+		createBackupSchedule.Labels = dbaas.Labels(convert.ConvertToMap(labels))
 	}
 	if annotations, ok := d.GetOk("annotations"); ok {
-		createBackupSchedule.Annotations = dbaasalphav1.Annotations(convert.ConvertToMap(annotations))
+		createBackupSchedule.Annotations = dbaas.Annotations(convert.ConvertToMap(annotations))
 	}
 
-	createdBackupSchedule, err := client.DbaaSAlphaV1().CreatePgBackupSchedule(ctx, dbCluster.Identity, createBackupSchedule)
+	createdBackupSchedule, err := client.DBaaS().CreatePgBackupSchedule(ctx, dbCluster.Identity, createBackupSchedule)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error creating backup schedule: %w", err))
 	}
@@ -180,7 +180,7 @@ func resourceDbBackupScheduleRead(ctx context.Context, d *schema.ResourceData, m
 	}
 
 	dbClusterId := d.Get("db_cluster_id").(string)
-	pgBackupSchedules, err := client.DbaaSAlphaV1().ListPgBackupSchedules(ctx, dbClusterId)
+	pgBackupSchedules, err := client.DBaaS().ListPgBackupSchedules(ctx, dbClusterId)
 	if err != nil {
 		if tcclient.IsNotFound(err) {
 			d.SetId("")
@@ -220,15 +220,15 @@ func resourceDbBackupScheduleUpdate(ctx context.Context, d *schema.ResourceData,
 	retentionPolicy := d.Get("retention_policy").(string)
 	backupTarget := d.Get("backup_target").(string)
 
-	updateBackupSchedule := dbaasalphav1.UpdatePgBackupScheduleRequest{
+	updateBackupSchedule := dbaas.UpdatePgBackupScheduleRequest{
 		Name:            name,
 		Schedule:        schedule,
 		RetentionPolicy: retentionPolicy,
-		Target:          dbaasalphav1.DbClusterBackupScheduleTarget(backupTarget),
+		Target:          dbaas.DbClusterBackupScheduleTarget(backupTarget),
 	}
 
-	var dbCluster *dbaasalphav1.DbCluster
-	dbCluster, err = client.DbaaSAlphaV1().GetDbCluster(ctx, dbClusterId)
+	var dbCluster *dbaas.DbCluster
+	dbCluster, err = client.DBaaS().GetDbCluster(ctx, dbClusterId)
 	if err != nil {
 		if tcclient.IsNotFound(err) {
 			return diag.FromErr(fmt.Errorf("db cluster not found: %w", err))
@@ -236,20 +236,20 @@ func resourceDbBackupScheduleUpdate(ctx context.Context, d *schema.ResourceData,
 		return diag.FromErr(fmt.Errorf("error getting db cluster: %w", err))
 	}
 	switch dbCluster.Status {
-	case dbaasalphav1.DbClusterStatusReady, dbaasalphav1.DbClusterStatusUpdating, dbaasalphav1.DbClusterStatusCreating:
+	case dbaas.DbClusterStatusReady, dbaas.DbClusterStatusUpdating, dbaas.DbClusterStatusCreating:
 		break
 	default:
 		return diag.FromErr(fmt.Errorf("db cluster is not ready: %s", dbCluster.Status))
 	}
 
 	if labels, ok := d.GetOk("labels"); ok {
-		updateBackupSchedule.Labels = dbaasalphav1.Labels(convert.ConvertToMap(labels))
+		updateBackupSchedule.Labels = dbaas.Labels(convert.ConvertToMap(labels))
 	}
 	if annotations, ok := d.GetOk("annotations"); ok {
-		updateBackupSchedule.Annotations = dbaasalphav1.Annotations(convert.ConvertToMap(annotations))
+		updateBackupSchedule.Annotations = dbaas.Annotations(convert.ConvertToMap(annotations))
 	}
 
-	_, err = client.DbaaSAlphaV1().UpdatePgBackupSchedule(ctx, dbCluster.Identity, d.Id(), updateBackupSchedule)
+	_, err = client.DBaaS().UpdatePgBackupSchedule(ctx, dbCluster.Identity, d.Id(), updateBackupSchedule)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error updating backup schedule: %w", err))
 	}
@@ -264,7 +264,7 @@ func resourceDbBackupScheduleDelete(ctx context.Context, d *schema.ResourceData,
 	}
 
 	dbClusterId := d.Get("db_cluster_id").(string)
-	dbCluster, err := client.DbaaSAlphaV1().GetDbCluster(ctx, dbClusterId)
+	dbCluster, err := client.DBaaS().GetDbCluster(ctx, dbClusterId)
 	if err != nil {
 		if tcclient.IsNotFound(err) {
 			d.SetId("")
@@ -273,7 +273,7 @@ func resourceDbBackupScheduleDelete(ctx context.Context, d *schema.ResourceData,
 		return diag.FromErr(fmt.Errorf("error getting db cluster: %w", err))
 	}
 
-	err = client.DbaaSAlphaV1().DeletePgBackupSchedule(ctx, dbCluster.Identity, d.Id())
+	err = client.DBaaS().DeletePgBackupSchedule(ctx, dbCluster.Identity, d.Id())
 	if err != nil {
 		if tcclient.IsNotFound(err) {
 			d.SetId("")

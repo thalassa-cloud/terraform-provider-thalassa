@@ -10,7 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/thalassa-cloud/client-go/dbaas/dbaasalphav1"
+	"github.com/thalassa-cloud/client-go/dbaas"
 	"github.com/thalassa-cloud/client-go/iaas"
 	tcclient "github.com/thalassa-cloud/client-go/pkg/client"
 	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/convert"
@@ -231,7 +231,7 @@ func resourceDbClusterCreate(ctx context.Context, d *schema.ResourceData, m inte
 	}
 
 	databaseInstanceType := d.Get("database_instance_type").(string)
-	databaseInstanceTypes, err := client.DbaaSAlphaV1().ListDatabaseInstanceTypes(ctx, &dbaasalphav1.ListDatabaseInstanceTypesRequest{})
+	databaseInstanceTypes, err := client.DBaaS().ListDatabaseInstanceTypes(ctx, &dbaas.ListDatabaseInstanceTypesRequest{})
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("database instance type not found: %w", err))
 	}
@@ -257,7 +257,7 @@ func resourceDbClusterCreate(ctx context.Context, d *schema.ResourceData, m inte
 		"engine":        engine,
 		"engineVersion": engineVersion,
 	})
-	engineVersions, err := client.DbaaSAlphaV1().ListEngineVersions(ctx, dbaasalphav1.DbClusterDatabaseEngine(engine), &dbaasalphav1.ListEngineVersionsRequest{})
+	engineVersions, err := client.DBaaS().ListEngineVersions(ctx, dbaas.DbClusterDatabaseEngine(engine), &dbaas.ListEngineVersionsRequest{})
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("engine version not found: %w", err))
 	}
@@ -271,20 +271,20 @@ func resourceDbClusterCreate(ctx context.Context, d *schema.ResourceData, m inte
 		return diag.FromErr(fmt.Errorf("engine version not found: %s", engineVersion))
 	}
 
-	createDbCluster := dbaasalphav1.CreateDbClusterRequest{
+	createDbCluster := dbaas.CreateDbClusterRequest{
 		Name:                         d.Get("name").(string),
 		Description:                  d.Get("description").(string),
-		Labels:                       dbaasalphav1.Labels(labels),
-		Annotations:                  dbaasalphav1.Annotations(annotations),
+		Labels:                       dbaas.Labels(labels),
+		Annotations:                  dbaas.Annotations(annotations),
 		SubnetIdentity:               subnet.Identity,
 		DeleteProtection:             d.Get("delete_protection").(bool),
-		Engine:                       dbaasalphav1.DbClusterDatabaseEngine(engine),
+		Engine:                       dbaas.DbClusterDatabaseEngine(engine),
 		EngineVersion:                engineVersion,
 		Parameters:                   parameters,
 		AllocatedStorage:             uint64(d.Get("allocated_storage").(int)),
 		DatabaseInstanceTypeIdentity: databaseInstanceType,
 		AutoMinorVersionUpgrade:      d.Get("auto_minor_version_upgrade").(bool),
-		Instances:                    d.Get("replicas").(int),
+		Replicas:                     d.Get("replicas").(int),
 	}
 
 	foundVolumeTypeClass := false
@@ -398,7 +398,7 @@ func resourceDbClusterCreate(ctx context.Context, d *schema.ResourceData, m inte
 				}
 			}
 
-			createDbCluster.PostgresInitDb = &dbaasalphav1.PostgresInitDb{
+			createDbCluster.PostgresInitDb = &dbaas.PostgresInitDb{
 				DataChecksums:  dataChecksums,
 				Encoding:       encoding,
 				Locale:         locale,
@@ -424,7 +424,7 @@ func resourceDbClusterCreate(ctx context.Context, d *schema.ResourceData, m inte
 	}
 
 	// Create the DbCluster
-	createdDbCluster, err := client.DbaaSAlphaV1().CreateDbCluster(ctx, createDbCluster)
+	createdDbCluster, err := client.DBaaS().CreateDbCluster(ctx, createDbCluster)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -432,10 +432,10 @@ func resourceDbClusterCreate(ctx context.Context, d *schema.ResourceData, m inte
 	// Set the id to the name of the cluster
 	d.SetId(createdDbCluster.Identity)
 
-	var dbCluster *dbaasalphav1.DbCluster
+	var dbCluster *dbaas.DbCluster
 	// Wait for the cluster to be ready
 	for {
-		dbCluster, err = client.DbaaSAlphaV1().GetDbCluster(ctx, createdDbCluster.Identity)
+		dbCluster, err = client.DBaaS().GetDbCluster(ctx, createdDbCluster.Identity)
 		if err != nil {
 			if tcclient.IsNotFound(err) {
 				return diag.FromErr(fmt.Errorf("db cluster not found: %w", err))
@@ -445,7 +445,7 @@ func resourceDbClusterCreate(ctx context.Context, d *schema.ResourceData, m inte
 		if dbCluster == nil {
 			return diag.FromErr(fmt.Errorf("db cluster not found: %w", err))
 		}
-		if dbCluster.Status == dbaasalphav1.DbClusterStatusReady {
+		if dbCluster.Status == dbaas.DbClusterStatusReady {
 			break
 		}
 		time.Sleep(1 * time.Second)
@@ -485,8 +485,8 @@ func resourceDbClusterRead(ctx context.Context, d *schema.ResourceData, m interf
 	}
 
 	identity := d.Get("id").(string)
-	var DbCluster *dbaasalphav1.DbCluster
-	DbCluster, err = client.DbaaSAlphaV1().GetDbCluster(ctx, identity)
+	var DbCluster *dbaas.DbCluster
+	DbCluster, err = client.DBaaS().GetDbCluster(ctx, identity)
 	if err != nil {
 		if tcclient.IsNotFound(err) {
 			d.SetId("")
@@ -577,22 +577,21 @@ func resourceDbClusterUpdate(ctx context.Context, d *schema.ResourceData, m inte
 		securityGroupAttachments = convert.ConvertToStringSlice(securityGroupsRaw)
 	}
 
-	updateDbCluster := dbaasalphav1.UpdateDbClusterRequest{
+	updateDbCluster := dbaas.UpdateDbClusterRequest{
 		Name:                         d.Get("name").(string),
 		Description:                  d.Get("description").(string),
-		Labels:                       dbaasalphav1.Labels(labels),
-		Annotations:                  dbaasalphav1.Annotations(annotations),
+		Labels:                       dbaas.Labels(labels),
+		Annotations:                  dbaas.Annotations(annotations),
 		SecurityGroupAttachments:     securityGroupAttachments,
 		DeleteProtection:             d.Get("delete_protection").(bool),
 		EngineVersion:                convert.Ptr(d.Get("engine_version").(string)),
 		Parameters:                   parameters,
 		AllocatedStorage:             uint64(d.Get("allocated_storage").(int)),
-		AutoMinorVersionUpgrade:      d.Get("auto_minor_version_upgrade").(bool),
 		Replicas:                     d.Get("replicas").(int),
 		DatabaseInstanceTypeIdentity: convert.Ptr(d.Get("database_instance_type").(string)),
 	}
 
-	_, err = client.DbaaSAlphaV1().UpdateDbCluster(ctx, id, updateDbCluster)
+	_, err = client.DBaaS().UpdateDbCluster(ctx, id, updateDbCluster)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to update db cluster: %w", err))
 	}
@@ -604,14 +603,14 @@ func resourceDbClusterUpdate(ctx context.Context, d *schema.ResourceData, m inte
 		default:
 			time.Sleep(1 * time.Second)
 		}
-		updatedDbCluster, err := client.DbaaSAlphaV1().GetDbCluster(ctx, id)
+		updatedDbCluster, err := client.DBaaS().GetDbCluster(ctx, id)
 		if err != nil {
 			return diag.FromErr(err)
 		}
 		if updatedDbCluster == nil {
 			return diag.FromErr(fmt.Errorf("db cluster not found"))
 		}
-		if updatedDbCluster.Status == dbaasalphav1.DbClusterStatusReady {
+		if updatedDbCluster.Status == dbaas.DbClusterStatusReady {
 			break
 		}
 	}
@@ -626,7 +625,7 @@ func resourceDbClusterDelete(ctx context.Context, d *schema.ResourceData, m inte
 
 	id := d.Get("id").(string)
 	// Get the cluster
-	dbCluster, err := client.DbaaSAlphaV1().GetDbCluster(ctx, id)
+	dbCluster, err := client.DBaaS().GetDbCluster(ctx, id)
 	if err != nil {
 		if tcclient.IsNotFound(err) {
 			d.SetId("")
@@ -635,7 +634,7 @@ func resourceDbClusterDelete(ctx context.Context, d *schema.ResourceData, m inte
 		return diag.FromErr(fmt.Errorf("failed to retrieve db cluster: %w", err))
 	}
 
-	err = client.DbaaSAlphaV1().DeleteDbCluster(ctx, dbCluster.Identity)
+	err = client.DBaaS().DeleteDbCluster(ctx, dbCluster.Identity)
 	if err != nil {
 		if tcclient.IsNotFound(err) {
 			d.SetId("")
@@ -651,7 +650,7 @@ func resourceDbClusterDelete(ctx context.Context, d *schema.ResourceData, m inte
 		default:
 			time.Sleep(1 * time.Second)
 		}
-		dbCluster, err = client.DbaaSAlphaV1().GetDbCluster(ctx, id)
+		dbCluster, err = client.DBaaS().GetDbCluster(ctx, id)
 		if err != nil {
 			if tcclient.IsNotFound(err) {
 				d.SetId("")
@@ -663,7 +662,7 @@ func resourceDbClusterDelete(ctx context.Context, d *schema.ResourceData, m inte
 			d.SetId("")
 			return nil
 		}
-		if dbCluster.Status == dbaasalphav1.DbClusterStatusDeleted {
+		if dbCluster.Status == dbaas.DbClusterStatusDeleted {
 			break
 		}
 	}
