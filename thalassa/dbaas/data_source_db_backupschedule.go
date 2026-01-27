@@ -59,7 +59,7 @@ func dataSourceDbBackupScheduleRead(ctx context.Context, d *schema.ResourceData,
 	}
 
 	dbClusterId := d.Get("db_cluster_id").(string)
-	backupSchedules, err := client.DBaaS().ListPgBackupSchedules(ctx, dbClusterId)
+	backupSchedules, err := client.DBaaS().ListDbBackupSchedules(ctx, dbClusterId)
 	if err != nil {
 		return diag.FromErr(err)
 	}

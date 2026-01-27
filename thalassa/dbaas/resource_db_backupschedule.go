@@ -95,19 +95,6 @@ func resourceDbBackupSchedule() *schema.Resource {
 				Default:     false,
 				Description: "Whether the database backup schedule is suspended",
 			},
-			"backup_target": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Default:     "primary",
-				Description: "The backup target of the database backup schedule (primary, prefer-standby)",
-				ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
-					if val.(string) != "primary" && val.(string) != "prefer-standby" {
-						errs = append(errs, fmt.Errorf("backup_target must be either primary or prefer-standby"))
-					}
-					warns = []string{}
-					return
-				},
-			},
 			"method": {
 				Type:        schema.TypeString,
 				Optional:    true,
@@ -149,18 +136,16 @@ func resourceDbBackupScheduleCreate(ctx context.Context, d *schema.ResourceData,
 		return diag.FromErr(fmt.Errorf("db cluster is not ready: %s", dbCluster.Status))
 	}
 
-	backupTarget := d.Get("backup_target").(string)
 	retentionPolicy := d.Get("retention_policy").(string)
 	method := d.Get("method").(string)
 	if method == "" {
 		method = "barman"
 	}
 
-	createBackupSchedule := dbaas.CreatePgBackupScheduleRequest{
+	createBackupSchedule := dbaas.CreateDbBackupScheduleRequest{
 		Name:            d.Get("name").(string),
 		Schedule:        d.Get("schedule").(string),
 		RetentionPolicy: retentionPolicy,
-		Target:          dbaas.DbClusterBackupScheduleTarget(backupTarget),
 		Method:          dbaas.DbClusterBackupScheduleMethod(method),
 	}
 
@@ -176,7 +161,7 @@ func resourceDbBackupScheduleCreate(ctx context.Context, d *schema.ResourceData,
 		createBackupSchedule.Annotations = dbaas.Annotations(convert.ConvertToMap(annotations))
 	}
 
-	createdBackupSchedule, err := client.DBaaS().CreatePgBackupSchedule(ctx, dbCluster.Identity, createBackupSchedule)
+	createdBackupSchedule, err := client.DBaaS().CreateDbBackupSchedule(ctx, dbCluster.Identity, createBackupSchedule)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error creating backup schedule: %w", err))
 	}
@@ -189,7 +174,6 @@ func resourceDbBackupScheduleCreate(ctx context.Context, d *schema.ResourceData,
 	d.Set("annotations", createdBackupSchedule.Annotations)
 	d.Set("schedule", createdBackupSchedule.Schedule)
 	d.Set("retention_policy", createdBackupSchedule.RetentionPolicy)
-	d.Set("backup_target", createdBackupSchedule.Target)
 
 	return resourceDbBackupScheduleRead(ctx, d, m)
 }
@@ -201,7 +185,7 @@ func resourceDbBackupScheduleRead(ctx context.Context, d *schema.ResourceData, m
 	}
 
 	dbClusterId := d.Get("db_cluster_id").(string)
-	pgBackupSchedules, err := client.DBaaS().ListPgBackupSchedules(ctx, dbClusterId)
+	DbBackupSchedules, err := client.DBaaS().ListDbBackupSchedules(ctx, dbClusterId)
 	if err != nil {
 		if tcclient.IsNotFound(err) {
 			d.SetId("")
@@ -210,7 +194,7 @@ func resourceDbBackupScheduleRead(ctx context.Context, d *schema.ResourceData, m
 		return diag.FromErr(fmt.Errorf("error listing pg backup schedules: %w", err))
 	}
 
-	for _, backupSchedule := range pgBackupSchedules {
+	for _, backupSchedule := range DbBackupSchedules {
 		if backupSchedule.Identity == d.Id() {
 			d.Set("db_cluster_id", dbClusterId)
 			d.Set("name", backupSchedule.Name)
@@ -242,8 +226,6 @@ func resourceDbBackupScheduleUpdate(ctx context.Context, d *schema.ResourceData,
 	name := d.Get("name").(string)
 	schedule := d.Get("schedule").(string)
 	retentionPolicy := d.Get("retention_policy").(string)
-	backupTarget := d.Get("backup_target").(string)
-
 	description := ""
 	if desc, ok := d.GetOk("description"); ok {
 		if strVal, ok := desc.(string); ok {
@@ -251,12 +233,11 @@ func resourceDbBackupScheduleUpdate(ctx context.Context, d *schema.ResourceData,
 		}
 	}
 
-	updateBackupSchedule := dbaas.UpdatePgBackupScheduleRequest{
+	updateBackupSchedule := dbaas.UpdateDbBackupScheduleRequest{
 		Name:            name,
 		Description:     description,
 		Schedule:        schedule,
 		RetentionPolicy: retentionPolicy,
-		Target:          dbaas.DbClusterBackupScheduleTarget(backupTarget),
 	}
 
 	var dbCluster *dbaas.DbCluster
@@ -281,7 +262,7 @@ func resourceDbBackupScheduleUpdate(ctx context.Context, d *schema.ResourceData,
 		updateBackupSchedule.Annotations = dbaas.Annotations(convert.ConvertToMap(annotations))
 	}
 
-	_, err = client.DBaaS().UpdatePgBackupSchedule(ctx, dbCluster.Identity, d.Id(), updateBackupSchedule)
+	_, err = client.DBaaS().UpdateDbBackupSchedule(ctx, dbCluster.Identity, d.Id(), updateBackupSchedule)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error updating backup schedule: %w", err))
 	}
@@ -305,7 +286,7 @@ func resourceDbBackupScheduleDelete(ctx context.Context, d *schema.ResourceData,
 		return diag.FromErr(fmt.Errorf("error getting db cluster: %w", err))
 	}
 
-	err = client.DBaaS().DeletePgBackupSchedule(ctx, dbCluster.Identity, d.Id())
+	err = client.DBaaS().DeleteDbBackupSchedule(ctx, dbCluster.Identity, d.Id())
 	if err != nil {
 		if tcclient.IsNotFound(err) {
 			d.SetId("")
