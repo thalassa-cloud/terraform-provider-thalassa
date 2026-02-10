@@ -6,7 +6,7 @@ require (
 	github.com/hashicorp/terraform-plugin-log v0.10.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.38.2
 	github.com/stretchr/testify v1.11.1
-	github.com/thalassa-cloud/client-go v0.28.2
+	github.com/thalassa-cloud/client-go v0.29.1
 )
 
 require (
