@@ -277,7 +277,17 @@ func resourceTfsInstanceRead(ctx context.Context, d *schema.ResourceData, m inte
 	}
 
 	if tfsInstance.Region != nil {
-		d.Set("region", tfsInstance.Region.Identity)
+		currentRegion := d.Get("region").(string)
+		switch currentRegion {
+		case "":
+			d.Set("region", tfsInstance.Region.Slug)
+		case tfsInstance.Region.Slug:
+			d.Set("region", tfsInstance.Region.Slug)
+		case tfsInstance.Region.Identity:
+			d.Set("region", tfsInstance.Region.Identity)
+		default:
+			d.Set("region", tfsInstance.Region.Slug)
+		}
 	}
 
 	if tfsInstance.Vpc != nil {
