@@ -133,6 +133,12 @@ func resourceKubernetesNodePool() *schema.Resource {
 				Default:     false,
 				Description: "Enable autohealing for the Kubernetes Node Pool",
 			},
+			"manage_node_allocatable": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     true,
+				Description: "Configure node allocatable resources for the Kubernetes Node Pool. If set to false, nodes of this node pool will not have system reserved resources configured. Recommended true for stability.",
+			},
 			"availability_zone": {
 				Type:        schema.TypeString,
 				Required:    true,
@@ -326,6 +332,7 @@ func resourceKubernetesNodePoolCreate(ctx context.Context, d *schema.ResourceDat
 		UpgradeStrategy:           convert.Ptr(kubernetes.KubernetesNodePoolUpgradeStrategy(d.Get("upgrade_strategy").(string))),
 		SubnetIdentity:            subnetIdentity,
 		KubernetesVersionIdentity: kubernetesVersionIdentity,
+		ManageNodeAllocatable:     d.Get("manage_node_allocatable").(bool),
 	}
 
 	if securityGroupAttachments, ok := d.GetOk("security_group_attachments"); ok {
@@ -519,6 +526,7 @@ func resourceKubernetesNodePoolUpdate(ctx context.Context, d *schema.ResourceDat
 		MinReplicas:               convert.Ptr(d.Get("min_replicas").(int)),
 		MaxReplicas:               convert.Ptr(d.Get("max_replicas").(int)),
 		EnableAutoHealing:         convert.Ptr(d.Get("enable_autohealing").(bool)),
+		ManageNodeAllocatable:     d.Get("manage_node_allocatable").(bool),
 		UpgradeStrategy:           convert.Ptr(kubernetes.KubernetesNodePoolUpgradeStrategy(d.Get("upgrade_strategy").(string))),
 		KubernetesVersionIdentity: kubernetesVersionIdentity,
 		NodeSettings: &kubernetes.KubernetesNodeSettings{
@@ -565,6 +573,7 @@ func resourceKubernetesNodePoolUpdate(ctx context.Context, d *schema.ResourceDat
 		d.Set("annotations", kubernetesNodePool.Annotations)
 		d.Set("enable_autoscaling", kubernetesNodePool.EnableAutoscaling)
 		d.Set("enable_autohealing", kubernetesNodePool.EnableAutoHealing)
+		d.Set("manage_node_allocatable", kubernetesNodePool.ManageNodeAllocatable)
 		d.Set("node_taints", convertFromNodeTaints(kubernetesNodePool.NodeSettings.Taints))
 		d.Set("node_labels", convertFromNodeLabels(kubernetesNodePool.NodeSettings.Labels))
 		d.Set("node_annotations", convertFromNodeLabels(kubernetesNodePool.NodeSettings.Annotations))
