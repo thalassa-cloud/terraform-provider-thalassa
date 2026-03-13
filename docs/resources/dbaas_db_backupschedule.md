@@ -68,7 +68,6 @@ output "backup_schedule_name" {
 ### Optional
 
 - `annotations` (Map of String) The annotations of the database backup schedule
-- `backup_target` (String) The backup target of the database backup schedule (primary, prefer-standby)
 - `description` (String) The description of the database backup schedule
 - `labels` (Map of String) The labels of the database backup schedule
 - `method` (String) The method of the backup schedule (barman)

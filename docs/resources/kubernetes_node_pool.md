@@ -108,6 +108,7 @@ output "node_pool_name" {
 - `enable_autoscaling` (Boolean) Enable autoscaling for the Kubernetes Node Pool
 - `kubernetes_version` (String) Kubernetes version for the node pool nodes. Optional - if not specified, the cluster's version will be used. Can be specified as version name, slug, or identity. Must be an enabled version.
 - `labels` (Map of String) Labels for the Kubernetes Node Pool. Optional. These labels are used for filtering and grouping resources in the Thalassa Console. Labels are not applied to the Kubernetes nodes created for this Node Pool, please use node_labels instead.
+- `manage_node_allocatable` (Boolean) Configure node allocatable resources for the Kubernetes Node Pool. If set to false, nodes of this node pool will not have system reserved resources configured. Recommended true for stability.
 - `max_replicas` (Number) Maximum number of replicas for the Kubernetes Node Pool. May only be set when enable_autoscaling is true.
 - `min_replicas` (Number) Minimum number of replicas for the Kubernetes Node Pool. May only be set when enable_autoscaling is true.
 - `node_annotations` (Map of String) Annotations for the Kubernetes Nodes within this Node Pool. Optional. These annotations are applied to the Kubernetes nodes created for this Node Pool. Annotations must match the same constraints as Kubernetes annotations.
