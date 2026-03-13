@@ -185,7 +185,7 @@ func resourceDbBackupScheduleRead(ctx context.Context, d *schema.ResourceData, m
 	}
 
 	dbClusterId := d.Get("db_cluster_id").(string)
-	DbBackupSchedules, err := client.DBaaS().ListDbBackupSchedules(ctx, dbClusterId)
+	DbBackupSchedules, err := client.DBaaS().ListDbBackupSchedules(ctx, dbClusterId, &dbaas.ListDbBackupSchedulesRequest{})
 	if err != nil {
 		if tcclient.IsNotFound(err) {
 			d.SetId("")
