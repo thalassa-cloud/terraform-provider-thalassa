@@ -6,6 +6,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/thalassa-cloud/client-go/dbaas"
 	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/provider"
 )
 
@@ -59,7 +60,7 @@ func dataSourceDbBackupScheduleRead(ctx context.Context, d *schema.ResourceData,
 	}
 
 	dbClusterId := d.Get("db_cluster_id").(string)
-	backupSchedules, err := client.DBaaS().ListDbBackupSchedules(ctx, dbClusterId)
+	backupSchedules, err := client.DBaaS().ListDbBackupSchedules(ctx, dbClusterId, &dbaas.ListDbBackupSchedulesRequest{})
 	if err != nil {
 		return diag.FromErr(err)
 	}

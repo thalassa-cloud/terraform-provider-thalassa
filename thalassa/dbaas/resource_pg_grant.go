@@ -121,19 +121,19 @@ func resourcePgGrantCreate(ctx context.Context, d *schema.ResourceData, m interf
 		Write:        d.Get("write").(bool),
 	}
 
-	err = client.DBaaS().CreatePgGrant(ctx, dbCluster.Identity, createGrant)
+	createdGrant, err := client.DBaaS().CreatePgGrant(ctx, dbCluster.Identity, createGrant)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error creating pg grant: %w", err))
 	}
 
 	// Use the grant name as the ID
-	d.SetId(createGrant.Name)
-	d.Set("name", createGrant.Name)
+	d.SetId(createdGrant.Name)
+	d.Set("name", createdGrant.Name)
 	d.Set("db_cluster_id", dbClusterId)
 	d.Set("role_name", roleName)
 	d.Set("database_name", databaseName)
-	d.Set("read", createGrant.Read)
-	d.Set("write", createGrant.Write)
+	d.Set("read", createdGrant.Read)
+	d.Set("write", createdGrant.Write)
 
 	return resourcePgGrantRead(ctx, d, m)
 }
@@ -214,7 +214,7 @@ func resourcePgGrantUpdate(ctx context.Context, d *schema.ResourceData, m interf
 		Write: convert.Ptr(d.Get("write").(bool)),
 	}
 
-	err = client.DBaaS().UpdatePgGrant(ctx, dbCluster.Identity, grantName, updateGrant)
+	_, err = client.DBaaS().UpdatePgGrant(ctx, dbCluster.Identity, grantName, updateGrant)
 	if err != nil {
 		if tcclient.IsNotFound(err) {
 			d.SetId("")

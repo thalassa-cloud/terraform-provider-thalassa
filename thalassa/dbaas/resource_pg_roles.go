@@ -152,7 +152,7 @@ func resourcePgRolesCreate(ctx context.Context, d *schema.ResourceData, m interf
 		}
 	}
 
-	err = client.DBaaS().CreatePgRole(ctx, dbCluster.Identity, createRole)
+	_, err = client.DBaaS().CreatePgRole(ctx, dbCluster.Identity, createRole)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -282,7 +282,7 @@ func resourcePgRolesUpdate(ctx context.Context, d *schema.ResourceData, m interf
 		}
 	}
 
-	err = client.DBaaS().UpdatePgRole(ctx, dbCluster.Identity, d.Get("id").(string), updateRole)
+	_, err = client.DBaaS().UpdatePgRole(ctx, dbCluster.Identity, d.Get("id").(string), updateRole)
 	if err != nil {
 		if tcclient.IsNotFound(err) {
 			d.SetId("")
