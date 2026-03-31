@@ -87,7 +87,7 @@ func resourceVirtualMachineInstance() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Machine image of the virtual machine instance",
+				Description: "Machine image for the virtual machine instance. You may pass the image identity, slug, or name (name match is case-insensitive)",
 			},
 			"delete_protection": {
 				Type:        schema.TypeBool,
@@ -219,6 +219,12 @@ func resourceVirtualMachineInstanceCreate(ctx context.Context, d *schema.Resourc
 		d.Set("root_volume_id", rootVolumeId.(string))
 	}
 
+	machineImageRef := d.Get("machine_image").(string)
+	machineImageIdentity, err := lookupMachineImageIdentity(ctx, client.IaaS(), machineImageRef)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	createVirtualMachineInstance := iaas.CreateMachine{
 		Name:                     d.Get("name").(string),
 		Description:              d.Get("description").(string),
@@ -226,7 +232,7 @@ func resourceVirtualMachineInstanceCreate(ctx context.Context, d *schema.Resourc
 		Annotations:              convert.ConvertToMap(d.Get("annotations")),
 		Subnet:                   d.Get("subnet_id").(string),
 		MachineType:              d.Get("machine_type").(string),
-		MachineImage:             d.Get("machine_image").(string),
+		MachineImage:             machineImageIdentity,
 		DeleteProtection:         d.Get("delete_protection").(bool),
 		CloudInit:                d.Get("cloud_init").(string),
 		RootVolume:               rootVolume,
@@ -347,15 +353,18 @@ func resourceVirtualMachineInstanceRead(ctx context.Context, d *schema.ResourceD
 	} else {
 		d.Set("machine_type", virtualMachineInstance.MachineType.Identity)
 	}
-	if d.Get("machine_image").(string) != "" {
-		d.Set("machine_image", d.Get("machine_image").(string))
-	} else {
-		d.Set("machine_image", virtualMachineInstance.MachineImage.Identity)
+	// Preserve the user's reference (identity, slug, or name) when it still matches; otherwise use API identity.
+	if virtualMachineInstance.MachineImage != nil {
+		setMachineImageField(d, virtualMachineInstance.MachineImage)
 	}
 
 	d.Set("subnet_id", virtualMachineInstance.Subnet.Identity)
 	d.Set("delete_protection", virtualMachineInstance.DeleteProtection)
-	d.Set("cloud_init", virtualMachineInstance.CloudInit)
+	if virtualMachineInstance.CloudInit != nil && cloudInitTemplateId == "" {
+		d.Set("cloud_init", *virtualMachineInstance.CloudInit)
+	} else {
+		d.Set("cloud_init", "")
+	}
 
 	securityGroupAttachments := make([]string, len(virtualMachineInstance.SecurityGroups))
 	for i, securityGroup := range virtualMachineInstance.SecurityGroups {
@@ -450,21 +459,8 @@ func resourceVirtualMachineInstanceUpdate(ctx context.Context, d *schema.Resourc
 			d.Set("machine_type", virtualMachineInstance.MachineType.Identity)
 		}
 
-		if d.Get("machine_image").(string) != "" {
-			if virtualMachineInstance.MachineImage != nil {
-				// check if the machine image is the same as the one in the diff
-				stateReference := d.Get("machine_image").(string)
-				switch stateReference {
-				case virtualMachineInstance.MachineImage.Identity:
-					d.Set("machine_image", stateReference)
-				case virtualMachineInstance.MachineImage.Slug:
-					d.Set("machine_image", stateReference)
-				default:
-					d.Set("machine_image", virtualMachineInstance.MachineImage.Identity)
-				}
-			}
-		} else {
-			d.Set("machine_image", virtualMachineInstance.MachineImage.Identity)
+		if virtualMachineInstance.MachineImage != nil {
+			setMachineImageField(d, virtualMachineInstance.MachineImage)
 		}
 
 		d.Set("subnet_id", virtualMachineInstance.Subnet.Identity)
@@ -537,6 +533,27 @@ func resourceVirtualMachineInstanceDelete(ctx context.Context, d *schema.Resourc
 				return nil
 			}
 		}
+	}
+}
+
+// setMachineImageField mirrors region handling on block_volume: the API returns identity, but Terraform
+// may use identity, slug, or name; we keep the user's value when it still matches the resolved image.
+func setMachineImageField(d *schema.ResourceData, mi *iaas.MachineImage) {
+	if mi == nil {
+		return
+	}
+	current := d.Get("machine_image").(string)
+	switch {
+	case current == "":
+		d.Set("machine_image", mi.Identity)
+	case current == mi.Identity:
+		d.Set("machine_image", current)
+	case current == mi.Slug:
+		d.Set("machine_image", current)
+	case strings.EqualFold(current, mi.Name):
+		d.Set("machine_image", current)
+	default:
+		d.Set("machine_image", mi.Identity)
 	}
 }
 
