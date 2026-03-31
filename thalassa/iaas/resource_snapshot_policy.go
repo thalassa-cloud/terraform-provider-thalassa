@@ -49,17 +49,20 @@ func resourceSnapshotPolicy() *schema.Resource {
 			},
 			"description": {
 				Type:         schema.TypeString,
+				Default:      "",
 				Optional:     true,
 				ValidateFunc: validate.StringLenBetween(0, 255),
 				Description:  "A human readable description about the snapshot policy",
 			},
 			"labels": {
 				Type:        schema.TypeMap,
+				Default:     make(map[string]string),
 				Optional:    true,
 				Description: "Labels for the snapshot policy",
 			},
 			"annotations": {
 				Type:        schema.TypeMap,
+				Default:     make(map[string]string),
 				Optional:    true,
 				Description: "Annotations for the snapshot policy",
 			},
@@ -126,6 +129,7 @@ func resourceSnapshotPolicy() *schema.Resource {
 						},
 						"selector": {
 							Type:        schema.TypeMap,
+							Default:     make(map[string]string),
 							Optional:    true,
 							Description: "Label selector for volumes (required when type is 'selector')",
 							Elem: &schema.Schema{

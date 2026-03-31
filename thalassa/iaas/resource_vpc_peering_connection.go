@@ -36,6 +36,7 @@ func resourceVpcPeeringConnection() *schema.Resource {
 			},
 			"description": {
 				Type:         schema.TypeString,
+				Default:      "",
 				Optional:     true,
 				ValidateFunc: validate.StringLenBetween(0, 500),
 				Description:  "Description of the VPC peering connection. Must be at most 500 characters and contain only ASCII characters.",
@@ -67,6 +68,7 @@ func resourceVpcPeeringConnection() *schema.Resource {
 			},
 			"labels": {
 				Type:        schema.TypeMap,
+				Default:     make(map[string]string),
 				Optional:    true,
 				Description: "Labels for the VPC peering connection",
 				Elem: &schema.Schema{
@@ -75,6 +77,7 @@ func resourceVpcPeeringConnection() *schema.Resource {
 			},
 			"annotations": {
 				Type:        schema.TypeMap,
+				Default:     make(map[string]string),
 				Optional:    true,
 				Description: "Annotations for the VPC peering connection",
 				Elem: &schema.Schema{
