@@ -107,7 +107,7 @@ func resourceKubernetesCluster() *schema.Resource {
 				ForceNew:     true,
 				Default:      "cilium", // Default to Cilium
 				ValidateFunc: validate.StringInSlice([]string{"cilium", "custom"}, false),
-				Description:  "CNI of the Kubernetes Cluster",
+				Description:  "CNI plugin installed in the Kubernetes Cluster. Must be one of: cilium, custom. Default: cilium. If custom, you must install your own CNI provider and configuration, otherwise Kubernetes Nodes will not function correctly.",
 			},
 			"networking_service_cidr": {
 				Type:         schema.TypeString,
@@ -115,7 +115,7 @@ func resourceKubernetesCluster() *schema.Resource {
 				ForceNew:     true,
 				ValidateFunc: validate.IsCIDR,
 				Default:      "172.16.0.0/18",
-				Description:  "Service CIDR of the Kubernetes Cluster. Must be a valid CIDR block.",
+				Description:  "Service CIDR of the Kubernetes Cluster. Must be a valid CIDR block. Ensure the CIDR matches with the CNI configuration when using custom CNI.",
 			},
 			"networking_pod_cidr": {
 				Type:         schema.TypeString,
@@ -123,7 +123,7 @@ func resourceKubernetesCluster() *schema.Resource {
 				ForceNew:     true,
 				ValidateFunc: validate.IsCIDR,
 				Default:      "192.168.0.0/16",
-				Description:  "Pod CIDR of the Kubernetes Cluster. Must be a valid CIDR block.",
+				Description:  "Pod CIDR of the Kubernetes Cluster. Must be a valid CIDR block. Ensure the CIDR matches with the CNI configuration when using custom CNI.",
 			},
 			"networking_kube_proxy_mode": {
 				Type:         schema.TypeString,

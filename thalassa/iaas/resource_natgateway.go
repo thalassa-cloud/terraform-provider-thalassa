@@ -108,6 +108,13 @@ func resourceNatGateway() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
 		},
+		CustomizeDiff: func(ctx context.Context, diff *schema.ResourceDiff, meta interface{}) error {
+			_, new := diff.GetChange("description")
+			if new == nil {
+				return diff.SetNew("description", "")
+			}
+			return nil
+		},
 	}
 }
 
@@ -161,7 +168,7 @@ func resourceNatGatewayCreate(ctx context.Context, d *schema.ResourceData, m int
 					d.Set("endpoint_ip", natGateway.EndpointIP)
 					d.Set("v4_ip", natGateway.V4IP)
 					d.Set("v6_ip", natGateway.V6IP)
-					return nil
+					return resourceNatGatewayRead(ctx, d, m)
 				}
 			}
 		}

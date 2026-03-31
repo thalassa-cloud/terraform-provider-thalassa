@@ -131,11 +131,11 @@ output "node_pool_name" {
 - `labels` (Map of String) Labels for the Kubernetes Cluster
 - `maintenance_day` (Number) Day of the week when the cluster will be upgraded (0-6, where 0 is Sunday)
 - `maintenance_start_at` (Number) Time of day when the cluster will be upgraded in minutes from midnight (0-1439)
-- `networking_cni` (String) CNI of the Kubernetes Cluster
+- `networking_cni` (String) CNI plugin installed in the Kubernetes Cluster. Must be one of: cilium, custom. Default: cilium. If custom, you must install your own CNI provider and configuration, otherwise Kubernetes Nodes will not function correctly.
 - `networking_kube_proxy_deployment` (String) Deployment mode of the kube proxy. Must be one of: custom, managed, disabled. Default: managed.
 - `networking_kube_proxy_mode` (String) Mode of the kube proxy. Must be one of: ipvs, iptables. Default: ipvs.
-- `networking_pod_cidr` (String) Pod CIDR of the Kubernetes Cluster. Must be a valid CIDR block.
-- `networking_service_cidr` (String) Service CIDR of the Kubernetes Cluster. Must be a valid CIDR block.
+- `networking_pod_cidr` (String) Pod CIDR of the Kubernetes Cluster. Must be a valid CIDR block. Ensure the CIDR matches with the CNI configuration when using custom CNI.
+- `networking_service_cidr` (String) Service CIDR of the Kubernetes Cluster. Must be a valid CIDR block. Ensure the CIDR matches with the CNI configuration when using custom CNI.
 - `organisation_id` (String) Reference to the Organisation of the Kubernetes Cluster. If not provided, the organisation of the (Terraform) provider will be used.
 - `pod_security_standards_profile` (String) Pod security standards profile of the Kubernetes Cluster. Must be one of: restricted, baseline, privileged. Default: baseline.
 - `region` (String) Region of the Kubernetes Cluster. Required for hosted-control-plane clusters.
