@@ -142,6 +142,7 @@ func resourceKubernetesCluster() *schema.Resource {
 			"autoscaler_config": {
 				Type:        schema.TypeList,
 				Optional:    true,
+				Computed:    true,
 				MaxItems:    1,
 				Description: "Configuration for the cluster autoscaler. These values can also be configured using annotations on a KubernetesNodePool object.",
 				Elem: &schema.Resource{
