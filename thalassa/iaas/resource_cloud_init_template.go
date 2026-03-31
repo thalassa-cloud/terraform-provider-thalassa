@@ -39,12 +39,14 @@ func resourceCloudInitTemplate() *schema.Resource {
 			},
 			"labels": {
 				Type:        schema.TypeMap,
+				Default:     make(map[string]string),
 				Optional:    true,
 				ForceNew:    true,
 				Description: "Labels to add to the cloud init template",
 			},
 			"annotations": {
 				Type:        schema.TypeMap,
+				Default:     make(map[string]string),
 				Optional:    true,
 				ForceNew:    true,
 				Description: "Annotations to add to the cloud init template",

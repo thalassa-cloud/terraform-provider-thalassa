@@ -73,11 +73,13 @@ func resourceKubernetesCluster() *schema.Resource {
 			},
 			"labels": {
 				Type:        schema.TypeMap,
+				Default:     make(map[string]string),
 				Optional:    true,
 				Description: "Labels for the Kubernetes Cluster",
 			},
 			"annotations": {
 				Type:        schema.TypeMap,
+				Default:     make(map[string]string),
 				Optional:    true,
 				Description: "Annotations for the Kubernetes Cluster",
 			},

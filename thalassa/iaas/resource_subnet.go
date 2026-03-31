@@ -60,17 +60,20 @@ func resourceSubnet() *schema.Resource {
 			},
 			"description": {
 				Type:         schema.TypeString,
+				Default:      "",
 				Optional:     true,
 				ValidateFunc: validate.StringLenBetween(0, 255),
 				Description:  "A human readable description about the subnet",
 			},
 			"labels": {
 				Type:        schema.TypeMap,
+				Default:     make(map[string]string),
 				Optional:    true,
 				Description: "Labels for the Subnet",
 			},
 			"annotations": {
 				Type:        schema.TypeMap,
+				Default:     make(map[string]string),
 				Optional:    true,
 				Description: "Annotations for the Subnet",
 			},

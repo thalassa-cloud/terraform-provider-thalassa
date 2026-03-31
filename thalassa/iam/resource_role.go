@@ -36,6 +36,7 @@ func ResourceRole() *schema.Resource {
 			},
 			"description": {
 				Type:         schema.TypeString,
+				Default:      "",
 				Optional:     true,
 				ValidateFunc: validate.StringLenBetween(0, 255),
 				Description:  "Description of the organisation role",
@@ -43,12 +44,14 @@ func ResourceRole() *schema.Resource {
 			},
 			"labels": {
 				Type:        schema.TypeMap,
+				Default:     make(map[string]string),
 				Optional:    true,
 				Description: "Labels for the organisation role",
 				ForceNew:    true,
 			},
 			"annotations": {
 				Type:        schema.TypeMap,
+				Default:     make(map[string]string),
 				Optional:    true,
 				Description: "Annotations for the organisation role",
 				ForceNew:    true,

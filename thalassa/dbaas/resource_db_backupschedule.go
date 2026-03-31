@@ -44,6 +44,7 @@ func resourceDbBackupSchedule() *schema.Resource {
 			},
 			"labels": {
 				Type:        schema.TypeMap,
+				Default:     make(map[string]string),
 				Optional:    true,
 				Description: "The labels of the database backup schedule",
 				Elem: &schema.Schema{
@@ -52,6 +53,7 @@ func resourceDbBackupSchedule() *schema.Resource {
 			},
 			"annotations": {
 				Type:        schema.TypeMap,
+				Default:     make(map[string]string),
 				Optional:    true,
 				Description: "The annotations of the database backup schedule",
 				Elem: &schema.Schema{

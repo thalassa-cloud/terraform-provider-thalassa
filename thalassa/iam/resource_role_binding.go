@@ -44,11 +44,13 @@ func ResourceRoleBinding() *schema.Resource {
 			},
 			"labels": {
 				Type:        schema.TypeMap,
+				Default:     make(map[string]string),
 				Optional:    true,
 				Description: "Labels for the role binding",
 			},
 			"annotations": {
 				Type:        schema.TypeMap,
+				Default:     make(map[string]string),
 				Optional:    true,
 				Description: "Annotations for the role binding",
 			},

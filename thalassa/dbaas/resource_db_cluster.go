@@ -55,11 +55,13 @@ func resourceDbCluster() *schema.Resource {
 			},
 			"labels": {
 				Type:        schema.TypeMap,
+				Default:     make(map[string]string),
 				Optional:    true,
 				Description: "Labels of the DB Cluster",
 			},
 			"annotations": {
 				Type:        schema.TypeMap,
+				Default:     make(map[string]string),
 				Optional:    true,
 				Description: "Annotations of the DB Cluster",
 			},
@@ -113,6 +115,7 @@ func resourceDbCluster() *schema.Resource {
 			},
 			"parameters": {
 				Type:        schema.TypeMap,
+				Default:     make(map[string]string),
 				Optional:    true,
 				Description: "Map of parameter name to database engine specific parameter value",
 			},
@@ -175,6 +178,7 @@ func resourceDbCluster() *schema.Resource {
 			},
 			"init_db": {
 				Type:        schema.TypeMap,
+				Default:     make(map[string]string),
 				Optional:    true,
 				Description: "Map of init db parameters",
 				Elem: &schema.Schema{

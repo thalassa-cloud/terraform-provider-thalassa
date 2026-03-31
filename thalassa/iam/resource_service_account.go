@@ -39,17 +39,20 @@ func ResourceServiceAccount() *schema.Resource {
 			},
 			"description": {
 				Type:         schema.TypeString,
+				Default:      "",
 				Optional:     true,
 				ValidateFunc: validate.StringLenBetween(0, 255),
 				Description:  "Description of the service account",
 			},
 			"labels": {
 				Type:        schema.TypeMap,
+				Default:     make(map[string]string),
 				Optional:    true,
 				Description: "Labels for the service account",
 			},
 			"annotations": {
 				Type:        schema.TypeMap,
+				Default:     make(map[string]string),
 				Optional:    true,
 				Description: "Annotations for the service account",
 			},

@@ -59,6 +59,7 @@ func resourceKubernetesNodePool() *schema.Resource {
 			},
 			"labels": {
 				Type:        schema.TypeMap,
+				Default:     make(map[string]string),
 				Optional:    true,
 				Description: "Labels for the Kubernetes Node Pool. Optional. These labels are used for filtering and grouping resources in the Thalassa Console. Labels are not applied to the Kubernetes nodes created for this Node Pool, please use node_labels instead.",
 				Elem: &schema.Schema{
@@ -67,6 +68,7 @@ func resourceKubernetesNodePool() *schema.Resource {
 			},
 			"annotations": {
 				Type:        schema.TypeMap,
+				Default:     make(map[string]string),
 				Optional:    true,
 				Description: "Annotations for the Kubernetes Node Pool. Optional. These annotations are used for additional metadata and configuration. Annotations are not applied to the Kubernetes nodes created for this Node Pool, please use node_annotations instead.",
 				Elem: &schema.Schema{
@@ -97,6 +99,7 @@ func resourceKubernetesNodePool() *schema.Resource {
 			},
 			"description": {
 				Type:         schema.TypeString,
+				Default:      "",
 				Optional:     true,
 				ValidateFunc: validate.StringLenBetween(0, 255),
 				Description:  "A human readable description about the Kubernetes Node Pool",
@@ -216,6 +219,7 @@ func resourceKubernetesNodePool() *schema.Resource {
 			},
 			"node_labels": {
 				Type:        schema.TypeMap,
+				Default:     make(map[string]string),
 				Optional:    true,
 				Description: "Labels for the Kubernetes Nodes within this Node Pool. Optional. These labels are applied to the Kubernetes nodes created for this Node Pool. Labels must match the same constraints as Kubernetes labels.",
 				Elem: &schema.Schema{
@@ -224,6 +228,7 @@ func resourceKubernetesNodePool() *schema.Resource {
 			},
 			"node_annotations": {
 				Type:        schema.TypeMap,
+				Default:     make(map[string]string),
 				Optional:    true,
 				Description: "Annotations for the Kubernetes Nodes within this Node Pool. Optional. These annotations are applied to the Kubernetes nodes created for this Node Pool. Annotations must match the same constraints as Kubernetes annotations.",
 				Elem: &schema.Schema{
