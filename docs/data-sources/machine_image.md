@@ -2,12 +2,12 @@
 page_title: "thalassa_machine_image Data Source - terraform-provider-thalassa"
 subcategory: "Compute"
 description: |-
-  Get an machine image
+  Get an machine image by name or slug
 ---
 
 # thalassa_machine_image (Data Source)
 
-Get an machine image
+Get an machine image by name or slug
 
 
 
@@ -20,12 +20,12 @@ Get an machine image
 
 ### Optional
 
-- `organisation_id` (String) Reference to the Organisation of the Machine Image. If not provided, the organisation of the (Terraform) provider will be used.
+- `organisation_id` (String) Reference to the Organisation of the Machine Image. If not provided, the organisation configured in the Terraform provider will be used.
 - `slug` (String) Slug of the machine image
 
 ### Read-Only
 
-- `annotations` (Map of String) Annotations of the machine image
+- `architecture` (String) Architecture of the machine image
 - `description` (String) Description of the machine image
 - `id` (String) Identity of the machine image
 - `labels` (Map of String) Labels of the machine image

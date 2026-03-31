@@ -75,6 +75,7 @@ func resourceVirtualMachineInstance() *schema.Resource {
 			"availability_zone": {
 				Type:        schema.TypeString,
 				Optional:    true,
+				Computed:    true,
 				Description: "Availability zone of the virtual machine instance",
 			},
 			"machine_type": {
@@ -322,7 +323,6 @@ func resourceVirtualMachineInstanceRead(ctx context.Context, d *schema.ResourceD
 	}
 
 	identity := d.Get("id").(string)
-	cloudInitTemplateId := d.Get("cloud_init_template_id").(string)
 	virtualMachineInstance, err := client.IaaS().GetMachine(ctx, identity)
 	if err != nil {
 		if tcclient.IsNotFound(err) {
@@ -346,6 +346,8 @@ func resourceVirtualMachineInstanceRead(ctx context.Context, d *schema.ResourceD
 	d.Set("state", virtualMachineInstance.State)
 	d.Set("ip_addresses", getIPAddresses(virtualMachineInstance))
 	d.Set("attached_volume_ids", getAttachedVolumeIds(virtualMachineInstance))
+
+	cloudInitTemplateId := d.Get("cloud_init_template_id").(string)
 	d.Set("cloud_init_template_id", cloudInitTemplateId)
 
 	if d.Get("machine_type").(string) != "" {
@@ -402,8 +404,21 @@ func resourceVirtualMachineInstanceUpdate(ctx context.Context, d *schema.Resourc
 
 	subnetId := d.Get("subnet_id").(string)
 
+	currentMachine, err := client.IaaS().GetMachine(ctx, d.Get("id").(string))
+	if err != nil {
+		if tcclient.IsNotFound(err) {
+			return diag.FromErr(fmt.Errorf("virtual machine instance not found: %w", err))
+		}
+		return diag.FromErr(fmt.Errorf("failed to get virtual machine instance: %w", err))
+	}
+
 	state := iaas.MachineState(d.Get("state").(string))
-	availabilityZone := d.Get("availability_zone").(string)
+	var availabilityZone *string
+	if d.Get("availability_zone").(string) != "" {
+		availabilityZone = convert.Ptr(d.Get("availability_zone").(string))
+	} else {
+		availabilityZone = currentMachine.AvailabilityZone
+	}
 	machineType := d.Get("machine_type").(string)
 	deleteProtection := d.Get("delete_protection").(bool)
 	cloudInitTemplateId := d.Get("cloud_init_template_id").(string)
@@ -415,7 +430,7 @@ func resourceVirtualMachineInstanceUpdate(ctx context.Context, d *schema.Resourc
 		Annotations:              convert.ConvertToMap(d.Get("annotations")),
 		Subnet:                   &subnetId,
 		State:                    &state,
-		AvailabilityZone:         &availabilityZone,
+		AvailabilityZone:         availabilityZone,
 		MachineType:              &machineType,
 		DeleteProtection:         &deleteProtection,
 		SecurityGroupAttachments: convert.ConvertToStringSlice(d.Get("security_group_attachments")),
@@ -476,6 +491,8 @@ func resourceVirtualMachineInstanceUpdate(ctx context.Context, d *schema.Resourc
 
 		if virtualMachineInstance.AvailabilityZone != nil {
 			d.Set("availability_zone", *virtualMachineInstance.AvailabilityZone)
+		} else if currentMachine.AvailabilityZone != nil {
+			d.Set("availability_zone", *currentMachine.AvailabilityZone)
 		} else {
 			d.Set("availability_zone", "")
 		}
@@ -599,15 +616,4 @@ func getVolumeAttachments(virtualMachineInstance *iaas.Machine) []map[string]int
 		volumeAttachments = append(volumeAttachments, v)
 	}
 	return volumeAttachments
-}
-
-func convertToStrList(v interface{}) []string {
-	if v == nil {
-		return []string{}
-	}
-	values := []string{}
-	for _, v := range v.([]interface{}) {
-		values = append(values, v.(string))
-	}
-	return values
 }

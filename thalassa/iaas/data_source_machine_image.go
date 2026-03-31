@@ -3,6 +3,7 @@ package iaas
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -12,7 +13,7 @@ import (
 
 func DataSourceMachineImage() *schema.Resource {
 	return &schema.Resource{
-		Description: "Get an machine image",
+		Description: "Get an machine image by name or slug",
 		ReadContext: dataSourceMachineImageRead,
 		Schema: map[string]*schema.Schema{
 			"id": {
@@ -29,7 +30,7 @@ func DataSourceMachineImage() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    true,
-				Description: "Reference to the Organisation of the Machine Image. If not provided, the organisation of the (Terraform) provider will be used.",
+				Description: "Reference to the Organisation of the Machine Image. If not provided, the organisation configured in the Terraform provider will be used.",
 			},
 			"slug": {
 				Type:        schema.TypeString,
@@ -46,10 +47,10 @@ func DataSourceMachineImage() *schema.Resource {
 				Computed:    true,
 				Description: "Labels of the machine image",
 			},
-			"annotations": {
-				Type:        schema.TypeMap,
+			"architecture": {
+				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Annotations of the machine image",
+				Description: "Architecture of the machine image",
 			},
 		},
 	}
@@ -58,25 +59,25 @@ func DataSourceMachineImage() *schema.Resource {
 func dataSourceMachineImageRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("failed to get client: %w", err))
 	}
 	slug := d.Get("slug").(string)
 
 	machineImages, err := client.IaaS().ListMachineImages(ctx, &iaas.ListMachineImagesRequest{})
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("failed to list machine images: %w", err))
 	}
 
 	name := d.Get("name").(string)
 
 	for _, machineImage := range machineImages {
-		if slug != "" && machineImage.Slug == slug || name != "" && machineImage.Name == name {
+		if slug != "" && strings.EqualFold(machineImage.Slug, slug) || name != "" && strings.EqualFold(machineImage.Name, name) {
 			d.SetId(machineImage.Identity)
 			d.Set("id", machineImage.Identity)
 			d.Set("name", machineImage.Name)
 			d.Set("slug", machineImage.Slug)
 			d.Set("description", machineImage.Description)
-
+			d.Set("architecture", machineImage.Architecture)
 			// Set labels and annotations directly
 			if err := d.Set("labels", machineImage.Labels); err != nil {
 				return diag.FromErr(fmt.Errorf("error setting labels: %s", err))
@@ -84,5 +85,5 @@ func dataSourceMachineImageRead(ctx context.Context, d *schema.ResourceData, m i
 			return diag.Diagnostics{}
 		}
 	}
-	return diag.FromErr(fmt.Errorf("not found"))
+	return diag.FromErr(fmt.Errorf("machine image not found: %s", name))
 }
