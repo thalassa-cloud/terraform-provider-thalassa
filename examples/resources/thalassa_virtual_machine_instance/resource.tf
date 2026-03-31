@@ -2,7 +2,7 @@
 resource "thalassa_vpc" "example" {
   name        = "example-vpc"
   description = "Example VPC for virtual machine instance"
-  region      = "nl-01"
+  region      = var.region
   cidrs       = ["10.0.0.0/16"]
 }
 
@@ -42,7 +42,7 @@ data "thalassa_volume_type" "block" {
 }
 
 data "thalassa_machine_image" "ubuntu" {
-  name = "ubuntu-22-04-01"
+  name = "ubuntu-22.04-8f08afc54644"
 }
 
 # Create a virtual machine instance with Thalassa default values
@@ -51,7 +51,7 @@ resource "thalassa_virtual_machine_instance" "example" {
   subnet_id              = thalassa_subnet.example.id
   machine_type           = "pgp-small" # Available: pgp-small, pgp-medium, pgp-large, pgp-xlarge, pgp-2xlarge, pgp-4xlarge, dgp-small, dgp-medium, dgp-large, dgp-xlarge, dgp-2xlarge, dgp-4xlarge
   machine_image          = data.thalassa_machine_image.ubuntu.name
-  availability_zone      = "nl-01a" # Available: nl-01a, nl-01b, nl-01c
+  availability_zone      = var.availability_zone # Available: nl-01a, nl-01b, nl-01c
   root_volume_size_gb    = 20
   root_volume_type       = data.thalassa_volume_type.block.id
   cloud_init_template_id = thalassa_cloud_init_template.example.id
@@ -66,10 +66,18 @@ output "instance_name" {
   value = thalassa_virtual_machine_instance.example.name
 }
 
+variable "region" {
+  default = "nl-01"
+}
+
+variable "availability_zone" {
+  default = "nl-01a"
+}
+
 # Create a load balancer for the virtual machine instance
 resource "thalassa_loadbalancer" "example" {
   name        = "example-lb"
-  region      = "nl-01"
+  region      = var.region
   description = "Example load balancer for virtual machine instance"
   subnet_id   = thalassa_subnet.example.id
 }
