@@ -1,8 +1,15 @@
+
+variable "region" {
+  type        = string
+  description = "Region for the VPC"
+  default     = "nl-01"
+}
+
 # Create a VPC for the NAT gateway
 resource "thalassa_vpc" "example" {
   name        = "example-vpc"
   description = "Example VPC for NAT gateway"
-  region      = "nl-01"
+  region      = var.region
   cidrs       = ["10.0.0.0/16"]
 }
 
@@ -14,24 +21,14 @@ resource "thalassa_subnet" "example" {
   cidr        = "10.0.1.0/24"
 }
 
-# Create a NAT gateway with all optional attributes
 resource "thalassa_natgateway" "example" {
   name        = "example-nat-gateway"
   subnet_id   = thalassa_subnet.example.id
-  description = "Example NAT gateway for documentation"
+  description = "Example NAT gateway"
 
-  # Labels are key-value pairs for organizing resources
   labels = {
     environment = "production"
-    service     = "networking"
     tier        = "public"
-  }
-
-  # Annotations are additional metadata for resources
-  annotations = {
-    cost-center   = "cc-12345"
-    backup-policy = "none"
-    monitoring    = "enabled"
   }
 }
 

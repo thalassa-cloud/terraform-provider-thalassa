@@ -25,6 +25,7 @@ Thalassa Cloud Terraform Provider
 - [Route Table](./examples/resources/thalassa_route_table/) - Set up routing tables
 - [Route Table Route](./examples/resources/thalassa_route_table_route/) - Configure routes within route tables
 - [NAT Gateway](./examples/resources/thalassa_natgateway/) - Set up NAT gateways for outbound internet access
+- [Reserved IP](./examples/resources/thalassa_reserved_ip/) - Allocate a public IP and attach it to a NAT gateway or load balancer
 
 #### Compute
 - [Virtual Machine Instance](./examples/resources/thalassa_virtual_machine_instance/) - Deploy virtual machines

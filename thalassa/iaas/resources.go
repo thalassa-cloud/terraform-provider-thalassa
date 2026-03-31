@@ -14,6 +14,7 @@ var (
 		"thalassa_natgateway":                        resourceNatGateway(),
 		"thalassa_route_table_route":                 resourceRouteTableRoute(),
 		"thalassa_route_table":                       resourceRouteTable(),
+		"thalassa_reserved_ip":                       resourceReservedIP(),
 		"thalassa_security_group":                    ResourceSecurityGroup(),
 		"thalassa_security_group_ingress_rule":       resourceSecurityGroupIngressRule(),
 		"thalassa_security_group_egress_rule":        resourceSecurityGroupEgressRule(),

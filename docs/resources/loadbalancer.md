@@ -74,6 +74,7 @@ output "loadbalancer_id" {
 - `internal` (Boolean) Internal loadbalancer
 - `labels` (Map of String) Labels for the Loadbalancer
 - `organisation_id` (String) Reference to the Organisation of the Loadbalancer. If not provided, the organisation of the (Terraform) provider will be used.
+- `reserved_ip_id` (String) Reserved IP ID to attach to this load balancer. Set to empty string to detach.
 - `security_group_attachments` (List of String) List identities of security group that will be attached to the Loadbalancer
 
 ### Read-Only

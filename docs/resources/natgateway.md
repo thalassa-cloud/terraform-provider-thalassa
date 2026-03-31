@@ -12,11 +12,17 @@ Create an NAT Gateway within a VPC
 ## Example Usage
 
 ```terraform
+variable "region" {
+  type        = string
+  description = "Region for the VPC"
+  default     = "nl-01"
+}
+
 # Create a VPC for the NAT gateway
 resource "thalassa_vpc" "example" {
   name        = "example-vpc"
   description = "Example VPC for NAT gateway"
-  region      = "nl-01"
+  region      = var.region
   cidrs       = ["10.0.0.0/16"]
 }
 
@@ -28,24 +34,14 @@ resource "thalassa_subnet" "example" {
   cidr        = "10.0.1.0/24"
 }
 
-# Create a NAT gateway with all optional attributes
 resource "thalassa_natgateway" "example" {
   name        = "example-nat-gateway"
   subnet_id   = thalassa_subnet.example.id
-  description = "Example NAT gateway for documentation"
+  description = "Example NAT gateway"
 
-  # Labels are key-value pairs for organizing resources
   labels = {
     environment = "production"
-    service     = "networking"
     tier        = "public"
-  }
-
-  # Annotations are additional metadata for resources
-  annotations = {
-    cost-center   = "cc-12345"
-    backup-policy = "none"
-    monitoring    = "enabled"
   }
 }
 
@@ -72,6 +68,7 @@ output "nat_gateway_endpoint_ip" {
 - `description` (String) A human readable description about the natGateway
 - `labels` (Map of String) Labels for the NatGateway
 - `organisation_id` (String) Reference to the Organisation of the NatGateway. If not provided, the organisation of the (Terraform) provider will be used.
+- `reserved_ip_id` (String) Reserved IP ID to attach to this NAT gateway. Set to empty string to detach.
 - `security_group_attachments` (List of String) List identities of security group that will be attached to the NAT Gateway
 
 ### Read-Only

@@ -75,6 +75,12 @@ func resourceNatGateway() *schema.Resource {
 				Optional:    true,
 				Description: "Annotations for the NatGateway",
 			},
+			"reserved_ip_id": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				Description: "Reserved IP ID to attach to this NAT gateway. Set to empty string to detach.",
+			},
 			"endpoint_ip": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -134,6 +140,10 @@ func resourceNatGatewayCreate(ctx context.Context, d *schema.ResourceData, m int
 		SubnetIdentity:           d.Get("subnet_id").(string),
 		SecurityGroupAttachments: securityGroupAttachments,
 	}
+	if v, ok := d.GetOk("reserved_ip_id"); ok {
+		reservedIPID := v.(string)
+		createNatGateway.ReservedIpID = &reservedIPID
+	}
 
 	natGateway, err := client.IaaS().CreateNatGateway(ctx, createNatGateway)
 
@@ -143,6 +153,7 @@ func resourceNatGatewayCreate(ctx context.Context, d *schema.ResourceData, m int
 	if natGateway != nil {
 		d.SetId(natGateway.Identity)
 		d.Set("slug", natGateway.Slug)
+		createdIdentity := natGateway.Identity
 
 		// wait until the natGateway is ready and has an endpoint IP
 		ctxWithTimeout, cancel := context.WithTimeout(ctx, 20*time.Minute)
@@ -153,15 +164,15 @@ func resourceNatGatewayCreate(ctx context.Context, d *schema.ResourceData, m int
 				return diag.FromErr(fmt.Errorf("timeout while waiting for natGateway to be ready"))
 			case <-time.After(1 * time.Second):
 				// continue
-				natGateway, err = client.IaaS().GetNatGateway(ctxWithTimeout, natGateway.Identity)
+				natGateway, err = client.IaaS().GetNatGateway(ctxWithTimeout, createdIdentity)
 				if err != nil {
 					if tcclient.IsNotFound(err) {
-						return diag.FromErr(fmt.Errorf("natGateway %s was not found after creation", natGateway.Identity))
+						return diag.FromErr(fmt.Errorf("natGateway %s was not found after creation", createdIdentity))
 					}
 					return diag.FromErr(err)
 				}
 				if natGateway == nil {
-					return diag.FromErr(fmt.Errorf("natGateway %s was not found after creation", natGateway.Identity))
+					return diag.FromErr(fmt.Errorf("natGateway %s was not found after creation", createdIdentity))
 				}
 				if strings.TrimSpace(natGateway.EndpointIP) != "" {
 					d.Set("status", natGateway.Status)
@@ -207,6 +218,7 @@ func resourceNatGatewayRead(ctx context.Context, d *schema.ResourceData, m inter
 	d.Set("status", natGateway.Status)
 	d.Set("v4_ip", natGateway.V4IP)
 	d.Set("v6_ip", natGateway.V6IP)
+	d.Set("reserved_ip_id", natGateway.ReservedIpID)
 
 	securityGroupAttachments := make([]string, len(natGateway.SecurityGroups))
 	for i, securityGroup := range natGateway.SecurityGroups {
@@ -230,12 +242,14 @@ func resourceNatGatewayUpdate(ctx context.Context, d *schema.ResourceData, m int
 		Annotations:              convert.ConvertToMap(d.Get("annotations")),
 		SecurityGroupAttachments: convert.ConvertToStringSlice(d.Get("security_group_attachments")),
 	}
+	if d.HasChange("reserved_ip_id") {
+		reservedIPID := d.Get("reserved_ip_id").(string)
+		updateNatGateway.ReservedIpID = &reservedIPID
+	}
 
-	slug := d.Get("slug").(string)
-
-	natGateway, err := client.IaaS().UpdateNatGateway(ctx, slug, updateNatGateway)
+	natGateway, err := client.IaaS().UpdateNatGateway(ctx, d.Get("id").(string), updateNatGateway)
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("failed to update natGateway: %w", err))
 	}
 	if natGateway != nil {
 		d.Set("name", natGateway.Name)
@@ -243,6 +257,7 @@ func resourceNatGatewayUpdate(ctx context.Context, d *schema.ResourceData, m int
 		d.Set("slug", natGateway.Slug)
 		d.Set("labels", natGateway.Labels)
 		d.Set("annotations", natGateway.Annotations)
+		d.Set("reserved_ip_id", natGateway.ReservedIpID)
 		return nil
 	}
 

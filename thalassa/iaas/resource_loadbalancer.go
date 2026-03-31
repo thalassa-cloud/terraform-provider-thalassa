@@ -90,6 +90,12 @@ func resourceLoadBalancer() *schema.Resource {
 				Optional:    true,
 				Description: "Internal loadbalancer",
 			},
+			"reserved_ip_id": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				Description: "Reserved IP ID to attach to this load balancer. Set to empty string to detach.",
+			},
 			"ip_address": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -139,6 +145,10 @@ func resourceLoadBalancerCreate(ctx context.Context, d *schema.ResourceData, m i
 	}
 	if internal := d.Get("internal").(bool); internal {
 		createLoadbalancer.InternalLoadbalancer = internal
+	}
+	if v, ok := d.GetOk("reserved_ip_id"); ok {
+		reservedIPID := v.(string)
+		createLoadbalancer.ReservedIpID = &reservedIPID
 	}
 
 	loadbalancer, err := client.IaaS().CreateLoadbalancer(ctx, createLoadbalancer)
@@ -218,6 +228,7 @@ func resourceLoadBalancerRead(ctx context.Context, d *schema.ResourceData, m int
 	d.Set("annotations", loadbalancer.Annotations)
 	d.Set("subnet_id", loadbalancer.Subnet.Identity)
 	d.Set("vpc_id", loadbalancer.Vpc.Identity)
+	d.Set("reserved_ip_id", loadbalancer.ReservedIpIdentity)
 	if len(loadbalancer.ExternalIpAddresses) > 0 {
 		d.Set("ip_address", loadbalancer.ExternalIpAddresses[0])
 	}
@@ -248,6 +259,10 @@ func resourceLoadBalancerUpdate(ctx context.Context, d *schema.ResourceData, m i
 		DeleteProtection:         d.Get("delete_protection").(bool),
 		SecurityGroupAttachments: convert.ConvertToStringSlice(d.Get("security_group_attachments")),
 	}
+	if d.HasChange("reserved_ip_id") {
+		reservedIPID := d.Get("reserved_ip_id").(string)
+		updateLoadbalancer.ReservedIpID = &reservedIPID
+	}
 
 	slug := d.Get("slug").(string)
 
@@ -265,6 +280,7 @@ func resourceLoadBalancerUpdate(ctx context.Context, d *schema.ResourceData, m i
 		d.Set("slug", loadbalancer.Slug)
 		d.Set("labels", loadbalancer.Labels)
 		d.Set("annotations", loadbalancer.Annotations)
+		d.Set("reserved_ip_id", loadbalancer.ReservedIpIdentity)
 		// d.Set("delete_protection", loadbalancer.DeleteProtection)
 		return nil
 	}
