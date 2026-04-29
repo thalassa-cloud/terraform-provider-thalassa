@@ -58,7 +58,7 @@ output "target_group_id" {
 
 - `name` (String) Name of the Target Group
 - `port` (Number) The port on which the targets receive traffic
-- `protocol` (String) The protocol to use for routing traffic to the targets. Must be one of: tcp, udp.
+- `protocol` (String) Protocol for routing traffic to targets (tcp, udp, http, https, grpc, quic).
 - `vpc_id` (String) The VPC this target group belongs to
 
 ### Optional
@@ -66,15 +66,18 @@ output "target_group_id" {
 - `annotations` (Map of String) Annotations for the Target Group
 - `attachments` (Block List) The targets to attach to the target group. If provided, the targets will be attached to the target group when the resource is created. Overwrites the target group attachment resource. (see [below for nested schema](#nestedblock--attachments))
 - `description` (String) A human readable description about the target group
-- `health_check_interval` (Number) The approximate amount of time, in seconds, between health checks of an individual target
-- `health_check_path` (String) The path to use for health checks (only for HTTP/HTTPS)
-- `health_check_port` (Number) The port to use for health checks
-- `health_check_protocol` (String) The protocol to use for health checks. Must be one of: tcp, http.
-- `health_check_timeout` (Number) The amount of time, in seconds, during which no response means a failed health check
-- `healthy_threshold` (Number) The number of consecutive health checks successes required before considering an unhealthy target healthy
+- `enable_proxy_protocol` (Boolean) When true, the load balancer uses PROXY protocol toward backends in this target group. All targets must support PROXY protocol.
+- `health_check_interval` (Number) Seconds between health checks of each target (periodSeconds).
+- `health_check_path` (String) HTTP(S) health check path; leave empty for TCP/UDP checks or when not using HTTP health checks.
+- `health_check_port` (Number) Port for health checks; if omitted but other health check settings are set, defaults to the target group port.
+- `health_check_protocol` (String) Health check protocol (tcp, udp, http, https). If omitted when configuring a health check, defaults to tcp.
+- `health_check_timeout` (Number) Seconds to wait for a health check response before failure (timeoutSeconds).
+- `healthy_threshold` (Number) Consecutive successes required to mark a target healthy.
 - `labels` (Map of String) Labels for the Target Group
+- `loadbalancing_policy` (String) Load balancing algorithm: ROUND_ROBIN (default), RANDOM, or MAGLEV.
 - `organisation_id` (String) Reference to the Organisation of the Target Group. If not provided, the organisation of the (Terraform) provider will be used.
-- `unhealthy_threshold` (Number) The number of consecutive health check failures required before considering a target unhealthy
+- `target_selector` (Map of String) Label selector for automatic target membership; when set, targets matching these labels join the group.
+- `unhealthy_threshold` (Number) Consecutive failures required to mark a target unhealthy.
 
 ### Read-Only
 

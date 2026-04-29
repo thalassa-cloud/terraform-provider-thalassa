@@ -38,11 +38,6 @@ func DataSourceBucket() *schema.Resource {
 				Optional:    true,
 				Description: "Region of the bucket",
 			},
-			"public": {
-				Type:        schema.TypeBool,
-				Computed:    true,
-				Description: "Whether the bucket is publicly accessible",
-			},
 			"policy": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -98,7 +93,6 @@ func dataSourceBucketRead(ctx context.Context, d *schema.ResourceData, m interfa
 	d.SetId(bucket.Identity)
 	d.Set("id", bucket.Identity)
 	d.Set("name", bucket.Name)
-	d.Set("public", bucket.Public)
 	d.Set("status", bucket.Status)
 	d.Set("endpoint", bucket.Endpoint)
 	d.Set("versioning", bucket.Versioning == objectstorage.ObjectStorageBucketVersioningEnabled)

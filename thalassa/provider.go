@@ -62,6 +62,12 @@ func Provider() *schema.Provider {
 				Description: "The organisation ID to use. Can be set via the THALASSA_ORGANISATION environment variable.",
 				DefaultFunc: schema.EnvDefaultFunc("THALASSA_ORGANISATION", ""),
 			},
+			"project_id": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "The project ID to use. Can be set via the THALASSA_PROJECT_ID environment variable.",
+				DefaultFunc: schema.EnvDefaultFunc("THALASSA_PROJECT_ID", ""),
+			},
 		},
 		ResourcesMap: JoinMaps(
 			iaas.ResourcesMap,

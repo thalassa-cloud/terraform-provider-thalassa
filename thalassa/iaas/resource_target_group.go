@@ -3,6 +3,7 @@ package iaas
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -13,6 +14,30 @@ import (
 
 	iaas "github.com/thalassa-cloud/client-go/iaas"
 )
+
+var (
+	targetGroupProtocols = []string{
+		"tcp", "udp", "http", "https", "grpc", "quic",
+	}
+	healthCheckProtocols = []string{
+		"tcp", "udp", "http", "https",
+	}
+	loadbalancingPolicies = []string{"ROUND_ROBIN", "RANDOM", "MAGLEV"}
+)
+
+func validateOptionalStringInSlice(valid []string) schema.SchemaValidateFunc {
+	return func(v interface{}, k string) (ws []string, es []error) {
+		s, ok := v.(string)
+		if !ok {
+			es = append(es, fmt.Errorf("expected string at %s", k))
+			return
+		}
+		if s == "" {
+			return
+		}
+		return validate.StringInSlice(valid, false)(v, k)
+	}
+}
 
 func resourceTargetGroup() *schema.Resource {
 	return &schema.Resource{
@@ -66,8 +91,8 @@ func resourceTargetGroup() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: validate.StringInSlice([]string{"tcp", "udp"}, false),
-				Description:  "The protocol to use for routing traffic to the targets. Must be one of: tcp, udp.",
+				ValidateFunc: validate.StringInSlice(targetGroupProtocols, false),
+				Description:  "Protocol for routing traffic to targets (tcp, udp, http, https, grpc, quic).",
 			},
 			"port": {
 				Type:         schema.TypeInt,
@@ -76,51 +101,69 @@ func resourceTargetGroup() *schema.Resource {
 				ValidateFunc: validate.IntBetween(1, 65535),
 				Description:  "The port on which the targets receive traffic",
 			},
+			"enable_proxy_protocol": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "When true, the load balancer uses PROXY protocol toward backends in this target group. All targets must support PROXY protocol.",
+			},
+			"loadbalancing_policy": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validateOptionalStringInSlice(loadbalancingPolicies),
+				Description:  "Load balancing algorithm: ROUND_ROBIN (default), RANDOM, or MAGLEV.",
+			},
+			"target_selector": {
+				Type:        schema.TypeMap,
+				Optional:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "Label selector for automatic target membership; when set, targets matching these labels join the group.",
+			},
 			"health_check_path": {
 				Type:         schema.TypeString,
 				Optional:     true,
-				ValidateFunc: validate.StringLenBetween(1, 255),
-				Description:  "The path to use for health checks (only for HTTP/HTTPS)",
+				ValidateFunc: validate.StringLenBetween(0, 255),
+				Description:  "HTTP(S) health check path; leave empty for TCP/UDP checks or when not using HTTP health checks.",
 			},
 			"health_check_port": {
 				Type:         schema.TypeInt,
 				Optional:     true,
 				ValidateFunc: validate.IntBetween(1, 65535),
-				Description:  "The port to use for health checks",
+				Description:  "Port for health checks; if omitted but other health check settings are set, defaults to the target group port.",
 			},
 			"health_check_protocol": {
 				Type:         schema.TypeString,
 				Optional:     true,
-				ValidateFunc: validate.StringInSlice([]string{"tcp", "http"}, false),
-				Description:  "The protocol to use for health checks. Must be one of: tcp, http.",
+				ValidateFunc: validateOptionalStringInSlice(healthCheckProtocols),
+				Description:  "Health check protocol (tcp, udp, http, https). If omitted when configuring a health check, defaults to tcp.",
 			},
 			"health_check_interval": {
 				Type:         schema.TypeInt,
 				Optional:     true,
 				Default:      30,
 				ValidateFunc: validate.IntBetween(5, 300),
-				Description:  "The approximate amount of time, in seconds, between health checks of an individual target",
+				Description:  "Seconds between health checks of each target (periodSeconds).",
 			},
 			"health_check_timeout": {
 				Type:         schema.TypeInt,
 				Optional:     true,
 				Default:      5,
-				ValidateFunc: validate.IntBetween(2, 60),
-				Description:  "The amount of time, in seconds, during which no response means a failed health check",
+				ValidateFunc: validate.IntBetween(1, 300),
+				Description:  "Seconds to wait for a health check response before failure (timeoutSeconds).",
 			},
 			"healthy_threshold": {
 				Type:         schema.TypeInt,
 				Optional:     true,
 				Default:      3,
-				ValidateFunc: validate.IntBetween(2, 10),
-				Description:  "The number of consecutive health checks successes required before considering an unhealthy target healthy",
+				ValidateFunc: validate.IntBetween(1, 10),
+				Description:  "Consecutive successes required to mark a target healthy.",
 			},
 			"unhealthy_threshold": {
 				Type:         schema.TypeInt,
 				Optional:     true,
 				Default:      3,
-				ValidateFunc: validate.IntBetween(2, 10),
-				Description:  "The number of consecutive health check failures required before considering a target unhealthy",
+				ValidateFunc: validate.IntBetween(1, 10),
+				Description:  "Consecutive failures required to mark a target unhealthy.",
 			},
 			"attachments": {
 				Type:        schema.TypeList,
@@ -156,29 +199,26 @@ func resourceTargetGroupCreate(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(fmt.Errorf("error creating client: %w", err))
 	}
 
-	healthCheck := &iaas.BackendHealthCheck{
-		Protocol:           iaas.LoadbalancerProtocol(d.Get("health_check_protocol").(string)),
-		Port:               int32(d.Get("health_check_port").(int)),
-		Path:               d.Get("health_check_path").(string),
-		PeriodSeconds:      d.Get("health_check_interval").(int),
-		TimeoutSeconds:     d.Get("health_check_timeout").(int),
-		HealthyThreshold:   int32(d.Get("healthy_threshold").(int)),
-		UnhealthyThreshold: int32(d.Get("unhealthy_threshold").(int)),
-	}
-
+	enableProxy := d.Get("enable_proxy_protocol").(bool)
 	createTargetGroup := iaas.CreateTargetGroup{
-		Name:        d.Get("name").(string),
-		Description: d.Get("description").(string),
-		Labels:      convert.ConvertToMap(d.Get("labels")),
-		Annotations: convert.ConvertToMap(d.Get("annotations")),
-		Vpc:         d.Get("vpc_id").(string),
-		TargetPort:  d.Get("port").(int),
-		Protocol:    iaas.LoadbalancerProtocol(d.Get("protocol").(string)),
+		Name:                d.Get("name").(string),
+		Description:         d.Get("description").(string),
+		Labels:              convert.ConvertToMap(d.Get("labels")),
+		Annotations:         convert.ConvertToMap(d.Get("annotations")),
+		Vpc:                 d.Get("vpc_id").(string),
+		TargetPort:          d.Get("port").(int),
+		Protocol:            iaas.LoadbalancerProtocol(d.Get("protocol").(string)),
+		EnableProxyProtocol: &enableProxy,
 	}
-
-	healthCheckPort := d.Get("health_check_port").(int)
-	if healthCheckPort != 0 {
-		createTargetGroup.HealthCheck = healthCheck
+	if ts := convert.ConvertToMap(d.Get("target_selector")); len(ts) > 0 {
+		createTargetGroup.TargetSelector = ts
+	}
+	if v := strings.TrimSpace(d.Get("loadbalancing_policy").(string)); v != "" {
+		p := iaas.LoadbalancingPolicy(v)
+		createTargetGroup.LoadbalancingPolicy = &p
+	}
+	if hc := expandTargetGroupHealthCheck(d); hc != nil {
+		createTargetGroup.HealthCheck = hc
 	}
 
 	tg, err := client.IaaS().CreateTargetGroup(ctx, createTargetGroup)
@@ -189,16 +229,16 @@ func resourceTargetGroupCreate(ctx context.Context, d *schema.ResourceData, m in
 		d.SetId(tg.Identity)
 		d.Set("slug", tg.Slug)
 		// Attach targets if specified
-		if targets, ok := d.GetOk("targets"); ok {
-			targetList := targets.([]interface{})
-			attachments := make([]iaas.AttachTarget, len(targetList))
-			for i, t := range targetList {
-				target := t.(map[string]interface{})
-				attachments[i] = iaas.AttachTarget{ServerIdentity: target["id"].(string)}
+		if attachments, ok := d.GetOk("attachments"); ok {
+			attachmentList := attachments.([]interface{})
+			attach := make([]iaas.AttachTarget, len(attachmentList))
+			for i, a := range attachmentList {
+				row := a.(map[string]interface{})
+				attach[i] = iaas.AttachTarget{ServerIdentity: row["id"].(string)}
 			}
 			batch := iaas.TargetGroupAttachmentsBatch{
 				TargetGroupID: tg.Identity,
-				Attachments:   attachments,
+				Attachments:   attach,
 			}
 			if err := client.IaaS().SetTargetGroupServerAttachments(ctx, batch); err != nil {
 				return diag.FromErr(fmt.Errorf("error setting target group server attachments: %w", err))
@@ -236,13 +276,27 @@ func resourceTargetGroupRead(ctx context.Context, d *schema.ResourceData, m inte
 	d.Set("labels", tg.Labels)
 	d.Set("annotations", tg.Annotations)
 	d.Set("vpc_id", tg.Vpc.Identity)
-	d.Set("protocol", tg.Protocol)
+	d.Set("protocol", string(tg.Protocol))
 	d.Set("port", tg.TargetPort)
+
+	if tg.EnableProxyProtocol != nil {
+		d.Set("enable_proxy_protocol", *tg.EnableProxyProtocol)
+	} else {
+		d.Set("enable_proxy_protocol", false)
+	}
+	if tg.LoadbalancingPolicy != nil {
+		d.Set("loadbalancing_policy", string(*tg.LoadbalancingPolicy))
+	}
+	if tg.TargetSelector != nil {
+		d.Set("target_selector", tg.TargetSelector)
+	} else {
+		d.Set("target_selector", map[string]string{})
+	}
 
 	if tg.HealthCheck != nil {
 		d.Set("health_check_path", tg.HealthCheck.Path)
 		d.Set("health_check_port", tg.HealthCheck.Port)
-		d.Set("health_check_protocol", tg.HealthCheck.Protocol)
+		d.Set("health_check_protocol", string(tg.HealthCheck.Protocol))
 		d.Set("health_check_interval", tg.HealthCheck.PeriodSeconds)
 		d.Set("health_check_timeout", tg.HealthCheck.TimeoutSeconds)
 		d.Set("healthy_threshold", tg.HealthCheck.HealthyThreshold)
@@ -271,28 +325,27 @@ func resourceTargetGroupUpdate(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(err)
 	}
 
-	healthCheck := &iaas.BackendHealthCheck{
-		Protocol:           iaas.LoadbalancerProtocol(d.Get("health_check_protocol").(string)),
-		Port:               int32(d.Get("health_check_port").(int)),
-		Path:               d.Get("health_check_path").(string),
-		PeriodSeconds:      d.Get("health_check_interval").(int),
-		TimeoutSeconds:     d.Get("health_check_timeout").(int),
-		HealthyThreshold:   int32(d.Get("healthy_threshold").(int)),
-		UnhealthyThreshold: int32(d.Get("unhealthy_threshold").(int)),
-	}
-
+	enableProxy := d.Get("enable_proxy_protocol").(bool)
 	updateTargetGroup := iaas.UpdateTargetGroup{
-		Name:        d.Get("name").(string),
-		Description: d.Get("description").(string),
-		Labels:      convert.ConvertToMap(d.Get("labels")),
-		Annotations: convert.ConvertToMap(d.Get("annotations")),
-		TargetPort:  d.Get("port").(int),
-		Protocol:    iaas.LoadbalancerProtocol(d.Get("protocol").(string)),
+		Name:                d.Get("name").(string),
+		Description:         d.Get("description").(string),
+		Labels:              convert.ConvertToMap(d.Get("labels")),
+		Annotations:         convert.ConvertToMap(d.Get("annotations")),
+		TargetPort:          d.Get("port").(int),
+		Protocol:            iaas.LoadbalancerProtocol(d.Get("protocol").(string)),
+		EnableProxyProtocol: &enableProxy,
 	}
-
-	healthCheckPort := d.Get("health_check_port").(int)
-	if healthCheckPort != 0 {
-		updateTargetGroup.HealthCheck = healthCheck
+	if d.HasChange("target_selector") {
+		updateTargetGroup.TargetSelector = convert.ConvertToMap(d.Get("target_selector"))
+	}
+	if d.HasChange("loadbalancing_policy") {
+		if v := strings.TrimSpace(d.Get("loadbalancing_policy").(string)); v != "" {
+			p := iaas.LoadbalancingPolicy(v)
+			updateTargetGroup.LoadbalancingPolicy = &p
+		}
+	}
+	if hc := expandTargetGroupHealthCheck(d); hc != nil {
+		updateTargetGroup.HealthCheck = hc
 	}
 
 	id := d.Get("id").(string)
@@ -342,4 +395,28 @@ func resourceTargetGroupDelete(ctx context.Context, d *schema.ResourceData, m in
 	}
 	d.SetId("")
 	return nil
+}
+
+func expandTargetGroupHealthCheck(d *schema.ResourceData) *iaas.BackendHealthCheck {
+	hcPort := d.Get("health_check_port").(int)
+	hcProto := strings.TrimSpace(d.Get("health_check_protocol").(string))
+	hcPath := d.Get("health_check_path").(string)
+	if hcPort == 0 && hcProto == "" && hcPath == "" {
+		return nil
+	}
+	if hcPort == 0 {
+		hcPort = d.Get("port").(int)
+	}
+	if hcProto == "" {
+		hcProto = "tcp"
+	}
+	return &iaas.BackendHealthCheck{
+		Protocol:           iaas.LoadbalancerProtocol(hcProto),
+		Port:               int32(hcPort),
+		Path:               hcPath,
+		PeriodSeconds:      d.Get("health_check_interval").(int),
+		TimeoutSeconds:     d.Get("health_check_timeout").(int),
+		HealthyThreshold:   int32(d.Get("healthy_threshold").(int)),
+		UnhealthyThreshold: int32(d.Get("unhealthy_threshold").(int)),
+	}
 }

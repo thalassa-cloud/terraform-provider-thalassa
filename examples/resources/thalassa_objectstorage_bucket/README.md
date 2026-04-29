@@ -25,16 +25,6 @@ resource "thalassa_objectstorage_bucket" "basic" {
 }
 ```
 
-### Public Bucket
-
-```hcl
-resource "thalassa_objectstorage_bucket" "public" {
-  name   = "my-public-bucket"
-  region = "nl-01"
-  public = true
-}
-```
-
 ### Bucket with Custom Policy
 
 ```hcl
