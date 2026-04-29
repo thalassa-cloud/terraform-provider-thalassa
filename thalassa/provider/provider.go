@@ -29,6 +29,7 @@ type ConfiguredProvider struct {
 	clientID          string
 	clientSecret      string
 	allowInsecureOIDC bool
+	projectID         string
 }
 
 func ProviderConfigure(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
@@ -39,6 +40,7 @@ func ProviderConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 	clientID := d.Get("client_id").(string)
 	clientSecret := d.Get("client_secret").(string)
 	allowInsecureOIDC := d.Get("allow_insecure_oidc").(bool)
+	projectID := d.Get("project_id").(string)
 
 	opts := []client.Option{
 		client.WithBaseURL(apiEndpoint),
@@ -62,6 +64,10 @@ func ProviderConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 		hasAuth = true
 	}
 
+	if projectID != "" {
+		opts = append(opts, client.WithProject(projectID))
+	}
+
 	if !hasAuth {
 		return nil, diag.FromErr(errors.New("no authentication method provided"))
 	}
@@ -78,6 +84,7 @@ func ProviderConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 		apiEndpoint:  apiEndpoint,
 		clientID:     clientID,
 		clientSecret: clientSecret,
+		projectID:    projectID,
 	}, nil
 }
 
@@ -107,6 +114,10 @@ func GetClient(provider ConfiguredProvider, d *schema.ResourceData) (thalassa.Cl
 	if provider.clientID != "" && provider.clientSecret != "" {
 		opts = append(opts, client.WithAuthOIDCInsecure(provider.clientID, provider.clientSecret, fmt.Sprintf("%s/oidc/token", provider.apiEndpoint), provider.allowInsecureOIDC))
 		hasAuth = true
+	}
+
+	if provider.projectID != "" {
+		opts = append(opts, client.WithProject(provider.projectID))
 	}
 
 	if !hasAuth {
