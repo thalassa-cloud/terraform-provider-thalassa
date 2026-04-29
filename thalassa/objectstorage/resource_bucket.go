@@ -49,12 +49,6 @@ func resourceBucket() *schema.Resource {
 				Description: "Region of the bucket",
 				ForceNew:    true,
 			},
-			"public": {
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Default:     false,
-				Description: "Whether the bucket is publicly accessible",
-			},
 			"policy": {
 				Type:        schema.TypeString,
 				Optional:    true,
@@ -118,7 +112,6 @@ func resourceBucketCreate(ctx context.Context, d *schema.ResourceData, m interfa
 
 	bucketName := d.Get("name").(string)
 	region := d.Get("region").(string)
-	public := d.Get("public").(bool)
 	versioning := d.Get("versioning").(bool)
 	objectLockEnabled := d.Get("object_lock_enabled").(bool)
 
@@ -140,7 +133,6 @@ func resourceBucketCreate(ctx context.Context, d *schema.ResourceData, m interfa
 
 	createReq := objectstorage.CreateBucketRequest{
 		BucketName:        bucketName,
-		Public:            public,
 		Region:            region,
 		PolicyDocument:    policyDoc,
 		Versioning:        bucketVersioning,
@@ -195,7 +187,6 @@ func resourceBucketRead(ctx context.Context, d *schema.ResourceData, m interface
 
 	d.SetId(bucket.Identity)
 	d.Set("name", bucket.Name)
-	d.Set("public", bucket.Public)
 	d.Set("status", bucket.Status)
 	d.Set("endpoint", bucket.Endpoint)
 	if bucket.Region != nil {
@@ -235,9 +226,6 @@ func resourceBucketUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 	}
 
 	updateReq := objectstorage.UpdateBucketRequest{}
-	if d.HasChange("public") {
-		updateReq.Public = d.Get("public").(bool)
-	}
 	if d.HasChange("policy") {
 		if v, ok := d.GetOk("policy"); ok && v.(string) != "" {
 			var doc objectstorage.PolicyDocument

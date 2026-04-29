@@ -118,7 +118,6 @@ resource "thalassa_objectstorage_bucket" "cluster_bucket" {
 - `object_lock_enabled` (Boolean) Whether the bucket has object lock enabled
 - `organisation_id` (String) Reference to the Organisation of the bucket. If not provided, the organisation of the (Terraform) provider will be used.
 - `policy` (String) The bucket policy as a JSON string
-- `public` (Boolean) Whether the bucket is publicly accessible
 - `versioning` (Boolean) Whether the bucket is versioned
 - `wait_for_deleted` (Boolean) Whether to wait for the bucket to be deleted
 - `wait_for_deleted_timeout` (Number) The timeout in minutes to wait for the bucket to be deleted. Only used if wait_for_deleted is true
