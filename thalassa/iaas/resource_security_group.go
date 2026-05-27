@@ -285,8 +285,10 @@ func resourceSecurityGroupRead(ctx context.Context, d *schema.ResourceData, meta
 	if err := d.Set("annotations", securityGroup.Annotations); err != nil {
 		return diag.FromErr(err)
 	}
-	if err := d.Set("vpc_id", securityGroup.Vpc.Identity); err != nil {
-		return diag.FromErr(err)
+	if securityGroup.Vpc != nil {
+		if err := d.Set("vpc_id", securityGroup.Vpc.Identity); err != nil {
+			return diag.FromErr(err)
+		}
 	}
 	if err := d.Set("allow_same_group_traffic", securityGroup.AllowSameGroupTraffic); err != nil {
 		return diag.FromErr(err)
