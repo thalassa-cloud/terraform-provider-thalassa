@@ -29,7 +29,6 @@ data "thalassa_organisation" "org" {
 resource "thalassa_objectstorage_bucket" "cluster_bucket" {
   name   = "cluster-bucket-${random_uuid.bucket_name.result}"
   region = "nl-01"
-  public = false
 
   policy = jsonencode({
     "Version" : "2012-10-17",

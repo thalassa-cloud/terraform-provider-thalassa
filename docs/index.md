@@ -22,4 +22,5 @@ description: |-
 - `client_id` (String, Sensitive) The OIDC client ID for authentication. Can be set via the THALASSA_CLIENT_ID environment variable.
 - `client_secret` (String, Sensitive) The OIDC client secret for authentication. Can be set via the THALASSA_CLIENT_SECRET environment variable.
 - `organisation_id` (String) The organisation ID to use. Can be set via the THALASSA_ORGANISATION environment variable.
+- `project_id` (String) The project ID to use. Can be set via the THALASSA_PROJECT_ID environment variable.
 - `token` (String, Sensitive) The API token for authentication. Can be set via the THALASSA_API_TOKEN environment variable.

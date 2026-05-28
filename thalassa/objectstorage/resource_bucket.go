@@ -100,6 +100,13 @@ func resourceBucket() *schema.Resource {
 				Description:  "The timeout in minutes to wait for the bucket to be deleted. Only used if wait_for_deleted is true",
 				ValidateFunc: validate.IntAtLeast(1),
 			},
+			// Deprecated: Do not use, will be removed in a future version.
+			"public": {
+				Type:       schema.TypeBool,
+				Optional:   true,
+				Default:    false,
+				Deprecated: "Does not have any effect. Will be removed in a future version.",
+			},
 		},
 	}
 }
