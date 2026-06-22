@@ -45,6 +45,14 @@ resource "thalassa_dbaas_db_cluster" "example" {
   engine_version         = "15.13"
   allocated_storage      = 100
   volume_type_class      = "block"
+
+  # DB object storage is required for backups. Provision it with the cluster, or attach an
+  # existing store via restore_from_backup_id.
+  provision_db_object_store = true
+
+  # Create a final backup before destroy when the cluster is ready (default: true).
+  create_backup_before_destroy         = true
+  create_backup_before_destroy_timeout = 30 # minutes
 }
 
 # Output the database cluster details
@@ -82,6 +90,8 @@ output "db_cluster_port" {
 - `annotations` (Map of String) Annotations of the DB Cluster
 - `auto_minor_version_upgrade` (Boolean) Flag indicating if the cluster should automatically upgrade to the latest minor version
 - `auto_upgrade_policy` (String) Auto upgrade policy for the cluster. Options: 'none', 'latest-version', 'latest-stable', 'latest-patch', 'latest-minor', 'latest-major'
+- `create_backup_before_destroy` (Boolean) Whether to create a backup before destroying the cluster. Only applies when the cluster is in ready status.
+- `create_backup_before_destroy_timeout` (Number) The timeout in minutes to wait for the pre-destroy backup to complete. Only used when create_backup_before_destroy is true.
 - `delete_protection` (Boolean) Flag indicating if the cluster should be protected from deletion
 - `description` (String) Description of the DB Cluster
 - `init_db` (Map of String) Map of init db parameters

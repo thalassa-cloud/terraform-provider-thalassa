@@ -1,0 +1,42 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.RenderedProviderName}}"
+subcategory: "DNS"
+description: |-
+{{ .Description | plainmarkdown | trimspace | prefixlines "  " }}
+---
+
+# {{.Name}} ({{.Type}})
+
+{{ .Description | trimspace }}
+
+~> **Early access:** DNS is in early access. The API and Terraform resource schema may change in future provider releases.
+
+See [DNS documentation](https://docs.thalassa.cloud/docs/dns/).
+
+One record per `(zone, name, type)` tuple. Only `ttl` and `values` are updatable after create.
+
+## Value formats
+
+| Type | Format |
+|------|--------|
+| A / AAAA | IP address |
+| CNAME | Single hostname |
+| MX | `"<priority> <host>"` |
+| CAA | `"<flags> <tag> <value>"` |
+| SRV | `"<priority> <weight> <port> <target>"` |
+| TXT | Plain text (max 4096 chars per value) |
+
+{{ if .HasExample -}}
+## Example Usage
+
+{{codefile "terraform" .ExampleFile}}
+{{- end }}
+{{ .SchemaMarkdown | trimspace }}
+
+{{ if .HasImport -}}
+## Import
+
+Import ID: platform identity of the record (e.g. `dnsr-xyz`). `zone_id` must be set in configuration when importing.
+
+{{codefile "shell" .ImportFile}}
+{{- end }}

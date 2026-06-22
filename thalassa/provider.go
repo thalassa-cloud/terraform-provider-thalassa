@@ -4,6 +4,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/dbaas"
+	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/dns"
 	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/iaas"
 	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/iam"
 	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/kms"
@@ -78,6 +79,7 @@ func Provider() *schema.Provider {
 			dbaas.ResourcesMap,
 			iam.ResourcesMap,
 			kms.ResourcesMap,
+			dns.ResourcesMap,
 			secrets.ResourcesMap,
 			objectstorage.ResourcesMap,
 			tfs.ResourcesMap,

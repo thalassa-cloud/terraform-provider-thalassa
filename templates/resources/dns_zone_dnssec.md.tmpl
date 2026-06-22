@@ -1,0 +1,33 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.RenderedProviderName}}"
+subcategory: "DNS"
+description: |-
+{{ .Description | plainmarkdown | trimspace | prefixlines "  " }}
+---
+
+# {{.Name}} ({{.Type}})
+
+{{ .Description | trimspace }}
+
+~> **Early access:** DNS is in early access. The API and Terraform resource schema may change in future provider releases.
+
+See [DNS documentation](https://docs.thalassa.cloud/docs/dns/).
+
+Enables DNSSEC signing for a zone. Requires DNS and KMS feature gates.
+
+DS records must be added at the parent registrar; the zone may publish unsigned until `ds_delegated = true`. Deleting this resource stops signing but does not delete the KMS key.
+
+{{ if .HasExample -}}
+## Example Usage
+
+{{codefile "terraform" .ExampleFile}}
+{{- end }}
+{{ .SchemaMarkdown | trimspace }}
+
+{{ if .HasImport -}}
+## Import
+
+Import ID: zone platform identity (`dnsz-…`).
+
+{{codefile "shell" .ImportFile}}
+{{- end }}

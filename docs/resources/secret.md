@@ -34,8 +34,7 @@ resource "thalassa_secret_version" "db_password" {
   region        = "nl-01"
   path          = thalassa_secret.db_password.path
   generate_secret {
-    length = 32
-    character_set = "alphanumeric"
+    byte_length = 32
   }
 }
 ```

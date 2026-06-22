@@ -1,0 +1,29 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.RenderedProviderName}}"
+subcategory: "Object Storage"
+description: |-
+{{ .Description | plainmarkdown | trimspace | prefixlines "  " }}
+---
+
+# {{.Name}} ({{.Type}})
+
+{{ .Description | trimspace }}
+
+Each apply **replaces the entire rule set** (`SetBucketLifecycle` PUT semantics). Ongoing lifecycle management should use this resource, not `thalassa_objectstorage_bucket`.
+
+Noncurrent version rules require bucket versioning `Enabled`.
+
+{{ if .HasExample -}}
+## Example Usage
+
+{{codefile "terraform" .ExampleFile}}
+{{- end }}
+{{ .SchemaMarkdown | trimspace }}
+
+{{ if .HasImport -}}
+## Import
+
+Import ID: `{bucket_name}`.
+
+{{codefile "shell" .ImportFile}}
+{{- end }}

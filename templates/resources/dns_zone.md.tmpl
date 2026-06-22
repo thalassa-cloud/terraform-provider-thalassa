@@ -1,0 +1,31 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.RenderedProviderName}}"
+subcategory: "DNS"
+description: |-
+{{ .Description | plainmarkdown | trimspace | prefixlines "  " }}
+---
+
+# {{.Name}} ({{.Type}})
+
+{{ .Description | trimspace }}
+
+~> **Early access:** DNS is in early access. The API and Terraform resource schema may change in future provider releases.
+
+See [DNS documentation](https://docs.thalassa.cloud/docs/dns/).
+
+Deleting a zone permanently removes all records. DNS changes propagate in approximately 25–40 seconds.
+
+{{ if .HasExample -}}
+## Example Usage
+
+{{codefile "terraform" .ExampleFile}}
+{{- end }}
+{{ .SchemaMarkdown | trimspace }}
+
+{{ if .HasImport -}}
+## Import
+
+Import ID: zone platform identity (`dnsz-…`).
+
+{{codefile "shell" .ImportFile}}
+{{- end }}

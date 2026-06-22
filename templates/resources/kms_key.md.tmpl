@@ -1,0 +1,35 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.RenderedProviderName}}"
+subcategory: "KMS"
+description: |-
+{{ .Description | plainmarkdown | trimspace | prefixlines "  " }}
+---
+
+# {{.Name}} ({{.Type}})
+
+{{ .Description | trimspace }}
+
+~> **Early access:** KMS is in early access. The API and Terraform resource schema may change in future provider releases.
+
+See [KMS product documentation](https://docs.thalassa.cloud/docs/kms/).
+
+KMS must be enabled for your organisation. Use the `thalassa_kms_summary` data source to verify regional availability before creating keys.
+
+## Deletion behaviour
+
+`DeleteKey` schedules deletion; the key enters `pending_deletion` status. Set `cancel_scheduled_deletion = true` and apply to cancel a pending deletion.
+
+{{ if .HasExample -}}
+## Example Usage
+
+{{codefile "terraform" .ExampleFile}}
+{{- end }}
+{{ .SchemaMarkdown | trimspace }}
+
+{{ if .HasImport -}}
+## Import
+
+Import ID: platform identity (e.g. `kms-abc123`). `region` must be set in configuration when importing.
+
+{{codefile "shell" .ImportFile}}
+{{- end }}
