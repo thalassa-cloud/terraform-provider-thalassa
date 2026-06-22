@@ -261,6 +261,7 @@ func resourceDbCluster() *schema.Resource {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,
+				ForceNew:    true,
 				Description: "Flag to indicate if the DB object store should be provisioned for the cluster. If true, restore_from_backup_id will be ignored.",
 			},
 		},
