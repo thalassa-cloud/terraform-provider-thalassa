@@ -18,7 +18,6 @@ func ResourceDnsZoneDnssec() *schema.Resource {
 		Description:   "Enable DNSSEC signing for a DNS zone",
 		CreateContext: resourceDnsZoneDnssecCreate,
 		ReadContext:   resourceDnsZoneDnssecRead,
-		UpdateContext: resourceDnsZoneDnssecUpdate,
 		DeleteContext: resourceDnsZoneDnssecDelete,
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -93,17 +92,6 @@ func ResourceDnsZoneDnssec() *schema.Resource {
 }
 
 func resourceDnsZoneDnssecCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	return resourceDnsZoneDnssecApply(ctx, d, m)
-}
-
-func resourceDnsZoneDnssecUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	if !d.HasChange("region") && !d.HasChange("kms_key_id") {
-		return resourceDnsZoneDnssecRead(ctx, d, m)
-	}
-	return resourceDnsZoneDnssecApply(ctx, d, m)
-}
-
-func resourceDnsZoneDnssecApply(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
