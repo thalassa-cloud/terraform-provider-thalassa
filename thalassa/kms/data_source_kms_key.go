@@ -6,9 +6,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	validate "github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
-	tckms "github.com/thalassa-cloud/client-go/kms"
 	tcclient "github.com/thalassa-cloud/client-go/pkg/client"
 
 	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/provider"
@@ -84,10 +82,9 @@ func DataSourceKmsKey() *schema.Resource {
 				Description: "Automatic rotation period in days.",
 			},
 			"status": {
-				Type:         schema.TypeString,
-				Computed:     true,
-				ValidateFunc: validate.StringInSlice(append(kmsKeyStatuses, string(tckms.KmsKeyStatusPendingDeletion)), false),
-				Description:  "Current key status.",
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Current key status.",
 			},
 			"imported": {
 				Type:        schema.TypeBool,
