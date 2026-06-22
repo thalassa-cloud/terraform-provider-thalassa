@@ -53,6 +53,7 @@ func ResourceSecretVersion() *schema.Resource {
 			"secret_string": {
 				Type:          schema.TypeString,
 				Optional:      true,
+				ForceNew:      true,
 				Sensitive:     true,
 				ConflictsWith: []string{"secret_key_values", "generate_secret"},
 				Description:   "Secret string value (not returned on read).",
@@ -60,6 +61,7 @@ func ResourceSecretVersion() *schema.Resource {
 			"secret_key_values": {
 				Type:          schema.TypeMap,
 				Optional:      true,
+				ForceNew:      true,
 				Sensitive:     true,
 				ConflictsWith: []string{"secret_string", "generate_secret"},
 				Elem:          &schema.Schema{Type: schema.TypeString},
@@ -67,6 +69,7 @@ func ResourceSecretVersion() *schema.Resource {
 			"generate_secret": {
 				Type:          schema.TypeList,
 				Optional:      true,
+				ForceNew:      true,
 				MaxItems:      1,
 				ConflictsWith: []string{"secret_string", "secret_key_values"},
 				Elem: &schema.Resource{
