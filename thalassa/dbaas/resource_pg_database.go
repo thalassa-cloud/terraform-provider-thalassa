@@ -145,7 +145,7 @@ func resourcePgDatabaseCreate(ctx context.Context, d *schema.ResourceData, m int
 		createDatabase.AllowConnections = &allowConnectionsBool
 	}
 
-	err = client.DBaaS().CreatePgDatabase(ctx, dbCluster.Identity, createDatabase)
+	_, err = client.DBaaS().CreatePgDatabase(ctx, dbCluster.Identity, createDatabase)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error creating pg database: %w", err))
 	}
@@ -266,7 +266,7 @@ func resourcePgDatabaseUpdate(ctx context.Context, d *schema.ResourceData, m int
 		updateDatabase.AllowConnections = &allowConnectionsBool
 	}
 
-	err = client.DBaaS().UpdatePgDatabase(ctx, dbCluster.Identity, d.Get("id").(string), updateDatabase)
+	_, err = client.DBaaS().UpdatePgDatabase(ctx, dbCluster.Identity, d.Get("id").(string), updateDatabase)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error updating pg database: %w", err))
 	}

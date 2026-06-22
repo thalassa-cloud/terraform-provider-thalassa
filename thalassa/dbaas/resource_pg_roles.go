@@ -211,6 +211,10 @@ func resourcePgRolesRead(ctx context.Context, d *schema.ResourceData, m interfac
 		}
 		dbCluster, err = client.DBaaS().GetDbCluster(ctx, dbClusterId)
 		if err != nil {
+			if tcclient.IsNotFound(err) {
+				d.SetId("")
+				return nil
+			}
 			return diag.FromErr(err)
 		}
 
@@ -256,10 +260,9 @@ func resourcePgRolesUpdate(ctx context.Context, d *schema.ResourceData, m interf
 		dbCluster, err = client.DBaaS().GetDbCluster(ctx, dbClusterId)
 		if err != nil {
 			if tcclient.IsNotFound(err) {
-				d.SetId("")
-				return nil // a deleted db cluster means the pg role is also deleted
+				return diag.FromErr(fmt.Errorf("db cluster not found: %w", err))
 			}
-			return diag.FromErr(err)
+			return diag.FromErr(fmt.Errorf("error getting db cluster: %w", err))
 		}
 
 		if dbCluster == nil {
@@ -285,12 +288,12 @@ func resourcePgRolesUpdate(ctx context.Context, d *schema.ResourceData, m interf
 	_, err = client.DBaaS().UpdatePgRole(ctx, dbCluster.Identity, d.Get("id").(string), updateRole)
 	if err != nil {
 		if tcclient.IsNotFound(err) {
-			d.SetId("")
-			return nil // a deleted db cluster means the pg role is also deleted
+			return diag.FromErr(fmt.Errorf("pg role not found: %w", err))
 		}
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("error updating pg role: %w", err))
 	}
 
+	roleID := d.Get("id").(string)
 	for {
 		select {
 		case <-ctx.Done():
@@ -300,14 +303,24 @@ func resourcePgRolesUpdate(ctx context.Context, d *schema.ResourceData, m interf
 		}
 		dbCluster, err = client.DBaaS().GetDbCluster(ctx, dbClusterId)
 		if err != nil {
-			return diag.FromErr(err)
+			return diag.FromErr(fmt.Errorf("error getting db cluster: %w", err))
 		}
-		if dbCluster.Status == dbaas.DbClusterStatusReady {
-			break
+		if dbCluster.Status != dbaas.DbClusterStatusReady {
+			continue
+		}
+		for _, role := range dbCluster.PostgresRoles {
+			if role.Identity == roleID {
+				d.Set("name", role.Name)
+				d.Set("db_cluster_id", dbClusterId)
+				d.Set("connection_limit", role.ConnectionLimit)
+				d.Set("create_db", role.CreateDb)
+				d.Set("create_role", role.CreateRole)
+				d.Set("login", role.Login)
+				return nil
+			}
 		}
 	}
 
-	return resourcePgRolesRead(ctx, d, m)
 }
 
 func resourcePgRolesDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
