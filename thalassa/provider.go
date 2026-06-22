@@ -11,6 +11,7 @@ import (
 	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/objectstorage"
 	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/organisation"
 	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/provider"
+	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/secrets"
 	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/tfs"
 )
 
@@ -77,6 +78,7 @@ func Provider() *schema.Provider {
 			dbaas.ResourcesMap,
 			iam.ResourcesMap,
 			kms.ResourcesMap,
+			secrets.ResourcesMap,
 			objectstorage.ResourcesMap,
 			tfs.ResourcesMap,
 		),
