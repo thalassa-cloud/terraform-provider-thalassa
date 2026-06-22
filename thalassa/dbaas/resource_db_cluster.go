@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	validate "github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/thalassa-cloud/client-go/dbaas"
 	"github.com/thalassa-cloud/client-go/iaas"
 	tcclient "github.com/thalassa-cloud/client-go/pkg/client"
@@ -263,6 +264,19 @@ func resourceDbCluster() *schema.Resource {
 				Default:     false,
 				ForceNew:    true,
 				Description: "Flag to indicate if the DB object store should be provisioned for the cluster. If true, restore_from_backup_id will be ignored.",
+			},
+			"create_backup_before_destroy": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "Whether to create a backup before destroying the cluster. Only applies when the cluster is in ready status.",
+			},
+			"create_backup_before_destroy_timeout": {
+				Type:         schema.TypeInt,
+				Optional:     true,
+				Default:      30,
+				Description:  "The timeout in minutes to wait for the pre-destroy backup to complete. Only used when create_backup_before_destroy is true.",
+				ValidateFunc: validate.IntAtLeast(1),
 			},
 		},
 		Importer: &schema.ResourceImporter{
@@ -780,6 +794,51 @@ func resourceDbClusterUpdate(ctx context.Context, d *schema.ResourceData, m inte
 	return resourceDbClusterRead(ctx, d, m)
 }
 
+func createBackupBeforeDestroy(ctx context.Context, dbaasClient *dbaas.Client, dbClusterIdentity string, timeoutMinutes int) diag.Diagnostics {
+	backupName := fmt.Sprintf("terraform-pre-destroy-%d", time.Now().Unix())
+	createBackup := dbaas.CreateDbClusterBackupRequest{
+		Name:   backupName,
+		Labels: dbaas.Labels{"terraform": "true", "purpose": "pre-destroy"},
+	}
+
+	backup, err := dbaasClient.CreateDbBackup(ctx, dbClusterIdentity, createBackup)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("failed to create pre-destroy backup: %w", err))
+	}
+
+	tflog.Info(ctx, "waiting for pre-destroy backup to complete", map[string]interface{}{
+		"backup_id": backup.Identity,
+	})
+
+	ctxWithTimeout, cancel := context.WithTimeout(ctx, time.Duration(timeoutMinutes)*time.Minute)
+	defer cancel()
+
+	for {
+		select {
+		case <-ctxWithTimeout.Done():
+			return diag.FromErr(fmt.Errorf("timeout waiting for pre-destroy backup to complete"))
+		default:
+		}
+
+		backup, err = dbaasClient.GetDbBackup(ctxWithTimeout, backup.Identity)
+		if err != nil {
+			return diag.FromErr(fmt.Errorf("failed to retrieve pre-destroy backup: %w", err))
+		}
+
+		switch backup.Status {
+		case dbaas.ObjectStatusReady:
+			tflog.Info(ctx, "pre-destroy backup completed", map[string]interface{}{
+				"backup_id": backup.Identity,
+			})
+			return nil
+		case dbaas.ObjectStatusFailed:
+			return diag.FromErr(fmt.Errorf("pre-destroy backup failed: %s", backup.StatusMessage))
+		default:
+			time.Sleep(1 * time.Second)
+		}
+	}
+}
+
 func resourceDbClusterDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
@@ -795,6 +854,13 @@ func resourceDbClusterDelete(ctx context.Context, d *schema.ResourceData, m inte
 			return nil
 		}
 		return diag.FromErr(fmt.Errorf("failed to retrieve db cluster: %w", err))
+	}
+
+	if d.Get("create_backup_before_destroy").(bool) && dbCluster.Status == dbaas.DbClusterStatusReady && dbCluster.DbObjectStore != nil {
+		timeout := d.Get("create_backup_before_destroy_timeout").(int)
+		if diags := createBackupBeforeDestroy(ctx, client.DBaaS(), dbCluster.Identity, timeout); diags != nil {
+			return diags
+		}
 	}
 
 	err = client.DBaaS().DeleteDbCluster(ctx, dbCluster.Identity)
