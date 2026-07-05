@@ -34,7 +34,7 @@ jobs:
           cache: true
 
       - name: Install tcloud CLI
-        uses: thalassa-cloud/tcloud-installer@v1
+        uses: thalassa-cloud/tcloud-installer@v1.1.0
 
       - name: Get GitHub OIDC token
         id: oidc
