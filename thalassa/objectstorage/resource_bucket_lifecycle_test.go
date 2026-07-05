@@ -47,6 +47,26 @@ func TestExpandFlattenLifecycleRules(t *testing.T) {
 	block := filterOnly[0].(map[string]any)
 	assert.Equal(t, "logs/", block["prefix"])
 	assert.Nil(t, block["filter"])
+
+	zeroSizeFilter := flattenLifecycleRules([]objectstorage.BucketLifecycleRule{
+		{
+			ID:     "expire-noncurrent",
+			Prefix: "archive/",
+			Status: objectstorage.BucketLifecycleRuleStatusEnabled,
+			Filter: &objectstorage.BucketLifecycleRuleFilter{
+				Prefix:                "archive/",
+				ObjectSizeGreaterThan: ptrInt64(0),
+				ObjectSizeLessThan:    ptrInt64(0),
+			},
+			NoncurrentVersionExpiration: &objectstorage.BucketLifecycleRuleNoncurrentVersionExpiration{
+				NoncurrentDays: ptrInt64(7),
+			},
+		},
+	})
+	assert.Len(t, zeroSizeFilter, 1)
+	noncurrentBlock := zeroSizeFilter[0].(map[string]any)
+	assert.Equal(t, "archive/", noncurrentBlock["prefix"])
+	assert.Nil(t, noncurrentBlock["filter"])
 }
 
 func ptrInt64(v int64) *int64 {

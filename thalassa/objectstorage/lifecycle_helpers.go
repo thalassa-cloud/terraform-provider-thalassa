@@ -388,21 +388,68 @@ func flattenLifecycleRules(rules []objectstorage.BucketLifecycleRule) []any {
 }
 
 func normalizeLifecycleRuleForFlatten(rule objectstorage.BucketLifecycleRule) objectstorage.BucketLifecycleRule {
-	if rule.Prefix == "" && rule.Filter != nil && rule.Filter.Prefix != "" {
-		rule.Prefix = rule.Filter.Prefix
-		if lifecycleFilterIsPrefixOnly(rule.Filter) {
-			rule.Filter = nil
-		} else {
-			filter := *rule.Filter
-			filter.Prefix = ""
-			if lifecycleFilterIsEmpty(&filter) {
-				rule.Filter = nil
-			} else {
-				rule.Filter = &filter
-			}
-		}
+	if rule.Filter == nil {
+		return rule
 	}
+
+	filter := sanitizeLifecycleFilter(*rule.Filter)
+	if filter == nil {
+		rule.Filter = nil
+		return rule
+	}
+
+	if rule.Prefix == "" && filter.Prefix != "" {
+		rule.Prefix = filter.Prefix
+	}
+
+	filter = dropRedundantFilterPrefix(filter, rule.Prefix)
+	if filter == nil || lifecycleFilterIsEmpty(filter) || lifecycleFilterIsPrefixOnly(filter) {
+		rule.Filter = nil
+	} else {
+		rule.Filter = filter
+	}
+
 	return rule
+}
+
+func sanitizeLifecycleFilter(filter objectstorage.BucketLifecycleRuleFilter) *objectstorage.BucketLifecycleRuleFilter {
+	if filter.ObjectSizeGreaterThan != nil && *filter.ObjectSizeGreaterThan <= 0 {
+		filter.ObjectSizeGreaterThan = nil
+	}
+	if filter.ObjectSizeLessThan != nil && *filter.ObjectSizeLessThan <= 0 {
+		filter.ObjectSizeLessThan = nil
+	}
+	if filter.And != nil {
+		filter.And = sanitizeLifecycleAndOperator(*filter.And)
+	}
+	if lifecycleFilterIsEmpty(&filter) {
+		return nil
+	}
+	return &filter
+}
+
+func sanitizeLifecycleAndOperator(and objectstorage.BucketLifecycleRuleAndOperator) *objectstorage.BucketLifecycleRuleAndOperator {
+	if and.ObjectSizeGreaterThan != nil && *and.ObjectSizeGreaterThan <= 0 {
+		and.ObjectSizeGreaterThan = nil
+	}
+	if and.ObjectSizeLessThan != nil && *and.ObjectSizeLessThan <= 0 {
+		and.ObjectSizeLessThan = nil
+	}
+	if and.Prefix == "" && len(and.Tags) == 0 && and.ObjectSizeGreaterThan == nil && and.ObjectSizeLessThan == nil {
+		return nil
+	}
+	return &and
+}
+
+func dropRedundantFilterPrefix(filter *objectstorage.BucketLifecycleRuleFilter, topLevelPrefix string) *objectstorage.BucketLifecycleRuleFilter {
+	if filter == nil || filter.Prefix == "" || filter.Prefix != topLevelPrefix {
+		return filter
+	}
+	filter.Prefix = ""
+	if lifecycleFilterIsEmpty(filter) {
+		return nil
+	}
+	return filter
 }
 
 func lifecycleFilterIsPrefixOnly(filter *objectstorage.BucketLifecycleRuleFilter) bool {
@@ -432,10 +479,10 @@ func flattenLifecycleFilter(filter *objectstorage.BucketLifecycleRuleFilter) map
 	if filter.Prefix != "" {
 		block["prefix"] = filter.Prefix
 	}
-	if filter.ObjectSizeGreaterThan != nil {
+	if filter.ObjectSizeGreaterThan != nil && *filter.ObjectSizeGreaterThan > 0 {
 		block["object_size_greater_than"] = int(*filter.ObjectSizeGreaterThan)
 	}
-	if filter.ObjectSizeLessThan != nil {
+	if filter.ObjectSizeLessThan != nil && *filter.ObjectSizeLessThan > 0 {
 		block["object_size_less_than"] = int(*filter.ObjectSizeLessThan)
 	}
 	if filter.Tag != nil {
@@ -449,10 +496,10 @@ func flattenLifecycleFilter(filter *objectstorage.BucketLifecycleRuleFilter) map
 		if filter.And.Prefix != "" {
 			andBlock["prefix"] = filter.And.Prefix
 		}
-		if filter.And.ObjectSizeGreaterThan != nil {
+		if filter.And.ObjectSizeGreaterThan != nil && *filter.And.ObjectSizeGreaterThan > 0 {
 			andBlock["object_size_greater_than"] = int(*filter.And.ObjectSizeGreaterThan)
 		}
-		if filter.And.ObjectSizeLessThan != nil {
+		if filter.And.ObjectSizeLessThan != nil && *filter.And.ObjectSizeLessThan > 0 {
 			andBlock["object_size_less_than"] = int(*filter.And.ObjectSizeLessThan)
 		}
 		if len(filter.And.Tags) > 0 {
