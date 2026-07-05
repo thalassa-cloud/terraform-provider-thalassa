@@ -101,27 +101,10 @@ func resourcePgRolesCreate(ctx context.Context, d *schema.ResourceData, m interf
 	}
 
 	dbClusterId := d.Get("db_cluster_id").(string)
-	var dbCluster *dbaas.DbCluster
 
-	for {
-		select {
-		case <-ctx.Done():
-			return diag.FromErr(ctx.Err())
-		default:
-			time.Sleep(1 * time.Second)
-		}
-		dbCluster, err = client.DBaaS().GetDbCluster(ctx, dbClusterId)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-
-		if dbCluster == nil {
-			return diag.FromErr(fmt.Errorf("db cluster not found"))
-		}
-
-		if dbCluster.Status == dbaas.DbClusterStatusReady {
-			break
-		}
+	dbCluster, err := waitForReadyDbCluster(ctx, client, dbClusterId)
+	if err != nil {
+		return diag.FromErr(err)
 	}
 
 	createRole := dbaas.CreatePgRoleRequest{
@@ -157,14 +140,15 @@ func resourcePgRolesCreate(ctx context.Context, d *schema.ResourceData, m interf
 		return diag.FromErr(err)
 	}
 
+	waitCtx, cancel := context.WithTimeout(ctx, dbClusterReadyTimeout)
+	defer cancel()
 	for {
 		select {
-		case <-ctx.Done():
-			return diag.FromErr(ctx.Err())
+		case <-waitCtx.Done():
+			return diag.FromErr(fmt.Errorf("timeout waiting for pg role %q to become available", createRole.Name))
 		default:
-			time.Sleep(1 * time.Second)
 		}
-		dbCluster, err = client.DBaaS().GetDbCluster(ctx, dbClusterId)
+		dbCluster, err = client.DBaaS().GetDbCluster(waitCtx, dbClusterId)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -187,6 +171,7 @@ func resourcePgRolesCreate(ctx context.Context, d *schema.ResourceData, m interf
 		if found {
 			break
 		}
+		time.Sleep(dbClusterReadyPollInterval)
 	}
 
 	return resourcePgRolesRead(ctx, d, m)
@@ -200,30 +185,14 @@ func resourcePgRolesRead(ctx context.Context, d *schema.ResourceData, m interfac
 	id := d.Get("id").(string)
 
 	dbClusterId := d.Get("db_cluster_id").(string)
-	var dbCluster *dbaas.DbCluster
 
-	for {
-		select {
-		case <-ctx.Done():
-			return diag.FromErr(ctx.Err())
-		default:
-			time.Sleep(1 * time.Second)
+	dbCluster, err := waitForReadyDbCluster(ctx, client, dbClusterId)
+	if err != nil {
+		if tcclient.IsNotFound(err) {
+			d.SetId("")
+			return nil
 		}
-		dbCluster, err = client.DBaaS().GetDbCluster(ctx, dbClusterId)
-		if err != nil {
-			if tcclient.IsNotFound(err) {
-				d.SetId("")
-				return nil
-			}
-			return diag.FromErr(err)
-		}
-
-		if dbCluster == nil {
-			return diag.FromErr(fmt.Errorf("db cluster not found"))
-		}
-		if dbCluster.Status == dbaas.DbClusterStatusReady {
-			break
-		}
+		return diag.FromErr(err)
 	}
 
 	for _, role := range dbCluster.PostgresRoles {
@@ -248,29 +217,13 @@ func resourcePgRolesUpdate(ctx context.Context, d *schema.ResourceData, m interf
 	}
 
 	dbClusterId := d.Get("db_cluster_id").(string)
-	var dbCluster *dbaas.DbCluster
 
-	for {
-		select {
-		case <-ctx.Done():
-			return diag.FromErr(ctx.Err())
-		default:
-			time.Sleep(1 * time.Second)
+	dbCluster, err := waitForReadyDbCluster(ctx, client, dbClusterId)
+	if err != nil {
+		if tcclient.IsNotFound(err) {
+			return diag.FromErr(fmt.Errorf("db cluster not found: %w", err))
 		}
-		dbCluster, err = client.DBaaS().GetDbCluster(ctx, dbClusterId)
-		if err != nil {
-			if tcclient.IsNotFound(err) {
-				return diag.FromErr(fmt.Errorf("db cluster not found: %w", err))
-			}
-			return diag.FromErr(fmt.Errorf("error getting db cluster: %w", err))
-		}
-
-		if dbCluster == nil {
-			return diag.FromErr(fmt.Errorf("db cluster not found"))
-		}
-		if dbCluster.Status == dbaas.DbClusterStatusReady {
-			break
-		}
+		return diag.FromErr(fmt.Errorf("error getting db cluster: %w", err))
 	}
 
 	updateRole := dbaas.UpdatePgRoleRequest{
@@ -294,18 +247,20 @@ func resourcePgRolesUpdate(ctx context.Context, d *schema.ResourceData, m interf
 	}
 
 	roleID := d.Get("id").(string)
+	waitCtx, cancel := context.WithTimeout(ctx, dbClusterReadyTimeout)
+	defer cancel()
 	for {
 		select {
-		case <-ctx.Done():
-			return diag.FromErr(ctx.Err())
+		case <-waitCtx.Done():
+			return diag.FromErr(fmt.Errorf("timeout waiting for pg role %q to reflect update", roleID))
 		default:
-			time.Sleep(1 * time.Second)
 		}
-		dbCluster, err = client.DBaaS().GetDbCluster(ctx, dbClusterId)
+		dbCluster, err = client.DBaaS().GetDbCluster(waitCtx, dbClusterId)
 		if err != nil {
 			return diag.FromErr(fmt.Errorf("error getting db cluster: %w", err))
 		}
 		if dbCluster.Status != dbaas.DbClusterStatusReady {
+			time.Sleep(dbClusterReadyPollInterval)
 			continue
 		}
 		for _, role := range dbCluster.PostgresRoles {
@@ -319,8 +274,8 @@ func resourcePgRolesUpdate(ctx context.Context, d *schema.ResourceData, m interf
 				return nil
 			}
 		}
+		time.Sleep(dbClusterReadyPollInterval)
 	}
-
 }
 
 func resourcePgRolesDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -330,30 +285,14 @@ func resourcePgRolesDelete(ctx context.Context, d *schema.ResourceData, m interf
 	}
 
 	dbClusterId := d.Get("db_cluster_id").(string)
-	var dbCluster *dbaas.DbCluster
 
-	for {
-		select {
-		case <-ctx.Done():
-			return diag.FromErr(ctx.Err())
-		default:
-			time.Sleep(1 * time.Second)
+	dbCluster, err := waitForReadyDbCluster(ctx, client, dbClusterId)
+	if err != nil {
+		if tcclient.IsNotFound(err) {
+			d.SetId("")
+			return nil // a deleted db cluster means the pg role is also deleted
 		}
-		dbCluster, err = client.DBaaS().GetDbCluster(ctx, dbClusterId)
-		if err != nil {
-			if tcclient.IsNotFound(err) {
-				d.SetId("")
-				return nil // a deleted db cluster means the pg role is also deleted
-			}
-			return diag.FromErr(err)
-		}
-
-		if dbCluster == nil {
-			return diag.FromErr(fmt.Errorf("db cluster not found"))
-		}
-		if dbCluster.Status == dbaas.DbClusterStatusReady {
-			break
-		}
+		return diag.FromErr(err)
 	}
 
 	err = client.DBaaS().DeletePgRole(ctx, dbCluster.Identity, d.Get("id").(string))
