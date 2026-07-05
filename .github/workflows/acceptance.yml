@@ -1,0 +1,61 @@
+name: acceptance
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: acceptance-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  THALASSA_ORGANISATION: o-d5obcgg3fspc73f7vqpg
+  THALASSA_SERVICE_ACCOUNT_ID: sa-d9537foqog6c73bedc70
+  THALASSA_TEST_REGION: nl-01
+
+jobs:
+  acceptance:
+    name: Acceptance tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 130
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Install tcloud CLI
+        uses: thalassa-cloud/tcloud-installer@v1
+
+      - name: Get GitHub OIDC token
+        id: oidc
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const token = await core.getIDToken();
+            core.setOutput('token', token);
+
+      - name: Exchange OIDC token for Thalassa access token
+        env:
+          THALASSA_ID_TOKEN: ${{ steps.oidc.outputs.token }}
+        run: |
+          ACCESS_TOKEN="$(tcloud oidc token-exchange \
+            --subject-token "${THALASSA_ID_TOKEN}" \
+            --organisation-id "${THALASSA_ORGANISATION}" \
+            --service-account-id "${THALASSA_SERVICE_ACCOUNT_ID}" \
+            --access-token-lifetime 2h)"
+          echo "THALASSA_ACCESS_TOKEN=${ACCESS_TOKEN}" >> "${GITHUB_ENV}"
+
+      - name: Run acceptance tests
+        env:
+          TF_ACC: '1'
+        run: make testacc
