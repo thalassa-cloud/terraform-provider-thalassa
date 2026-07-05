@@ -1,6 +1,7 @@
 package kms
 
 import (
+	"strings"
 	"time"
 
 	tckms "github.com/thalassa-cloud/client-go/kms"
@@ -45,7 +46,6 @@ func setKmsKeyState(d interface {
 	_ = d.Set("key_rotation_enabled", key.KeyRotationEnabled)
 	_ = d.Set("rotation_period_in_days", key.RotationPeriodInDays)
 	_ = d.Set("latest_version", key.LatestVersion)
-	_ = d.Set("object_version", key.ObjectVersion)
 	if !key.CreatedAt.IsZero() {
 		_ = d.Set("created_at", key.CreatedAt.Format(timeFormatRFC3339))
 	}
@@ -53,6 +53,25 @@ func setKmsKeyState(d interface {
 		_ = d.Set("updated_at", key.UpdatedAt.Format(timeFormatRFC3339))
 	}
 	return nil
+}
+
+func setKmsKeyResourceState(d interface {
+	Set(string, any) error
+}, key *tckms.KmsKey, region string) error {
+	if err := setKmsKeyState(d, key, region); err != nil {
+		return err
+	}
+
+	_ = d.Set("object_version", key.ObjectVersion)
+	return nil
+}
+
+func parseKmsKeyImportID(id string) (region, identity string) {
+	if slash := strings.Index(id, "/"); slash > 0 {
+		return id[:slash], id[slash+1:]
+	}
+
+	return "", id
 }
 
 func regionKmsAvailable(summary *tckms.KmsSummary, region string) bool {

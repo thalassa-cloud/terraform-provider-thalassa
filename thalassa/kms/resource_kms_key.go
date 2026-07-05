@@ -23,7 +23,7 @@ func ResourceKmsKey() *schema.Resource {
 		UpdateContext: resourceKmsKeyUpdate,
 		DeleteContext: resourceKmsKeyDelete,
 		Importer: &schema.ResourceImporter{
-			StateContext: schema.ImportStatePassthroughContext,
+			StateContext: resourceKmsKeyImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"id": {
@@ -159,6 +159,16 @@ func ResourceKmsKey() *schema.Resource {
 	}
 }
 
+func resourceKmsKeyImport(ctx context.Context, d *schema.ResourceData, m any) ([]*schema.ResourceData, error) {
+	region, identity := parseKmsKeyImportID(d.Id())
+	if region != "" {
+		_ = d.Set("region", region)
+	}
+	d.SetId(identity)
+
+	return []*schema.ResourceData{d}, nil
+}
+
 func resourceKmsKeyCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
@@ -238,7 +248,7 @@ func resourceKmsKeyRead(ctx context.Context, d *schema.ResourceData, m any) diag
 }
 
 func resourceKmsKeyReadWithKey(d *schema.ResourceData, region string, key *tckms.KmsKey) diag.Diagnostics {
-	if err := setKmsKeyState(d, key, region); err != nil {
+	if err := setKmsKeyResourceState(d, key, region); err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -246,6 +256,8 @@ func resourceKmsKeyReadWithKey(d *schema.ResourceData, region string, key *tckms
 	if desiredStatus == "" || key.Status == tckms.KmsKeyStatusPendingDeletion {
 		_ = d.Set("status", string(key.Status))
 	}
+
+	_ = d.Set("cancel_scheduled_deletion", false)
 
 	return nil
 }

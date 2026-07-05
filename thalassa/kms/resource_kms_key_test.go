@@ -37,3 +37,32 @@ func TestDataSourceKmsSummary(t *testing.T) {
 	assert.NotNil(t, dataSource.ReadContext)
 	assert.True(t, dataSource.Schema["feature_enabled"].Computed)
 }
+
+func TestParseKmsKeyImportID(t *testing.T) {
+	tests := []struct {
+		name           string
+		id             string
+		wantRegion     string
+		wantIdentity   string
+	}{
+		{
+			name:         "composite id",
+			id:           "nl-01/kms-abc123",
+			wantRegion:   "nl-01",
+			wantIdentity: "kms-abc123",
+		},
+		{
+			name:         "identity only",
+			id:           "kms-abc123",
+			wantRegion:   "",
+			wantIdentity: "kms-abc123",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			region, identity := parseKmsKeyImportID(tt.id)
+			assert.Equal(t, tt.wantRegion, region)
+			assert.Equal(t, tt.wantIdentity, identity)
+		})
+	}
+}
