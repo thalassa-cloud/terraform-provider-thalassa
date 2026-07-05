@@ -12,14 +12,14 @@ func SetReferenceField(d *schema.ResourceData, field, identity, slug, name strin
 	current := d.Get(field).(string)
 	switch {
 	case current == "":
-		d.Set(field, identity)
+		_ = d.Set(field, identity)
 	case current == identity:
-		d.Set(field, current)
+		_ = d.Set(field, current)
 	case slug != "" && current == slug:
-		d.Set(field, current)
+		_ = d.Set(field, current)
 	case name != "" && strings.EqualFold(current, name):
-		d.Set(field, current)
+		_ = d.Set(field, current)
 	default:
-		d.Set(field, identity)
+		_ = d.Set(field, identity)
 	}
 }

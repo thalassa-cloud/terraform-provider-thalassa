@@ -166,15 +166,15 @@ func dataSourceKubernetesClusterRoleRead(ctx context.Context, d *schema.Resource
 
 	// Set the resource data
 	d.SetId(matchingRole.Identity)
-	d.Set("name", matchingRole.Name)
-	d.Set("slug", matchingRole.Slug)
-	d.Set("description", matchingRole.Description)
-	d.Set("labels", matchingRole.Labels)
-	d.Set("annotations", matchingRole.Annotations)
-	d.Set("system", matchingRole.System)
-	d.Set("created_at", matchingRole.CreatedAt.Format(time.RFC3339))
+	_ = d.Set("name", matchingRole.Name)
+	_ = d.Set("slug", matchingRole.Slug)
+	_ = d.Set("description", matchingRole.Description)
+	_ = d.Set("labels", matchingRole.Labels)
+	_ = d.Set("annotations", matchingRole.Annotations)
+	_ = d.Set("system", matchingRole.System)
+	_ = d.Set("created_at", matchingRole.CreatedAt.Format(time.RFC3339))
 	if matchingRole.UpdatedAt != nil {
-		d.Set("updated_at", matchingRole.UpdatedAt.Format(time.RFC3339))
+		_ = d.Set("updated_at", matchingRole.UpdatedAt.Format(time.RFC3339))
 	}
 
 	// Set rules
@@ -191,7 +191,7 @@ func dataSourceKubernetesClusterRoleRead(ctx context.Context, d *schema.Resource
 				"note":              rule.Note,
 			}
 		}
-		d.Set("rules", rules)
+		_ = d.Set("rules", rules)
 	}
 
 	return nil

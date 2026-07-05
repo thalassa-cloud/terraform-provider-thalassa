@@ -171,11 +171,11 @@ func resourceKubernetesClusterRoleCreate(ctx context.Context, d *schema.Resource
 
 	if role != nil {
 		d.SetId(role.Identity)
-		d.Set("slug", role.Slug)
-		d.Set("system", role.System)
-		d.Set("created_at", role.CreatedAt.Format(time.RFC3339))
+		_ = d.Set("slug", role.Slug)
+		_ = d.Set("system", role.System)
+		_ = d.Set("created_at", role.CreatedAt.Format(time.RFC3339))
 		if role.UpdatedAt != nil {
-			d.Set("updated_at", role.UpdatedAt.Format(time.RFC3339))
+			_ = d.Set("updated_at", role.UpdatedAt.Format(time.RFC3339))
 		}
 	}
 
@@ -225,15 +225,15 @@ func resourceKubernetesClusterRoleRead(ctx context.Context, d *schema.ResourceDa
 	}
 
 	d.SetId(role.Identity)
-	d.Set("name", role.Name)
-	d.Set("slug", role.Slug)
-	d.Set("description", role.Description)
-	d.Set("labels", role.Labels)
-	d.Set("annotations", role.Annotations)
-	d.Set("system", role.System)
-	d.Set("created_at", role.CreatedAt.Format(time.RFC3339))
+	_ = d.Set("name", role.Name)
+	_ = d.Set("slug", role.Slug)
+	_ = d.Set("description", role.Description)
+	_ = d.Set("labels", role.Labels)
+	_ = d.Set("annotations", role.Annotations)
+	_ = d.Set("system", role.System)
+	_ = d.Set("created_at", role.CreatedAt.Format(time.RFC3339))
 	if role.UpdatedAt != nil {
-		d.Set("updated_at", role.UpdatedAt.Format(time.RFC3339))
+		_ = d.Set("updated_at", role.UpdatedAt.Format(time.RFC3339))
 	}
 
 	// Set rules
@@ -250,7 +250,7 @@ func resourceKubernetesClusterRoleRead(ctx context.Context, d *schema.ResourceDa
 				"note":              rule.Note,
 			}
 		}
-		d.Set("rules", rules)
+		_ = d.Set("rules", rules)
 	}
 
 	return nil

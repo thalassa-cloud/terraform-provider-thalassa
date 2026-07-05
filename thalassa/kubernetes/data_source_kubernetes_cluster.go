@@ -262,100 +262,89 @@ func dataSourceKubernetesClusterRead(ctx context.Context, d *schema.ResourceData
 
 	for _, cluster := range clusters {
 		if cluster.Name == name {
-			d.SetId(cluster.Identity)
-			d.Set("id", cluster.Identity)
-			d.Set("name", cluster.Name)
-			d.Set("slug", cluster.Slug)
-			d.Set("description", cluster.Description)
-			d.Set("cluster_version", cluster.ClusterVersion.Name)
-			d.Set("cluster_type", cluster.ClusterType)
-			d.Set("delete_protection", cluster.DeleteProtection)
-			d.Set("networking_cni", cluster.Configuration.Networking.CNI)
-			d.Set("networking_service_cidr", cluster.Configuration.Networking.ServiceCIDR)
-			d.Set("networking_pod_cidr", cluster.Configuration.Networking.PodCIDR)
-			if cluster.Configuration.Networking.KubeProxyMode != nil {
-				d.Set("networking_kube_proxy_mode", string(*cluster.Configuration.Networking.KubeProxyMode))
-			}
-			if cluster.Configuration.Networking.KubeProxyDeployment != nil {
-				d.Set("networking_kube_proxy_deployment", string(*cluster.Configuration.Networking.KubeProxyDeployment))
-			}
-			d.Set("pod_security_standards_profile", cluster.PodSecurityStandardsProfile)
-			d.Set("audit_log_profile", cluster.AuditLogProfile)
-			d.Set("default_network_policy", cluster.DefaultNetworkPolicy)
-			d.Set("disable_public_endpoint", cluster.DisablePublicEndpoint)
-			if cluster.Region != nil {
-				d.Set("region", cluster.Region.Identity)
-			}
-			if cluster.Subnet != nil {
-				d.Set("subnet_id", cluster.Subnet.Identity)
-			}
-			if cluster.VPC != nil {
-				d.Set("vpc_id", cluster.VPC.Identity)
-			}
-			d.Set("kubernetes_api_server_endpoint", cluster.APIServerURL)
-			d.Set("kubernetes_api_server_ca_certificate", cluster.APIServerCA)
-			if cluster.InternalEndpoint != nil {
-				d.Set("internal_endpoint", *cluster.InternalEndpoint)
-			}
-			if cluster.AdvertisePort != nil {
-				d.Set("advertise_port", *cluster.AdvertisePort)
-			}
-			if cluster.KonnectivityPort != nil {
-				d.Set("konnectivity_port", *cluster.KonnectivityPort)
-			}
-
-			// Set API server ACLs
-			if cluster.ApiServerACLs.AllowedCIDRs != nil {
-				apiServerACLs := map[string]any{
-					"allowed_cidrs": cluster.ApiServerACLs.AllowedCIDRs,
-				}
-				if err := d.Set("api_server_acls", []any{apiServerACLs}); err != nil {
-					return diag.FromErr(fmt.Errorf("error setting api_server_acls: %s", err))
-				}
-			}
-
-			// Set auto upgrade policy
-			d.Set("auto_upgrade_policy", cluster.AutoUpgradePolicy)
-
-			// Set maintenance settings
-			if cluster.MaintenanceDay != nil {
-				d.Set("maintenance_day", int(*cluster.MaintenanceDay))
-			}
-			if cluster.MaintenanceStartAt != nil {
-				d.Set("maintenance_start_at", int(*cluster.MaintenanceStartAt))
-			}
-
-			// Set autoscaler config
-			if cluster.AutoscalerConfig != nil {
-				autoscalerConfig := map[string]any{
-					"scale_down_disabled":              cluster.AutoscalerConfig.ScaleDownDisabled,
-					"scale_down_delay_after_add":       cluster.AutoscalerConfig.ScaleDownDelayAfterAdd,
-					"estimator":                        cluster.AutoscalerConfig.Estimator,
-					"expander":                         cluster.AutoscalerConfig.Expander,
-					"ignore_daemonsets_utilization":    cluster.AutoscalerConfig.IgnoreDaemonsetsUtilization,
-					"balance_similar_node_groups":      cluster.AutoscalerConfig.BalanceSimilarNodeGroups,
-					"expendable_pods_priority_cutoff":  cluster.AutoscalerConfig.ExpendablePodsPriorityCutoff,
-					"scale_down_unneeded_time":         cluster.AutoscalerConfig.ScaleDownUnneededTime,
-					"scale_down_utilization_threshold": cluster.AutoscalerConfig.ScaleDownUtilizationThreshold,
-					"max_graceful_termination_sec":     cluster.AutoscalerConfig.MaxGracefulTerminationSec,
-					"enable_proactive_scale_up":        cluster.AutoscalerConfig.EnableProactiveScaleUp,
-				}
-				if err := d.Set("autoscaler_config", []any{autoscalerConfig}); err != nil {
-					return diag.FromErr(fmt.Errorf("error setting autoscaler_config: %s", err))
-				}
-			}
-
-			// Set labels and annotations directly
-			if err := d.Set("labels", cluster.Labels); err != nil {
-				return diag.FromErr(fmt.Errorf("error setting labels: %s", err))
-			}
-
-			if err := d.Set("annotations", cluster.Annotations); err != nil {
-				return diag.FromErr(fmt.Errorf("error setting annotations: %s", err))
-			}
-
-			return diag.Diagnostics{}
+			return setKubernetesClusterDataSourceState(d, cluster)
 		}
 	}
 	return diag.FromErr(fmt.Errorf("not found"))
+}
+
+func setKubernetesClusterDataSourceState(d *schema.ResourceData, cluster kubernetes.KubernetesCluster) diag.Diagnostics { //nolint:gocyclo // maps many optional cluster attributes
+	_ = d.Set("id", cluster.Identity)
+	d.SetId(cluster.Identity)
+	_ = d.Set("name", cluster.Name)
+	_ = d.Set("slug", cluster.Slug)
+	_ = d.Set("description", cluster.Description)
+	_ = d.Set("cluster_version", cluster.ClusterVersion.Name)
+	_ = d.Set("cluster_type", cluster.ClusterType)
+	_ = d.Set("delete_protection", cluster.DeleteProtection)
+	_ = d.Set("networking_cni", cluster.Configuration.Networking.CNI)
+	_ = d.Set("networking_service_cidr", cluster.Configuration.Networking.ServiceCIDR)
+	_ = d.Set("networking_pod_cidr", cluster.Configuration.Networking.PodCIDR)
+	if cluster.Configuration.Networking.KubeProxyMode != nil {
+		_ = d.Set("networking_kube_proxy_mode", string(*cluster.Configuration.Networking.KubeProxyMode))
+	}
+	if cluster.Configuration.Networking.KubeProxyDeployment != nil {
+		_ = d.Set("networking_kube_proxy_deployment", string(*cluster.Configuration.Networking.KubeProxyDeployment))
+	}
+	_ = d.Set("pod_security_standards_profile", cluster.PodSecurityStandardsProfile)
+	_ = d.Set("audit_log_profile", cluster.AuditLogProfile)
+	_ = d.Set("default_network_policy", cluster.DefaultNetworkPolicy)
+	_ = d.Set("disable_public_endpoint", cluster.DisablePublicEndpoint)
+	if cluster.Region != nil {
+		_ = d.Set("region", cluster.Region.Identity)
+	}
+	if cluster.Subnet != nil {
+		_ = d.Set("subnet_id", cluster.Subnet.Identity)
+	}
+	if cluster.VPC != nil {
+		_ = d.Set("vpc_id", cluster.VPC.Identity)
+	}
+	_ = d.Set("kubernetes_api_server_endpoint", cluster.APIServerURL)
+	_ = d.Set("kubernetes_api_server_ca_certificate", cluster.APIServerCA)
+	if cluster.InternalEndpoint != nil {
+		_ = d.Set("internal_endpoint", *cluster.InternalEndpoint)
+	}
+	if cluster.AdvertisePort != nil {
+		_ = d.Set("advertise_port", *cluster.AdvertisePort)
+	}
+	if cluster.KonnectivityPort != nil {
+		_ = d.Set("konnectivity_port", *cluster.KonnectivityPort)
+	}
+
+	if cluster.ApiServerACLs.AllowedCIDRs != nil {
+		apiServerACLs := map[string]any{
+			"allowed_cidrs": cluster.ApiServerACLs.AllowedCIDRs,
+		}
+		_ = d.Set("api_server_acls", []any{apiServerACLs})
+	}
+
+	_ = d.Set("auto_upgrade_policy", cluster.AutoUpgradePolicy)
+	if cluster.MaintenanceDay != nil {
+		_ = d.Set("maintenance_day", int(*cluster.MaintenanceDay))
+	}
+	if cluster.MaintenanceStartAt != nil {
+		_ = d.Set("maintenance_start_at", int(*cluster.MaintenanceStartAt))
+	}
+
+	if cluster.AutoscalerConfig != nil {
+		autoscalerConfig := map[string]any{
+			"scale_down_disabled":              cluster.AutoscalerConfig.ScaleDownDisabled,
+			"scale_down_delay_after_add":       cluster.AutoscalerConfig.ScaleDownDelayAfterAdd,
+			"estimator":                        cluster.AutoscalerConfig.Estimator,
+			"expander":                         cluster.AutoscalerConfig.Expander,
+			"ignore_daemonsets_utilization":    cluster.AutoscalerConfig.IgnoreDaemonsetsUtilization,
+			"balance_similar_node_groups":      cluster.AutoscalerConfig.BalanceSimilarNodeGroups,
+			"expendable_pods_priority_cutoff":  cluster.AutoscalerConfig.ExpendablePodsPriorityCutoff,
+			"scale_down_unneeded_time":         cluster.AutoscalerConfig.ScaleDownUnneededTime,
+			"scale_down_utilization_threshold": cluster.AutoscalerConfig.ScaleDownUtilizationThreshold,
+			"max_graceful_termination_sec":     cluster.AutoscalerConfig.MaxGracefulTerminationSec,
+			"enable_proactive_scale_up":        cluster.AutoscalerConfig.EnableProactiveScaleUp,
+		}
+		_ = d.Set("autoscaler_config", []any{autoscalerConfig})
+	}
+
+	_ = d.Set("labels", cluster.Labels)
+	_ = d.Set("annotations", cluster.Annotations)
+
+	return nil
 }

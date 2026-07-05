@@ -114,19 +114,17 @@ func dataSourceKubernetesVersionRead(ctx context.Context, d *schema.ResourceData
 	}
 
 	d.SetId(version.Identity)
-	d.Set("id", version.Identity)
-	d.Set("kubernetes_version", version.KubernetesVersion)
-	d.Set("containerd_version", version.ContainerdVersion)
-	d.Set("cni_plugins_version", version.CNIPluginsVersion)
-	d.Set("crictl_version", version.CrictlVersion)
-	d.Set("runc_version", version.RuncVersion)
-	d.Set("cilium_version", version.CiliumVersion)
-	d.Set("cloud_controller_manager_version", version.CloudControllerManagerVersion)
-	d.Set("istio_version", version.IstioVersion)
+	_ = d.Set("id", version.Identity)
+	_ = d.Set("kubernetes_version", version.KubernetesVersion)
+	_ = d.Set("containerd_version", version.ContainerdVersion)
+	_ = d.Set("cni_plugins_version", version.CNIPluginsVersion)
+	_ = d.Set("crictl_version", version.CrictlVersion)
+	_ = d.Set("runc_version", version.RuncVersion)
+	_ = d.Set("cilium_version", version.CiliumVersion)
+	_ = d.Set("cloud_controller_manager_version", version.CloudControllerManagerVersion)
+	_ = d.Set("istio_version", version.IstioVersion)
 
-	if err := d.Set("annotations", version.Annotations); err != nil {
-		return diag.FromErr(fmt.Errorf("error setting annotations: %s", err))
-	}
+	_ = d.Set("annotations", version.Annotations)
 
 	return diag.Diagnostics{}
 }
