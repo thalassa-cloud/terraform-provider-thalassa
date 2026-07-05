@@ -92,7 +92,7 @@ func dataSourceVpcRead(ctx context.Context, d *schema.ResourceData, m any) diag.
 	// First find all VPCs matching name and region
 	var matchingVpcs []iaas.Vpc
 	for _, v := range vpcs {
-		if v.CloudRegion != nil && region != "" && v.CloudRegion.Identity != region {
+		if !vpcMatchesRegion(v.CloudRegion, region) {
 			continue
 		}
 		if v.Name == name {
@@ -123,7 +123,7 @@ func dataSourceVpcRead(ctx context.Context, d *schema.ResourceData, m any) diag.
 	} else if slug != "" {
 		// No matches by name, try finding by slug
 		for _, v := range vpcs {
-			if v.CloudRegion != nil && region != "" && v.CloudRegion.Identity != region {
+			if !vpcMatchesRegion(v.CloudRegion, region) {
 				continue
 			}
 			if v.Slug == slug {
@@ -144,11 +144,30 @@ func dataSourceVpcRead(ctx context.Context, d *schema.ResourceData, m any) diag.
 		_ = d.Set("labels", vpc.Labels)
 		_ = d.Set("annotations", vpc.Annotations)
 		if vpc.CloudRegion != nil {
-			_ = d.Set("region", vpc.CloudRegion.Identity)
+			_ = d.Set("region", vpcRegionStateValue(vpc.CloudRegion))
 		}
 		_ = d.Set("cidrs", vpc.CIDRs)
 		return diag.Diagnostics{}
 	}
 
 	return diag.FromErr(fmt.Errorf("vpc %s not found", name))
+}
+
+func vpcMatchesRegion(region *iaas.Region, filter string) bool {
+	if filter == "" || region == nil {
+		return true
+	}
+
+	return region.Identity == filter || region.Slug == filter
+}
+
+func vpcRegionStateValue(region *iaas.Region) string {
+	if region == nil {
+		return ""
+	}
+	if region.Slug != "" {
+		return region.Slug
+	}
+
+	return region.Identity
 }

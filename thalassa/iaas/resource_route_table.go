@@ -97,8 +97,6 @@ func resourceRouteTableCreate(ctx context.Context, d *schema.ResourceData, m any
 	}
 	if routeTable != nil {
 		d.SetId(routeTable.Identity)
-		_ = d.Set("slug", routeTable.Slug)
-		return nil
 	}
 	return resourceRouteTableRead(ctx, d, m)
 }

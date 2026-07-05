@@ -194,6 +194,12 @@ func resourceSubnetRead(ctx context.Context, d *schema.ResourceData, m any) diag
 	_ = d.Set("description", subnet.Description)
 	_ = d.Set("labels", subnet.Labels)
 	_ = d.Set("annotations", subnet.Annotations)
+	_ = d.Set("cidr", subnet.Cidr)
+	if subnet.Vpc != nil {
+		_ = d.Set("vpc_id", subnet.Vpc.Identity)
+	} else if subnet.VpcIdentity != "" {
+		_ = d.Set("vpc_id", subnet.VpcIdentity)
+	}
 	if subnet.RouteTable != nil {
 		_ = d.Set("route_table_id", subnet.RouteTable.Identity)
 	}
@@ -269,7 +275,10 @@ func resourceSubnetDelete(ctx context.Context, d *schema.ResourceData, m any) di
 		return diag.FromErr(err)
 	}
 
-	id := d.Get("id").(string)
+	id := d.Id()
+	if id == "" {
+		return nil
+	}
 
 	err = client.IaaS().DeleteSubnet(ctx, id)
 	if err != nil && !tcclient.IsNotFound(err) {
@@ -278,9 +287,40 @@ func resourceSubnetDelete(ctx context.Context, d *schema.ResourceData, m any) di
 
 	ctxWithTimeout, cancel := context.WithTimeout(ctx, 20*time.Minute)
 	defer cancel()
-	if err := client.IaaS().WaitUntilSubnetDeleted(ctxWithTimeout, id); err != nil {
-		return diag.FromErr(fmt.Errorf("error waiting for subnet to be deleted: %w", err))
+
+	for {
+		select {
+		case <-ctxWithTimeout.Done():
+			return diag.FromErr(fmt.Errorf("timeout waiting for subnet %s to be deleted: %w", id, ctxWithTimeout.Err()))
+		default:
+		}
+
+		subnet, err := client.IaaS().GetSubnet(ctx, id)
+		if err != nil {
+			if tcclient.IsNotFound(err) {
+				d.SetId("")
+				return nil
+			}
+			return diag.FromErr(err)
+		}
+
+		switch subnet.Status {
+		case iaas.SubnetStatusDeleted:
+			d.SetId("")
+			return nil
+		case iaas.SubnetStatusDeleting:
+			// Deletion in progress; keep polling.
+		case iaas.SubnetStatusReady, iaas.SubnetStatusActive:
+			// The delete API can return before the subnet transitions to deleting.
+			if err := client.IaaS().DeleteSubnet(ctx, id); err != nil && !tcclient.IsNotFound(err) {
+				return diag.FromErr(err)
+			}
+		case iaas.SubnetStatusFailed:
+			return diag.FromErr(fmt.Errorf("subnet %s failed to delete (status: %s)", id, subnet.Status))
+		default:
+			return diag.FromErr(fmt.Errorf("subnet %s unexpected status during delete: %s", id, subnet.Status))
+		}
+
+		time.Sleep(iaas.DefaultPollIntervalForWaiting)
 	}
-	d.SetId("")
-	return nil
 }

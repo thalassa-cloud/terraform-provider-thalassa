@@ -134,8 +134,6 @@ func resourceVpcCreate(ctx context.Context, d *schema.ResourceData, m any) diag.
 	}
 	if vpc != nil {
 		d.SetId(vpc.Identity)
-		_ = d.Set("slug", vpc.Slug)
-		return nil
 	}
 	return resourceVpcRead(ctx, d, m)
 }
