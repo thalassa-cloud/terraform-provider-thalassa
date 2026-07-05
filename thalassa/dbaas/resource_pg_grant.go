@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -233,30 +232,14 @@ func resourcePgGrantDelete(ctx context.Context, d *schema.ResourceData, m any) d
 	}
 
 	dbClusterId := d.Get("db_cluster_id").(string)
-	var dbCluster *dbaas.DbCluster
 
-	for {
-		select {
-		case <-ctx.Done():
-			return diag.FromErr(ctx.Err())
-		default:
-			time.Sleep(1 * time.Second)
+	dbCluster, err := waitForReadyDbCluster(ctx, client, dbClusterId)
+	if err != nil {
+		if tcclient.IsNotFound(err) {
+			d.SetId("")
+			return nil // a deleted db cluster means the pg grant is also deleted
 		}
-		dbCluster, err = client.DBaaS().GetDbCluster(ctx, dbClusterId)
-		if err != nil {
-			if tcclient.IsNotFound(err) {
-				d.SetId("")
-				return nil // a deleted db cluster means the pg grant is also deleted
-			}
-			return diag.FromErr(err)
-		}
-
-		if dbCluster == nil {
-			return diag.FromErr(fmt.Errorf("db cluster not found"))
-		}
-		if dbCluster.Status == dbaas.DbClusterStatusReady {
-			break
-		}
+		return diag.FromErr(err)
 	}
 
 	grantName := d.Get("name").(string)

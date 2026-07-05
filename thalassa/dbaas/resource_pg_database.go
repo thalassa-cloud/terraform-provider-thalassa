@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -77,28 +76,13 @@ func resourcePgDatabaseCreate(ctx context.Context, d *schema.ResourceData, m any
 	}
 
 	dbClusterId := d.Get("db_cluster_id").(string)
-	var dbCluster *dbaas.DbCluster
 
-	for {
-		select {
-		case <-ctx.Done():
-			return diag.FromErr(ctx.Err())
-		default:
-			time.Sleep(1 * time.Second)
+	dbCluster, err := waitForReadyDbCluster(ctx, client, dbClusterId)
+	if err != nil {
+		if tcclient.IsNotFound(err) {
+			return diag.FromErr(fmt.Errorf("db cluster not found: %w", err))
 		}
-		dbCluster, err = client.DBaaS().GetDbCluster(ctx, dbClusterId)
-		if err != nil {
-			if tcclient.IsNotFound(err) {
-				return diag.FromErr(fmt.Errorf("db cluster not found: %w", err))
-			}
-			return diag.FromErr(fmt.Errorf("error getting db cluster: %w", err))
-		}
-		if dbCluster == nil {
-			return diag.FromErr(fmt.Errorf("db cluster not found"))
-		}
-		if dbCluster.Status == dbaas.DbClusterStatusReady {
-			break
-		}
+		return diag.FromErr(fmt.Errorf("error getting db cluster: %w", err))
 	}
 
 	// check the owner exists
@@ -181,30 +165,14 @@ func resourcePgDatabaseRead(ctx context.Context, d *schema.ResourceData, m any) 
 	}
 
 	dbClusterId := d.Get("db_cluster_id").(string)
-	var dbCluster *dbaas.DbCluster
 
-	for {
-		select {
-		case <-ctx.Done():
-			return diag.FromErr(ctx.Err())
-		default:
-			time.Sleep(1 * time.Second)
+	dbCluster, err := waitForReadyDbCluster(ctx, client, dbClusterId)
+	if err != nil {
+		if tcclient.IsNotFound(err) {
+			d.SetId("")
+			return nil // a deleted db cluster means the pg database is also deleted
 		}
-		dbCluster, err = client.DBaaS().GetDbCluster(ctx, dbClusterId)
-		if err != nil {
-			if tcclient.IsNotFound(err) {
-				d.SetId("")
-				return nil // a deleted db cluster means the pg database is also deleted
-			}
-			return diag.FromErr(err)
-		}
-		if dbCluster == nil {
-			return diag.FromErr(fmt.Errorf("db cluster not found"))
-		}
-
-		if dbCluster.Status == dbaas.DbClusterStatusReady {
-			break
-		}
+		return diag.FromErr(err)
 	}
 
 	ownerRoleId := d.Get("owner_role_id").(string)
@@ -229,30 +197,13 @@ func resourcePgDatabaseUpdate(ctx context.Context, d *schema.ResourceData, m any
 	}
 
 	dbClusterId := d.Get("db_cluster_id").(string)
-	var dbCluster *dbaas.DbCluster
 
-	for {
-		select {
-		case <-ctx.Done():
-			return diag.FromErr(ctx.Err())
-		default:
-			time.Sleep(1 * time.Second)
+	dbCluster, err := waitForReadyDbCluster(ctx, client, dbClusterId)
+	if err != nil {
+		if tcclient.IsNotFound(err) {
+			return diag.FromErr(fmt.Errorf("db cluster not found: %w", err))
 		}
-		dbCluster, err = client.DBaaS().GetDbCluster(ctx, dbClusterId)
-		if err != nil {
-			if tcclient.IsNotFound(err) {
-				return diag.FromErr(fmt.Errorf("db cluster not found: %w", err))
-			}
-			return diag.FromErr(fmt.Errorf("error getting db cluster: %w", err))
-		}
-
-		if dbCluster == nil {
-			return diag.FromErr(fmt.Errorf("db cluster not found"))
-		}
-
-		if dbCluster.Status == dbaas.DbClusterStatusReady {
-			break
-		}
+		return diag.FromErr(fmt.Errorf("error getting db cluster: %w", err))
 	}
 
 	connectionLimit := d.Get("connection_limit").(int)
@@ -293,31 +244,14 @@ func resourcePgDatabaseDelete(ctx context.Context, d *schema.ResourceData, m any
 	}
 
 	dbClusterId := d.Get("db_cluster_id").(string)
-	var dbCluster *dbaas.DbCluster
 
-	for {
-		select {
-		case <-ctx.Done():
-			return diag.FromErr(ctx.Err())
-		default:
-			time.Sleep(1 * time.Second)
+	dbCluster, err := waitForReadyDbCluster(ctx, client, dbClusterId)
+	if err != nil {
+		if tcclient.IsNotFound(err) {
+			d.SetId("")
+			return nil // a deleted db cluster means the pg database is also deleted
 		}
-		dbCluster, err = client.DBaaS().GetDbCluster(ctx, dbClusterId)
-		if err != nil {
-			if tcclient.IsNotFound(err) {
-				d.SetId("")
-				return nil // a deleted db cluster means the pg database is also deleted
-			}
-			return diag.FromErr(fmt.Errorf("error getting db cluster: %w", err))
-		}
-
-		if dbCluster == nil {
-			return diag.FromErr(fmt.Errorf("db cluster not found"))
-		}
-
-		if dbCluster.Status == dbaas.DbClusterStatusReady {
-			break
-		}
+		return diag.FromErr(fmt.Errorf("error getting db cluster: %w", err))
 	}
 
 	// Check if the database is not already scheduled for deletion
