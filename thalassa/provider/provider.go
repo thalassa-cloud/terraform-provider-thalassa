@@ -12,7 +12,7 @@ import (
 	"github.com/thalassa-cloud/client-go/thalassa"
 )
 
-func GetProvider(m interface{}) ConfiguredProvider {
+func GetProvider(m any) ConfiguredProvider {
 	p, ok := m.(ConfiguredProvider)
 	if !ok {
 		panic("invalid configured provider")
@@ -32,7 +32,7 @@ type ConfiguredProvider struct {
 	projectID         string
 }
 
-func ProviderConfigure(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
+func ProviderConfigure(ctx context.Context, d *schema.ResourceData) (any, diag.Diagnostics) {
 	token := d.Get("token").(string)
 	accessToken := d.Get("access_token").(string)
 	apiEndpoint := d.Get("api").(string)

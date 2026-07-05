@@ -119,7 +119,7 @@ func resourceSubnet() *schema.Resource {
 	}
 }
 
-func resourceSubnetCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceSubnetCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -165,7 +165,7 @@ func resourceSubnetCreate(ctx context.Context, d *schema.ResourceData, m interfa
 	return resourceSubnetRead(ctx, d, m)
 }
 
-func resourceSubnetRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceSubnetRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -205,7 +205,7 @@ func resourceSubnetRead(ctx context.Context, d *schema.ResourceData, m interface
 	return nil
 }
 
-func resourceSubnetUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceSubnetUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error creating client: %w", err))
@@ -260,7 +260,7 @@ func resourceSubnetUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 	return resourceSubnetRead(ctx, d, m)
 }
 
-func resourceSubnetDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceSubnetDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)

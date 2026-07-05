@@ -90,7 +90,7 @@ func resourceVpc() *schema.Resource {
 	}
 }
 
-func resourceVpcCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceVpcCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -140,7 +140,7 @@ func resourceVpcCreate(ctx context.Context, d *schema.ResourceData, m interface{
 	return resourceVpcRead(ctx, d, m)
 }
 
-func resourceVpcRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceVpcRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -172,7 +172,7 @@ func resourceVpcRead(ctx context.Context, d *schema.ResourceData, m interface{})
 	return nil
 }
 
-func resourceVpcUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceVpcUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -206,7 +206,7 @@ func resourceVpcUpdate(ctx context.Context, d *schema.ResourceData, m interface{
 	return resourceVpcRead(ctx, d, m)
 }
 
-func resourceVpcDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceVpcDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)

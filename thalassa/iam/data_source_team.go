@@ -113,7 +113,7 @@ func DataSourceTeam() *schema.Resource {
 	}
 }
 
-func dataSourceTeamRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataSourceTeamRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -190,9 +190,9 @@ func dataSourceTeamRead(ctx context.Context, d *schema.ResourceData, m interface
 	}
 
 	// Set members data
-	memberList := make([]map[string]interface{}, len(team.Members))
+	memberList := make([]map[string]any, len(team.Members))
 	for i, member := range team.Members {
-		memberMap := map[string]interface{}{
+		memberMap := map[string]any{
 			"identity":   member.Identity,
 			"role":       member.Role,
 			"created_at": member.CreatedAt.Format(TimeFormatRFC3339),

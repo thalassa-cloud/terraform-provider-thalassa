@@ -98,7 +98,7 @@ func resourceReservedIP() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
 		},
-		CustomizeDiff: func(ctx context.Context, diff *schema.ResourceDiff, meta interface{}) error {
+		CustomizeDiff: func(ctx context.Context, diff *schema.ResourceDiff, meta any) error {
 			_, new := diff.GetChange("description")
 			if new == nil {
 				return diff.SetNew("description", "")
@@ -108,7 +108,7 @@ func resourceReservedIP() *schema.Resource {
 	}
 }
 
-func resourceReservedIPCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceReservedIPCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -183,7 +183,7 @@ func resourceReservedIPCreate(ctx context.Context, d *schema.ResourceData, m int
 	}
 }
 
-func resourceReservedIPRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceReservedIPRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to get client: %w", err))
@@ -222,7 +222,7 @@ func resourceReservedIPRead(ctx context.Context, d *schema.ResourceData, m inter
 	return nil
 }
 
-func resourceReservedIPUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceReservedIPUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to get client: %w", err))
@@ -254,7 +254,7 @@ func resourceReservedIPUpdate(ctx context.Context, d *schema.ResourceData, m int
 	return resourceReservedIPRead(ctx, d, m)
 }
 
-func resourceReservedIPDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceReservedIPDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to get client: %w", err))

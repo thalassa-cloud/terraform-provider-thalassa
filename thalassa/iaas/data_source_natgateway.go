@@ -120,7 +120,7 @@ func DataSourceNatGateway() *schema.Resource {
 	}
 }
 
-func dataSourceNatGatewayRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataSourceNatGatewayRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	provider := provider.GetProvider(m)
 
 	// Build filters based on provided criteria
@@ -129,7 +129,7 @@ func dataSourceNatGatewayRead(ctx context.Context, d *schema.ResourceData, m int
 	subnetID := d.Get("subnet_id").(string)
 	region := d.Get("region").(string)
 	status := d.Get("status").(string)
-	labels := d.Get("labels").(map[string]interface{})
+	labels := d.Get("labels").(map[string]any)
 
 	// Add VPC filter
 	if vpcID != "" {

@@ -152,7 +152,7 @@ func resourceTfsInstance() *schema.Resource {
 	}
 }
 
-func resourceTfsInstanceCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceTfsInstanceCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -246,7 +246,7 @@ func resourceTfsInstanceCreate(ctx context.Context, d *schema.ResourceData, m in
 	return resourceTfsInstanceRead(ctx, d, m)
 }
 
-func resourceTfsInstanceRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceTfsInstanceRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to create Thalassa client: %w", err))
@@ -303,9 +303,9 @@ func resourceTfsInstanceRead(ctx context.Context, d *schema.ResourceData, m inte
 
 	// Set endpoints
 	if len(tfsInstance.Endpoints) > 0 {
-		endpoints := make([]map[string]interface{}, len(tfsInstance.Endpoints))
+		endpoints := make([]map[string]any, len(tfsInstance.Endpoints))
 		for i, endpoint := range tfsInstance.Endpoints {
-			endpointMap := map[string]interface{}{
+			endpointMap := map[string]any{
 				"identity": endpoint.Identity,
 				"address":  endpoint.EndpointAddress,
 				"hostname": endpoint.EndpointHostname,
@@ -315,7 +315,7 @@ func resourceTfsInstanceRead(ctx context.Context, d *schema.ResourceData, m inte
 		}
 		d.Set("endpoints", endpoints)
 	} else {
-		d.Set("endpoints", []map[string]interface{}{})
+		d.Set("endpoints", []map[string]any{})
 	}
 
 	// Set security group IDs
@@ -332,7 +332,7 @@ func resourceTfsInstanceRead(ctx context.Context, d *schema.ResourceData, m inte
 	return nil
 }
 
-func resourceTfsInstanceUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceTfsInstanceUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to create Thalassa client: %w", err))
@@ -385,9 +385,9 @@ func resourceTfsInstanceUpdate(ctx context.Context, d *schema.ResourceData, m in
 
 		// Set endpoints
 		if len(tfsInstance.Endpoints) > 0 {
-			endpoints := make([]map[string]interface{}, len(tfsInstance.Endpoints))
+			endpoints := make([]map[string]any, len(tfsInstance.Endpoints))
 			for i, endpoint := range tfsInstance.Endpoints {
-				endpointMap := map[string]interface{}{
+				endpointMap := map[string]any{
 					"identity": endpoint.Identity,
 					"address":  endpoint.EndpointAddress,
 					"hostname": endpoint.EndpointHostname,
@@ -397,7 +397,7 @@ func resourceTfsInstanceUpdate(ctx context.Context, d *schema.ResourceData, m in
 			}
 			d.Set("endpoints", endpoints)
 		} else {
-			d.Set("endpoints", []map[string]interface{}{})
+			d.Set("endpoints", []map[string]any{})
 		}
 
 		return nil
@@ -406,7 +406,7 @@ func resourceTfsInstanceUpdate(ctx context.Context, d *schema.ResourceData, m in
 	return resourceTfsInstanceRead(ctx, d, m)
 }
 
-func resourceTfsInstanceDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceTfsInstanceDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to create Thalassa client: %w", err))

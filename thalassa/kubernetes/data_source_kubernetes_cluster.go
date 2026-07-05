@@ -251,7 +251,7 @@ func DataSourceKubernetesCluster() *schema.Resource {
 	}
 }
 
-func dataSourceKubernetesClusterRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataSourceKubernetesClusterRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	provider := provider.GetProvider(m)
 	name := d.Get("name").(string)
 
@@ -306,10 +306,10 @@ func dataSourceKubernetesClusterRead(ctx context.Context, d *schema.ResourceData
 
 			// Set API server ACLs
 			if cluster.ApiServerACLs.AllowedCIDRs != nil {
-				apiServerACLs := map[string]interface{}{
+				apiServerACLs := map[string]any{
 					"allowed_cidrs": cluster.ApiServerACLs.AllowedCIDRs,
 				}
-				if err := d.Set("api_server_acls", []interface{}{apiServerACLs}); err != nil {
+				if err := d.Set("api_server_acls", []any{apiServerACLs}); err != nil {
 					return diag.FromErr(fmt.Errorf("error setting api_server_acls: %s", err))
 				}
 			}
@@ -327,7 +327,7 @@ func dataSourceKubernetesClusterRead(ctx context.Context, d *schema.ResourceData
 
 			// Set autoscaler config
 			if cluster.AutoscalerConfig != nil {
-				autoscalerConfig := map[string]interface{}{
+				autoscalerConfig := map[string]any{
 					"scale_down_disabled":              cluster.AutoscalerConfig.ScaleDownDisabled,
 					"scale_down_delay_after_add":       cluster.AutoscalerConfig.ScaleDownDelayAfterAdd,
 					"estimator":                        cluster.AutoscalerConfig.Estimator,
@@ -340,7 +340,7 @@ func dataSourceKubernetesClusterRead(ctx context.Context, d *schema.ResourceData
 					"max_graceful_termination_sec":     cluster.AutoscalerConfig.MaxGracefulTerminationSec,
 					"enable_proactive_scale_up":        cluster.AutoscalerConfig.EnableProactiveScaleUp,
 				}
-				if err := d.Set("autoscaler_config", []interface{}{autoscalerConfig}); err != nil {
+				if err := d.Set("autoscaler_config", []any{autoscalerConfig}); err != nil {
 					return diag.FromErr(fmt.Errorf("error setting autoscaler_config: %s", err))
 				}
 			}

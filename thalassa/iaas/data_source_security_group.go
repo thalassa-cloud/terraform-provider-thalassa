@@ -186,7 +186,7 @@ func DataSourceSecurityGroup() *schema.Resource {
 	}
 }
 
-func dataSourceSecurityGroupRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func dataSourceSecurityGroupRead(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(meta), d)
 	if err != nil {
 		return diag.FromErr(err)

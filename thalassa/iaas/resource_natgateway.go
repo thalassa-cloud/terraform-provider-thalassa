@@ -114,7 +114,7 @@ func resourceNatGateway() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
 		},
-		CustomizeDiff: func(ctx context.Context, diff *schema.ResourceDiff, meta interface{}) error {
+		CustomizeDiff: func(ctx context.Context, diff *schema.ResourceDiff, meta any) error {
 			_, new := diff.GetChange("description")
 			if new == nil {
 				return diff.SetNew("description", "")
@@ -124,7 +124,7 @@ func resourceNatGateway() *schema.Resource {
 	}
 }
 
-func resourceNatGatewayCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceNatGatewayCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -187,7 +187,7 @@ func resourceNatGatewayCreate(ctx context.Context, d *schema.ResourceData, m int
 	return resourceNatGatewayRead(ctx, d, m)
 }
 
-func resourceNatGatewayRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceNatGatewayRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -229,7 +229,7 @@ func resourceNatGatewayRead(ctx context.Context, d *schema.ResourceData, m inter
 	return nil
 }
 
-func resourceNatGatewayUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceNatGatewayUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -264,7 +264,7 @@ func resourceNatGatewayUpdate(ctx context.Context, d *schema.ResourceData, m int
 	return resourceNatGatewayRead(ctx, d, m)
 }
 
-func resourceNatGatewayDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceNatGatewayDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)

@@ -102,7 +102,7 @@ func DataSourceServiceAccount() *schema.Resource {
 	}
 }
 
-func dataSourceServiceAccountRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataSourceServiceAccountRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -181,13 +181,13 @@ func dataSourceServiceAccountRead(ctx context.Context, d *schema.ResourceData, m
 	}
 
 	// Set role bindings
-	roleBindingsList := make([]map[string]interface{}, len(account.RoleBindings))
+	roleBindingsList := make([]map[string]any, len(account.RoleBindings))
 	for i, binding := range account.RoleBindings {
 		roleId := ""
 		if binding.OrganisationRole != nil {
 			roleId = binding.OrganisationRole.Identity
 		}
-		bindingMap := map[string]interface{}{
+		bindingMap := map[string]any{
 			"identity":    binding.Identity,
 			"name":        binding.Name,
 			"description": binding.Description,

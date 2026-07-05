@@ -103,7 +103,7 @@ func resourceSecurityGroupEgressRule() *schema.Resource {
 	}
 }
 
-func resourceSecurityGroupEgressRuleCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceSecurityGroupEgressRuleCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(meta), d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error getting client: %w", err))
@@ -123,7 +123,7 @@ func resourceSecurityGroupEgressRuleCreate(ctx context.Context, d *schema.Resour
 	// Warn if the security group already has egress rules, as this might indicate
 	// that rules are being managed by the security group resource
 	if len(securityGroup.EgressRules) > 0 {
-		tflog.Warn(ctx, "Security group already has egress rules. Ensure you're not managing rules through both thalassa_security_group and thalassa_security_group_egress_rule resources for the same security group, as this will cause conflicts.", map[string]interface{}{
+		tflog.Warn(ctx, "Security group already has egress rules. Ensure you're not managing rules through both thalassa_security_group and thalassa_security_group_egress_rule resources for the same security group, as this will cause conflicts.", map[string]any{
 			"security_group_id": securityGroupID,
 			"existing_rules":    len(securityGroup.EgressRules),
 		})
@@ -131,7 +131,7 @@ func resourceSecurityGroupEgressRuleCreate(ctx context.Context, d *schema.Resour
 
 	var rules []iaas.SecurityGroupRule
 	if v, ok := d.GetOk("rule"); ok {
-		rules = expandSecurityGroupRules(v.([]interface{}))
+		rules = expandSecurityGroupRules(v.([]any))
 	}
 
 	batchReq := iaas.BatchUpdateSecurityGroupRulesRequest{
@@ -149,7 +149,7 @@ func resourceSecurityGroupEgressRuleCreate(ctx context.Context, d *schema.Resour
 	return resourceSecurityGroupEgressRuleRead(ctx, d, meta)
 }
 
-func resourceSecurityGroupEgressRuleRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceSecurityGroupEgressRuleRead(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(meta), d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error getting client: %w", err))
@@ -177,7 +177,7 @@ func resourceSecurityGroupEgressRuleRead(ctx context.Context, d *schema.Resource
 	return nil
 }
 
-func resourceSecurityGroupEgressRuleUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceSecurityGroupEgressRuleUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(meta), d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error getting client: %w", err))
@@ -187,7 +187,7 @@ func resourceSecurityGroupEgressRuleUpdate(ctx context.Context, d *schema.Resour
 
 	var rules []iaas.SecurityGroupRule
 	if v, ok := d.GetOk("rule"); ok {
-		rules = expandSecurityGroupRules(v.([]interface{}))
+		rules = expandSecurityGroupRules(v.([]any))
 	}
 
 	batchReq := iaas.BatchUpdateSecurityGroupRulesRequest{
@@ -202,7 +202,7 @@ func resourceSecurityGroupEgressRuleUpdate(ctx context.Context, d *schema.Resour
 	return resourceSecurityGroupEgressRuleRead(ctx, d, meta)
 }
 
-func resourceSecurityGroupEgressRuleDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceSecurityGroupEgressRuleDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(meta), d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error getting client: %w", err))

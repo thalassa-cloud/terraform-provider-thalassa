@@ -114,7 +114,7 @@ func ResourceServiceAccount() *schema.Resource {
 	}
 }
 
-func resourceServiceAccountCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceServiceAccountCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -140,7 +140,7 @@ func resourceServiceAccountCreate(ctx context.Context, d *schema.ResourceData, m
 	return diag.FromErr(fmt.Errorf("failed to create service account"))
 }
 
-func resourceServiceAccountRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceServiceAccountRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to get service account: %w", err))
@@ -175,13 +175,13 @@ func resourceServiceAccountRead(ctx context.Context, d *schema.ResourceData, m i
 	}
 
 	// Set role bindings
-	roleBindingsList := make([]map[string]interface{}, len(account.RoleBindings))
+	roleBindingsList := make([]map[string]any, len(account.RoleBindings))
 	for i, binding := range account.RoleBindings {
 		roleId := ""
 		if binding.OrganisationRole != nil {
 			roleId = binding.OrganisationRole.Identity
 		}
-		bindingMap := map[string]interface{}{
+		bindingMap := map[string]any{
 			"identity":    binding.Identity,
 			"name":        binding.Name,
 			"description": binding.Description,
@@ -196,7 +196,7 @@ func resourceServiceAccountRead(ctx context.Context, d *schema.ResourceData, m i
 	return nil
 }
 
-func resourceServiceAccountUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceServiceAccountUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to update service account: %w", err))
@@ -223,7 +223,7 @@ func resourceServiceAccountUpdate(ctx context.Context, d *schema.ResourceData, m
 	return diag.FromErr(fmt.Errorf("failed to update service account"))
 }
 
-func resourceServiceAccountDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceServiceAccountDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to get client: %w", err))

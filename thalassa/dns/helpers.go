@@ -20,7 +20,7 @@ var dnsRecordTypes = []string{
 }
 
 func setDnsZoneState(d interface {
-	Set(string, interface{}) error
+	Set(string, any) error
 }, zone *tcdns.DnsZone) error {
 	if err := d.Set("zone_name", zone.Name); err != nil {
 		return err
@@ -54,7 +54,7 @@ func setDnsZoneState(d interface {
 }
 
 func setDnsRecordState(d interface {
-	Set(string, interface{}) error
+	Set(string, any) error
 }, record *tcdns.DnsRecord, zoneID string) error {
 	if err := d.Set("zone_id", zoneID); err != nil {
 		return err
@@ -84,10 +84,10 @@ func setDnsRecordState(d interface {
 	return nil
 }
 
-func flattenDsRecords(records []tcdns.DnsZoneDsRecord) []map[string]interface{} {
-	result := make([]map[string]interface{}, 0, len(records))
+func flattenDsRecords(records []tcdns.DnsZoneDsRecord) []map[string]any {
+	result := make([]map[string]any, 0, len(records))
 	for _, r := range records {
-		result = append(result, map[string]interface{}{
+		result = append(result, map[string]any{
 			"record":           r.Record,
 			"digest_type_name": r.DigestTypeName,
 			"key_tag":          r.KeyTag,

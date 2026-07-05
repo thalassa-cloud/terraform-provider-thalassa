@@ -141,7 +141,7 @@ func dataSourceDbCluster() *schema.Resource {
 	}
 }
 
-func dataSourceDbClusterRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataSourceDbClusterRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)

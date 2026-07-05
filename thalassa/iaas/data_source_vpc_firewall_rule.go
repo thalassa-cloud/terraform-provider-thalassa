@@ -136,7 +136,7 @@ func DataSourceVpcFirewallRule() *schema.Resource {
 	}
 }
 
-func dataSourceVpcFirewallRuleRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataSourceVpcFirewallRuleRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	provider := provider.GetProvider(m)
 	vpcIdentity := d.Get("vpc_id").(string)
 	name := d.Get("name").(string)

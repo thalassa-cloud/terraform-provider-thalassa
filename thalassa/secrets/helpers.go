@@ -43,7 +43,7 @@ func parseSecretVersionID(id string) (region, path string, version int, err erro
 	return region, path, version, err
 }
 
-func validateSecretPath(path interface{}, _ string) (warns []string, errs []error) {
+func validateSecretPath(path any, _ string) (warns []string, errs []error) {
 	p, ok := path.(string)
 	if !ok {
 		return nil, []error{fmt.Errorf("path must be a string")}
@@ -55,7 +55,7 @@ func validateSecretPath(path interface{}, _ string) (warns []string, errs []erro
 }
 
 func setSecretState(d interface {
-	Set(string, interface{}) error
+	Set(string, any) error
 }, secret *tcsecrets.Secret, region string) error {
 	if err := d.Set("region", region); err != nil {
 		return err
@@ -93,11 +93,11 @@ func setSecretState(d interface {
 	return nil
 }
 
-func expandGenerateSecret(raw []interface{}) *tcsecrets.GenerateSecret {
+func expandGenerateSecret(raw []any) *tcsecrets.GenerateSecret {
 	if len(raw) == 0 {
 		return nil
 	}
-	block := raw[0].(map[string]interface{})
+	block := raw[0].(map[string]any)
 	gen := &tcsecrets.GenerateSecret{}
 	if v, ok := block["byte_length"].(int); ok && v > 0 {
 		gen.ByteLength = v
@@ -105,23 +105,23 @@ func expandGenerateSecret(raw []interface{}) *tcsecrets.GenerateSecret {
 	return gen
 }
 
-func expandAccessPolicyStatements(raw []interface{}) []tcsecrets.SecretPolicyStatement {
+func expandAccessPolicyStatements(raw []any) []tcsecrets.SecretPolicyStatement {
 	if len(raw) == 0 {
 		return nil
 	}
 	statements := make([]tcsecrets.SecretPolicyStatement, 0, len(raw))
 	for _, item := range raw {
-		block := item.(map[string]interface{})
+		block := item.(map[string]any)
 		stmt := tcsecrets.SecretPolicyStatement{
 			Effect: block["effect"].(string),
 		}
-		if v, ok := block["actions"].([]interface{}); ok {
+		if v, ok := block["actions"].([]any); ok {
 			stmt.Actions = make([]string, len(v))
 			for i, a := range v {
 				stmt.Actions[i] = a.(string)
 			}
 		}
-		if v, ok := block["principals"].([]interface{}); ok {
+		if v, ok := block["principals"].([]any); ok {
 			stmt.Principals = make([]string, len(v))
 			for i, p := range v {
 				stmt.Principals[i] = p.(string)
@@ -132,21 +132,21 @@ func expandAccessPolicyStatements(raw []interface{}) []tcsecrets.SecretPolicySta
 	return statements
 }
 
-func flattenAccessPolicyStatements(statements []tcsecrets.SecretPolicyStatement) []map[string]interface{} {
+func flattenAccessPolicyStatements(statements []tcsecrets.SecretPolicyStatement) []map[string]any {
 	if len(statements) == 0 {
 		return nil
 	}
-	result := make([]map[string]interface{}, 0, len(statements))
+	result := make([]map[string]any, 0, len(statements))
 	for _, stmt := range statements {
-		actions := make([]interface{}, len(stmt.Actions))
+		actions := make([]any, len(stmt.Actions))
 		for i, a := range stmt.Actions {
 			actions[i] = a
 		}
-		principals := make([]interface{}, len(stmt.Principals))
+		principals := make([]any, len(stmt.Principals))
 		for i, p := range stmt.Principals {
 			principals[i] = p
 		}
-		result = append(result, map[string]interface{}{
+		result = append(result, map[string]any{
 			"effect":     stmt.Effect,
 			"actions":    actions,
 			"principals": principals,

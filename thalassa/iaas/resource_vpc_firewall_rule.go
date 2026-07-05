@@ -153,13 +153,13 @@ func resourceVpcFirewallRule() *schema.Resource {
 	}
 }
 
-func resourceVpcFirewallRuleCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceVpcFirewallRuleCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	protocols := d.Get("protocols").([]interface{})[0].(map[string]interface{})
+	protocols := d.Get("protocols").([]any)[0].(map[string]any)
 	protocolsConfig := iaas.VpcFirewallRuleProtocols{
 		TCP:  protocols["tcp"].(bool),
 		UDP:  protocols["udp"].(bool),
@@ -221,7 +221,7 @@ func resourceVpcFirewallRuleCreate(ctx context.Context, d *schema.ResourceData, 
 	return resourceVpcFirewallRuleRead(ctx, d, m)
 }
 
-func resourceVpcFirewallRuleRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceVpcFirewallRuleRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -246,13 +246,13 @@ func resourceVpcFirewallRuleRead(ctx context.Context, d *schema.ResourceData, m 
 	return setVpcFirewallRuleData(d, firewallRule)
 }
 
-func resourceVpcFirewallRuleUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceVpcFirewallRuleUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	protocols := d.Get("protocols").([]interface{})[0].(map[string]interface{})
+	protocols := d.Get("protocols").([]any)[0].(map[string]any)
 	protocolsConfig := iaas.VpcFirewallRuleProtocols{
 		TCP:  protocols["tcp"].(bool),
 		UDP:  protocols["udp"].(bool),
@@ -313,7 +313,7 @@ func resourceVpcFirewallRuleUpdate(ctx context.Context, d *schema.ResourceData, 
 	return setVpcFirewallRuleData(d, firewallRule)
 }
 
-func resourceVpcFirewallRuleDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceVpcFirewallRuleDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -354,7 +354,7 @@ func setVpcFirewallRuleData(d *schema.ResourceData, rule *iaas.VpcFirewallRule) 
 	}
 
 	// Set protocols
-	protocols := []map[string]interface{}{
+	protocols := []map[string]any{
 		{
 			"tcp":  rule.Protocols.TCP,
 			"udp":  rule.Protocols.UDP,

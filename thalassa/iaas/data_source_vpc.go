@@ -77,7 +77,7 @@ func DataSourceVpc() *schema.Resource {
 	}
 }
 
-func dataSourceVpcRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataSourceVpcRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	provider := provider.GetProvider(m)
 	slug := d.Get("slug").(string)
 	name := d.Get("name").(string)

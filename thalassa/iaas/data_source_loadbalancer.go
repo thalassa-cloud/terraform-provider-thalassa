@@ -156,7 +156,7 @@ func DataSourceLoadBalancer() *schema.Resource {
 	}
 }
 
-func dataSourceLoadBalancerRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataSourceLoadBalancerRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	provider := provider.GetProvider(m)
 
 	// Build filters based on provided criteria
@@ -165,7 +165,7 @@ func dataSourceLoadBalancerRead(ctx context.Context, d *schema.ResourceData, m i
 	subnetID := d.Get("subnet_id").(string)
 	region := d.Get("region").(string)
 	status := d.Get("status").(string)
-	labels := d.Get("labels").(map[string]interface{})
+	labels := d.Get("labels").(map[string]any)
 
 	// Add VPC filter
 	if vpcID != "" {

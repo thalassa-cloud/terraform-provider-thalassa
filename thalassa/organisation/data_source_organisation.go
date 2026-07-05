@@ -43,7 +43,7 @@ func DataSourceOrganisations() *schema.Resource {
 	}
 }
 
-func dataSourceOrganisationsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataSourceOrganisationsRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	provider := provider.GetProvider(m)
 	slug := d.Get("slug").(string)
 

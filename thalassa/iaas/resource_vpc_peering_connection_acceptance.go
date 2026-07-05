@@ -68,7 +68,7 @@ func resourceVpcPeeringConnectionAcceptance() *schema.Resource {
 	}
 }
 
-func resourceVpcPeeringConnectionAcceptanceCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceVpcPeeringConnectionAcceptanceCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -108,7 +108,7 @@ func resourceVpcPeeringConnectionAcceptanceCreate(ctx context.Context, d *schema
 	return setVpcPeeringConnectionAcceptanceData(d, peeringConnection)
 }
 
-func updateVpcPeeringConnectionAcceptance(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func updateVpcPeeringConnectionAcceptance(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -136,7 +136,7 @@ func updateVpcPeeringConnectionAcceptance(ctx context.Context, d *schema.Resourc
 	return setVpcPeeringConnectionAcceptanceData(d, peeringConnection)
 }
 
-func resourceVpcPeeringConnectionAcceptanceRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceVpcPeeringConnectionAcceptanceRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -155,7 +155,7 @@ func resourceVpcPeeringConnectionAcceptanceRead(ctx context.Context, d *schema.R
 	return setVpcPeeringConnectionAcceptanceData(d, peeringConnection)
 }
 
-func resourceVpcPeeringConnectionAcceptanceDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceVpcPeeringConnectionAcceptanceDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to get client: %w", err))

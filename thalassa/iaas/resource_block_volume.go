@@ -103,7 +103,7 @@ func resourceBlockVolume() *schema.Resource {
 	}
 }
 
-func resourceBlockVolumeCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceBlockVolumeCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -199,7 +199,7 @@ func resourceBlockVolumeCreate(ctx context.Context, d *schema.ResourceData, m in
 	return resourceBlockVolumeRead(ctx, d, m)
 }
 
-func resourceBlockVolumeRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceBlockVolumeRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to create Thalassa client: %w", err))
@@ -254,7 +254,7 @@ func resourceBlockVolumeRead(ctx context.Context, d *schema.ResourceData, m inte
 	return nil
 }
 
-func resourceBlockVolumeUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceBlockVolumeUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to create Thalassa client: %w", err))
@@ -293,7 +293,7 @@ func resourceBlockVolumeUpdate(ctx context.Context, d *schema.ResourceData, m in
 	return resourceBlockVolumeRead(ctx, d, m)
 }
 
-func resourceBlockVolumeDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceBlockVolumeDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to create Thalassa client: %w", err))

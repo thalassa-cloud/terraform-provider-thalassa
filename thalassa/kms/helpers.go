@@ -30,7 +30,7 @@ var kmsKeyStatuses = []string{
 }
 
 func setKmsKeyState(d interface {
-	Set(string, interface{}) error
+	Set(string, any) error
 }, key *tckms.KmsKey, region string) error {
 	if err := d.Set("region", region); err != nil {
 		return err

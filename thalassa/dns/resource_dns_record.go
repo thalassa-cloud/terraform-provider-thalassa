@@ -79,7 +79,7 @@ func ResourceDnsRecord() *schema.Resource {
 	}
 }
 
-func resourceDnsRecordCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceDnsRecordCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -100,7 +100,7 @@ func resourceDnsRecordCreate(ctx context.Context, d *schema.ResourceData, m inte
 	return resourceDnsRecordReadWithRecord(ctx, d, zoneID, record)
 }
 
-func resourceDnsRecordRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceDnsRecordRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -127,7 +127,7 @@ func resourceDnsRecordReadWithRecord(_ context.Context, d *schema.ResourceData, 
 	return nil
 }
 
-func resourceDnsRecordUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceDnsRecordUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -147,7 +147,7 @@ func resourceDnsRecordUpdate(ctx context.Context, d *schema.ResourceData, m inte
 	return resourceDnsRecordRead(ctx, d, m)
 }
 
-func resourceDnsRecordDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceDnsRecordDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)

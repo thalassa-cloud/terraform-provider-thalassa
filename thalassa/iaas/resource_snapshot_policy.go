@@ -76,7 +76,7 @@ func resourceSnapshotPolicy() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Time to live for snapshots created by this policy. Supports formats like '168h' (hours), '7d' (days), '1w' (weeks). Examples: '24h', '7d', '30d'",
-				ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
+				ValidateFunc: func(val any, key string) (warns []string, errs []error) {
 					ttlStr := val.(string)
 					_, err := parseDuration(ttlStr)
 					if err != nil {
@@ -100,7 +100,7 @@ func resourceSnapshotPolicy() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Cron schedule for the snapshot policy (e.g., '0 2 * * *' for daily at 2 AM)",
-				ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
+				ValidateFunc: func(val any, key string) (warns []string, errs []error) {
 					schedule := val.(string)
 					if !regexp.MustCompile(`^[0-9,\-\*]+ [0-9,\-\*]+ [0-9,\-\*]+ [0-9,\-\*]+ [0-9,\-\*]+$`).MatchString(schedule) {
 						errs = append(errs, fmt.Errorf("schedule must be in valid cron format (e.g., '0 2 * * *')"))
@@ -168,8 +168,8 @@ func resourceSnapshotPolicy() *schema.Resource {
 // in addition to standard Go duration formats
 func parseDuration(s string) (time.Duration, error) {
 	// Handle days (d)
-	if strings.HasSuffix(s, "d") {
-		daysStr := strings.TrimSuffix(s, "d")
+	if before, ok := strings.CutSuffix(s, "d"); ok {
+		daysStr := before
 		days, err := strconv.Atoi(daysStr)
 		if err != nil {
 			return 0, fmt.Errorf("invalid days format: %w", err)
@@ -178,8 +178,8 @@ func parseDuration(s string) (time.Duration, error) {
 	}
 
 	// Handle weeks (w)
-	if strings.HasSuffix(s, "w") {
-		weeksStr := strings.TrimSuffix(s, "w")
+	if before, ok := strings.CutSuffix(s, "w"); ok {
+		weeksStr := before
 		weeks, err := strconv.Atoi(weeksStr)
 		if err != nil {
 			return 0, fmt.Errorf("invalid weeks format: %w", err)
@@ -191,7 +191,7 @@ func parseDuration(s string) (time.Duration, error) {
 	return time.ParseDuration(s)
 }
 
-func resourceSnapshotPolicyCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceSnapshotPolicyCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -229,11 +229,11 @@ func resourceSnapshotPolicyCreate(ctx context.Context, d *schema.ResourceData, m
 	}
 
 	// Parse target
-	targetList := d.Get("target").([]interface{})
+	targetList := d.Get("target").([]any)
 	if len(targetList) != 1 {
 		return diag.FromErr(fmt.Errorf("target must have exactly one element"))
 	}
-	targetMap := targetList[0].(map[string]interface{})
+	targetMap := targetList[0].(map[string]any)
 	targetType := targetMap["type"].(string)
 
 	var target iaas.SnapshotPolicyTarget
@@ -290,7 +290,7 @@ func resourceSnapshotPolicyCreate(ctx context.Context, d *schema.ResourceData, m
 	return resourceSnapshotPolicyRead(ctx, d, m)
 }
 
-func resourceSnapshotPolicyRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceSnapshotPolicyRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to create Thalassa client: %w", err))
@@ -340,7 +340,7 @@ func resourceSnapshotPolicyRead(ctx context.Context, d *schema.ResourceData, m i
 	}
 
 	// Set target
-	target := map[string]interface{}{
+	target := map[string]any{
 		"type": string(policy.Target.Type),
 	}
 
@@ -352,12 +352,12 @@ func resourceSnapshotPolicyRead(ctx context.Context, d *schema.ResourceData, m i
 		target["volume_identities"] = policy.Target.VolumeIdentities
 	}
 
-	d.Set("target", []interface{}{target})
+	d.Set("target", []any{target})
 
 	return nil
 }
 
-func resourceSnapshotPolicyUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceSnapshotPolicyUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to create Thalassa client: %w", err))
@@ -371,11 +371,11 @@ func resourceSnapshotPolicyUpdate(ctx context.Context, d *schema.ResourceData, m
 	}
 
 	// Parse target
-	targetList := d.Get("target").([]interface{})
+	targetList := d.Get("target").([]any)
 	if len(targetList) != 1 {
 		return diag.FromErr(fmt.Errorf("target must have exactly one element"))
 	}
-	targetMap := targetList[0].(map[string]interface{})
+	targetMap := targetList[0].(map[string]any)
 	targetType := targetMap["type"].(string)
 
 	var target iaas.SnapshotPolicyTarget
@@ -443,7 +443,7 @@ func resourceSnapshotPolicyUpdate(ctx context.Context, d *schema.ResourceData, m
 	return resourceSnapshotPolicyRead(ctx, d, m)
 }
 
-func resourceSnapshotPolicyDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceSnapshotPolicyDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to create Thalassa client: %w", err))

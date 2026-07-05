@@ -53,7 +53,7 @@ func dataSourceDbBackupSchedule() *schema.Resource {
 	}
 }
 
-func dataSourceDbBackupScheduleRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataSourceDbBackupScheduleRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)

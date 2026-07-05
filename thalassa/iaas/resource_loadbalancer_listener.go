@@ -17,7 +17,7 @@ import (
 )
 
 // validateCIDRorIP validates that a string is either a valid CIDR block or IP address
-func validateCIDRorIP(i interface{}, k string) (warnings []string, errors []error) {
+func validateCIDRorIP(i any, k string) (warnings []string, errors []error) {
 	v, ok := i.(string)
 	if !ok {
 		errors = append(errors, fmt.Errorf("expected type of %s to be string", k))
@@ -137,7 +137,7 @@ func resourceLoadBalancerListener() *schema.Resource {
 	}
 }
 
-func resourceLoadBalancerListenerCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceLoadBalancerListenerCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -165,8 +165,8 @@ func resourceLoadBalancerListenerCreate(ctx context.Context, d *schema.ResourceD
 	}
 
 	if v, ok := d.GetOk("allowed_sources"); ok {
-		sources := make([]string, len(v.([]interface{})))
-		for i, source := range v.([]interface{}) {
+		sources := make([]string, len(v.([]any)))
+		for i, source := range v.([]any) {
 			sources[i] = source.(string)
 		}
 		createListener.AllowedSources = sources
@@ -186,7 +186,7 @@ func resourceLoadBalancerListenerCreate(ctx context.Context, d *schema.ResourceD
 	return resourceLoadBalancerListenerRead(ctx, d, m)
 }
 
-func resourceLoadBalancerListenerRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceLoadBalancerListenerRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -244,7 +244,7 @@ func resourceLoadBalancerListenerRead(ctx context.Context, d *schema.ResourceDat
 	return nil
 }
 
-func resourceLoadBalancerListenerUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceLoadBalancerListenerUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -274,8 +274,8 @@ func resourceLoadBalancerListenerUpdate(ctx context.Context, d *schema.ResourceD
 	}
 
 	if v, ok := d.GetOk("allowed_sources"); ok {
-		sources := make([]string, len(v.([]interface{})))
-		for i, source := range v.([]interface{}) {
+		sources := make([]string, len(v.([]any)))
+		for i, source := range v.([]any) {
 			sources[i] = source.(string)
 		}
 		updateListener.AllowedSources = sources
@@ -313,7 +313,7 @@ func resourceLoadBalancerListenerUpdate(ctx context.Context, d *schema.ResourceD
 	return resourceLoadBalancerListenerRead(ctx, d, m)
 }
 
-func resourceLoadBalancerListenerDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceLoadBalancerListenerDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)

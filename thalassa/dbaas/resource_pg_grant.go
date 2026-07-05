@@ -71,7 +71,7 @@ func resourcePgGrant() *schema.Resource {
 	}
 }
 
-func resourcePgGrantCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourcePgGrantCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -138,7 +138,7 @@ func resourcePgGrantCreate(ctx context.Context, d *schema.ResourceData, m interf
 	return resourcePgGrantRead(ctx, d, m)
 }
 
-func resourcePgGrantRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourcePgGrantRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -192,7 +192,7 @@ func resourcePgGrantRead(ctx context.Context, d *schema.ResourceData, m interfac
 	return nil
 }
 
-func resourcePgGrantUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourcePgGrantUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -226,7 +226,7 @@ func resourcePgGrantUpdate(ctx context.Context, d *schema.ResourceData, m interf
 	return resourcePgGrantRead(ctx, d, m)
 }
 
-func resourcePgGrantDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourcePgGrantDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)

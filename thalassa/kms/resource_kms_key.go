@@ -159,7 +159,7 @@ func ResourceKmsKey() *schema.Resource {
 	}
 }
 
-func resourceKmsKeyCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceKmsKeyCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -216,7 +216,7 @@ func resourceKmsKeyCreate(ctx context.Context, d *schema.ResourceData, m interfa
 	return resourceKmsKeyReadWithKey(ctx, d, m, region, key)
 }
 
-func resourceKmsKeyRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceKmsKeyRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -237,7 +237,7 @@ func resourceKmsKeyRead(ctx context.Context, d *schema.ResourceData, m interface
 	return resourceKmsKeyReadWithKey(ctx, d, m, region, key)
 }
 
-func resourceKmsKeyReadWithKey(ctx context.Context, d *schema.ResourceData, m interface{}, region string, key *tckms.KmsKey) diag.Diagnostics {
+func resourceKmsKeyReadWithKey(ctx context.Context, d *schema.ResourceData, m any, region string, key *tckms.KmsKey) diag.Diagnostics {
 	if err := setKmsKeyState(d, key, region); err != nil {
 		return diag.FromErr(err)
 	}
@@ -252,7 +252,7 @@ func resourceKmsKeyReadWithKey(ctx context.Context, d *schema.ResourceData, m in
 	return nil
 }
 
-func resourceKmsKeyUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceKmsKeyUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -305,7 +305,7 @@ func resourceKmsKeyUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 	return resourceKmsKeyRead(ctx, d, m)
 }
 
-func resourceKmsKeyDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceKmsKeyDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)

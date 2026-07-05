@@ -221,7 +221,7 @@ func resourceVpcPeeringConnection() *schema.Resource {
 	}
 }
 
-func resourceVpcPeeringConnectionCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceVpcPeeringConnectionCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -257,7 +257,7 @@ func resourceVpcPeeringConnectionCreate(ctx context.Context, d *schema.ResourceD
 	return resourceVpcPeeringConnectionRead(ctx, d, m)
 }
 
-func resourceVpcPeeringConnectionRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceVpcPeeringConnectionRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -275,7 +275,7 @@ func resourceVpcPeeringConnectionRead(ctx context.Context, d *schema.ResourceDat
 	return setVpcPeeringConnectionData(d, peeringConnection)
 }
 
-func resourceVpcPeeringConnectionUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceVpcPeeringConnectionUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -314,7 +314,7 @@ func resourceVpcPeeringConnectionUpdate(ctx context.Context, d *schema.ResourceD
 	return setVpcPeeringConnectionData(d, peeringConnection)
 }
 
-func resourceVpcPeeringConnectionDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceVpcPeeringConnectionDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -382,7 +382,7 @@ func setVpcPeeringConnectionData(d *schema.ResourceData, connection *iaas.VpcPee
 
 	// Set requester VPC information
 	if connection.RequesterVpc != nil {
-		requesterVpc := []map[string]interface{}{
+		requesterVpc := []map[string]any{
 			{
 				"identity": connection.RequesterVpc.Identity,
 				"name":     connection.RequesterVpc.Name,
@@ -393,7 +393,7 @@ func setVpcPeeringConnectionData(d *schema.ResourceData, connection *iaas.VpcPee
 
 	// Set accepter VPC information
 	if connection.AccepterVpc != nil {
-		accepterVpc := []map[string]interface{}{
+		accepterVpc := []map[string]any{
 			{
 				"identity": connection.AccepterVpc.Identity,
 				"name":     connection.AccepterVpc.Name,
@@ -404,7 +404,7 @@ func setVpcPeeringConnectionData(d *schema.ResourceData, connection *iaas.VpcPee
 
 	// Set requester organisation information
 	if connection.RequesterOrganisation != nil {
-		requesterOrg := []map[string]interface{}{
+		requesterOrg := []map[string]any{
 			{
 				"identity": connection.RequesterOrganisation.Identity,
 				"name":     connection.RequesterOrganisation.Name,
@@ -415,7 +415,7 @@ func setVpcPeeringConnectionData(d *schema.ResourceData, connection *iaas.VpcPee
 
 	// Set accepter organisation information
 	if connection.AccepterOrganisation != nil {
-		accepterOrg := []map[string]interface{}{
+		accepterOrg := []map[string]any{
 			{
 				"identity": connection.AccepterOrganisation.Identity,
 				"name":     connection.AccepterOrganisation.Name,

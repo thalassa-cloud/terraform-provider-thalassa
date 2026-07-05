@@ -69,7 +69,7 @@ func DataSourceVpcDefaultRouteTable() *schema.Resource {
 	}
 }
 
-func dataSourceVpcDefaultRouteTableRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataSourceVpcDefaultRouteTableRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	prov := provider.GetProvider(m)
 	vpcID := d.Get("vpc_id").(string)
 

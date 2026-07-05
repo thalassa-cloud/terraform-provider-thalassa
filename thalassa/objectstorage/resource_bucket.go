@@ -111,7 +111,7 @@ func resourceBucket() *schema.Resource {
 	}
 }
 
-func resourceBucketCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceBucketCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -176,7 +176,7 @@ func resourceBucketCreate(ctx context.Context, d *schema.ResourceData, m interfa
 	return resourceBucketRead(ctx, d, m)
 }
 
-func resourceBucketRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceBucketRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error getting client: %w", err))
@@ -216,7 +216,7 @@ func resourceBucketRead(ctx context.Context, d *schema.ResourceData, m interface
 	return nil
 }
 
-func resourceBucketUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceBucketUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error getting client: %w", err))
@@ -267,7 +267,7 @@ func resourceBucketUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 	return resourceBucketRead(ctx, d, m)
 }
 
-func resourceBucketDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceBucketDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error getting bucket: %w", err))

@@ -3,6 +3,7 @@ package dbaas
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -35,7 +36,7 @@ func resourceDbCluster() *schema.Resource {
 				Required:    true,
 				ForceNew:    true,
 				Description: "Name of the DB Cluster",
-				ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
+				ValidateFunc: func(val any, key string) (warns []string, errs []error) {
 					if val == "" {
 						errs = append(errs, fmt.Errorf("name is required"))
 					}
@@ -70,7 +71,7 @@ func resourceDbCluster() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Subnet of the DB Cluster",
-				ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
+				ValidateFunc: func(val any, key string) (warns []string, errs []error) {
 					if val == "" {
 						errs = append(errs, fmt.Errorf("subnet is required"))
 					}
@@ -93,7 +94,7 @@ func resourceDbCluster() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Database engine of the cluster",
-				ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
+				ValidateFunc: func(val any, key string) (warns []string, errs []error) {
 					// Must be one of: postgres; PostgresInitDb is only supported for Postgres clusters
 					if val != "postgres" {
 						errs = append(errs, fmt.Errorf("invalid engine: %s", val))
@@ -106,7 +107,7 @@ func resourceDbCluster() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Version of the database engine",
-				ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
+				ValidateFunc: func(val any, key string) (warns []string, errs []error) {
 					if val == "" {
 						errs = append(errs, fmt.Errorf("engine version is required"))
 					}
@@ -129,7 +130,7 @@ func resourceDbCluster() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Storage type used to determine the size of the cluster storage",
-				ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
+				ValidateFunc: func(val any, key string) (warns []string, errs []error) {
 					if val == "" {
 						errs = append(errs, fmt.Errorf("volume type class is required"))
 					}
@@ -210,16 +211,10 @@ func resourceDbCluster() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Auto upgrade policy for the cluster. Options: 'none', 'latest-version', 'latest-stable', 'latest-patch', 'latest-minor', 'latest-major'",
-				ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
+				ValidateFunc: func(val any, key string) (warns []string, errs []error) {
 					validPolicies := []string{"none", "latest-version", "latest-stable", "latest-patch", "latest-minor", "latest-major"}
 					policy := val.(string)
-					valid := false
-					for _, p := range validPolicies {
-						if policy == p {
-							valid = true
-							break
-						}
-					}
+					valid := slices.Contains(validPolicies, policy)
 					if !valid {
 						errs = append(errs, fmt.Errorf("auto_upgrade_policy must be one of: %v", validPolicies))
 					}
@@ -231,7 +226,7 @@ func resourceDbCluster() *schema.Resource {
 				Type:        schema.TypeInt,
 				Optional:    true,
 				Description: "Day of the week for the maintenance window. 0 is Sunday, 6 is Saturday",
-				ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
+				ValidateFunc: func(val any, key string) (warns []string, errs []error) {
 					day := val.(int)
 					if day < 0 || day > 6 {
 						errs = append(errs, fmt.Errorf("maintenance_day must be between 0 (Sunday) and 6 (Saturday)"))
@@ -244,7 +239,7 @@ func resourceDbCluster() *schema.Resource {
 				Type:        schema.TypeInt,
 				Optional:    true,
 				Description: "Start time of the maintenance window on the maintenance day in UTC. 0 is 00:00, 23 is 23:00",
-				ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
+				ValidateFunc: func(val any, key string) (warns []string, errs []error) {
 					hour := val.(int)
 					if hour < 0 || hour > 23 {
 						errs = append(errs, fmt.Errorf("maintenance_start_at must be between 0 and 23"))
@@ -285,7 +280,7 @@ func resourceDbCluster() *schema.Resource {
 	}
 }
 
-func resourceDbClusterCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceDbClusterCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -294,7 +289,7 @@ func resourceDbClusterCreate(ctx context.Context, d *schema.ResourceData, m inte
 	// Safe type assertions with nil checks
 	labels := make(map[string]string)
 	if labelsRaw := d.Get("labels"); labelsRaw != nil {
-		if labelsMap, ok := labelsRaw.(map[string]interface{}); ok {
+		if labelsMap, ok := labelsRaw.(map[string]any); ok {
 			for k, v := range labelsMap {
 				if strVal, ok := v.(string); ok {
 					labels[k] = strVal
@@ -345,7 +340,7 @@ func resourceDbClusterCreate(ctx context.Context, d *schema.ResourceData, m inte
 	}
 
 	engineVersion := d.Get("engine_version").(string)
-	tflog.Info(ctx, "engine", map[string]interface{}{
+	tflog.Info(ctx, "engine", map[string]any{
 		"engine":        engine,
 		"engineVersion": engineVersion,
 	})
@@ -415,8 +410,8 @@ func resourceDbClusterCreate(ctx context.Context, d *schema.ResourceData, m inte
 	}
 
 	// Safe handling of init_db
-	if initDbRaw := d.Get("init_db"); initDbRaw != nil && len(initDbRaw.(map[string]interface{})) > 0 {
-		if initDbMap, ok := initDbRaw.(map[string]interface{}); ok {
+	if initDbRaw := d.Get("init_db"); initDbRaw != nil && len(initDbRaw.(map[string]any)) > 0 {
+		if initDbMap, ok := initDbRaw.(map[string]any); ok {
 			// Safe extraction of init_db values with defaults
 			dataChecksums := false
 			if val, exists := initDbMap["data_checksums"]; exists && val != nil {
@@ -513,8 +508,8 @@ func resourceDbClusterCreate(ctx context.Context, d *schema.ResourceData, m inte
 
 	// Handle restore recovery target
 	if restoreRecoveryTargetRaw := d.Get("restore_recovery_target"); restoreRecoveryTargetRaw != nil {
-		if restoreRecoveryTargetList, ok := restoreRecoveryTargetRaw.([]interface{}); ok && len(restoreRecoveryTargetList) > 0 {
-			if restoreRecoveryTargetMap, ok := restoreRecoveryTargetList[0].(map[string]interface{}); ok {
+		if restoreRecoveryTargetList, ok := restoreRecoveryTargetRaw.([]any); ok && len(restoreRecoveryTargetList) > 0 {
+			if restoreRecoveryTargetMap, ok := restoreRecoveryTargetList[0].(map[string]any); ok {
 				recoveryTarget := &dbaas.RestoreRecoveryTarget{}
 				if targetTime, exists := restoreRecoveryTargetMap["target_time"]; exists && targetTime != nil {
 					if strVal, ok := targetTime.(string); ok && strVal != "" {
@@ -567,7 +562,7 @@ func resourceDbClusterCreate(ctx context.Context, d *schema.ResourceData, m inte
 		}
 	}
 
-	if d.Get("parameters") != nil && len(d.Get("parameters").(map[string]interface{})) > 0 {
+	if d.Get("parameters") != nil && len(d.Get("parameters").(map[string]any)) > 0 {
 		createDbCluster.Parameters = parameters
 	}
 
@@ -626,7 +621,7 @@ func resourceDbClusterCreate(ctx context.Context, d *schema.ResourceData, m inte
 	return resourceDbClusterRead(ctx, d, m)
 }
 
-func resourceDbClusterRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceDbClusterRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -695,7 +690,7 @@ func resourceDbClusterRead(ctx context.Context, d *schema.ResourceData, m interf
 	return nil
 }
 
-func resourceDbClusterUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceDbClusterUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -806,7 +801,7 @@ func createBackupBeforeDestroy(ctx context.Context, dbaasClient *dbaas.Client, d
 		return diag.FromErr(fmt.Errorf("failed to create pre-destroy backup: %w", err))
 	}
 
-	tflog.Info(ctx, "waiting for pre-destroy backup to complete", map[string]interface{}{
+	tflog.Info(ctx, "waiting for pre-destroy backup to complete", map[string]any{
 		"backup_id": backup.Identity,
 	})
 
@@ -827,7 +822,7 @@ func createBackupBeforeDestroy(ctx context.Context, dbaasClient *dbaas.Client, d
 
 		switch backup.Status {
 		case dbaas.ObjectStatusReady:
-			tflog.Info(ctx, "pre-destroy backup completed", map[string]interface{}{
+			tflog.Info(ctx, "pre-destroy backup completed", map[string]any{
 				"backup_id": backup.Identity,
 			})
 			return nil
@@ -839,7 +834,7 @@ func createBackupBeforeDestroy(ctx context.Context, dbaasClient *dbaas.Client, d
 	}
 }
 
-func resourceDbClusterDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceDbClusterDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)

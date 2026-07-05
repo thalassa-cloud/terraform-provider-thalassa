@@ -108,7 +108,7 @@ func resourceSnapshot() *schema.Resource {
 	}
 }
 
-func resourceSnapshotCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceSnapshotCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -158,7 +158,7 @@ func resourceSnapshotCreate(ctx context.Context, d *schema.ResourceData, m inter
 	return resourceSnapshotRead(ctx, d, m)
 }
 
-func resourceSnapshotRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceSnapshotRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to create Thalassa client: %w", err))
@@ -206,7 +206,7 @@ func resourceSnapshotRead(ctx context.Context, d *schema.ResourceData, m interfa
 	return nil
 }
 
-func resourceSnapshotUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceSnapshotUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to create Thalassa client: %w", err))
@@ -240,7 +240,7 @@ func resourceSnapshotUpdate(ctx context.Context, d *schema.ResourceData, m inter
 	return resourceSnapshotRead(ctx, d, m)
 }
 
-func resourceSnapshotDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceSnapshotDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to create Thalassa client: %w", err))

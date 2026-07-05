@@ -48,7 +48,7 @@ func resourceTargetGroupAttachment() *schema.Resource {
 	}
 }
 
-func resourceTargetGroupAttachmentCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceTargetGroupAttachmentCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -96,7 +96,7 @@ func createTargetGroupAttachmentID(vmiID, targetGroupID string) string {
 	return fmt.Sprintf("%s:%s", vmiID, targetGroupID)
 }
 
-func resourceTargetGroupAttachmentRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceTargetGroupAttachmentRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error getting client: %w", err))
@@ -140,7 +140,7 @@ func resourceTargetGroupAttachmentRead(ctx context.Context, d *schema.ResourceDa
 	return nil
 }
 
-func resourceTargetGroupAttachmentDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceTargetGroupAttachmentDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error getting client: %w", err))

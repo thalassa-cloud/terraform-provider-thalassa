@@ -78,7 +78,7 @@ func DataSourceRouteTable() *schema.Resource {
 	}
 }
 
-func dataSourceRouteTableRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataSourceRouteTableRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	prov := provider.GetProvider(m)
 
 	if id := d.Get("identity").(string); id != "" {
@@ -115,7 +115,7 @@ func dataSourceRouteTableRead(ctx context.Context, d *schema.ResourceData, m int
 		}
 		if hasLabelSelector {
 			match := true
-			selector := labelSelector.(map[string]interface{})
+			selector := labelSelector.(map[string]any)
 			for k, v := range selector {
 				valStr := v.(string)
 				if rt.Labels == nil {

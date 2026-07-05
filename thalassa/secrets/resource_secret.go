@@ -128,7 +128,7 @@ func ResourceSecret() *schema.Resource {
 	}
 }
 
-func resourceSecretImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+func resourceSecretImport(ctx context.Context, d *schema.ResourceData, m any) ([]*schema.ResourceData, error) {
 	region, path, err := parseSecretID(d.Id())
 	if err != nil {
 		return nil, err
@@ -138,7 +138,7 @@ func resourceSecretImport(ctx context.Context, d *schema.ResourceData, m interfa
 	return []*schema.ResourceData{d}, nil
 }
 
-func resourceSecretCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceSecretCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -162,7 +162,7 @@ func resourceSecretCreate(ctx context.Context, d *schema.ResourceData, m interfa
 		createReq.SecretKeyValues = convert.ConvertToMap(v)
 	}
 	if v, ok := d.GetOk("generate_secret"); ok {
-		createReq.GenerateSecret = expandGenerateSecret(v.([]interface{}))
+		createReq.GenerateSecret = expandGenerateSecret(v.([]any))
 	}
 
 	secret, err := client.Secrets().CreateSecret(ctx, region, createReq)
@@ -174,7 +174,7 @@ func resourceSecretCreate(ctx context.Context, d *schema.ResourceData, m interfa
 	return resourceSecretRead(ctx, d, m)
 }
 
-func resourceSecretRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceSecretRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -201,7 +201,7 @@ func resourceSecretRead(ctx context.Context, d *schema.ResourceData, m interface
 	return nil
 }
 
-func resourceSecretUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceSecretUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	if !d.HasChanges("description", "labels", "annotations") {
 		return resourceSecretRead(ctx, d, m)
 	}
@@ -213,7 +213,7 @@ func resourceSecretUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 	}}
 }
 
-func resourceSecretDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceSecretDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)

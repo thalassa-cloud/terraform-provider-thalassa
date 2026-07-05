@@ -78,7 +78,7 @@ func ResourceServiceAccountAccessCredential() *schema.Resource {
 	}
 }
 
-func resourceServiceAccountAccessCredentialCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceServiceAccountAccessCredentialCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -88,7 +88,7 @@ func resourceServiceAccountAccessCredentialCreate(ctx context.Context, d *schema
 
 	// Convert scopes list
 	scopes := make([]iam.AccessCredentialsScope, 0)
-	if s, ok := d.Get("scopes").([]interface{}); ok {
+	if s, ok := d.Get("scopes").([]any); ok {
 		for _, scope := range s {
 			scopes = append(scopes, iam.AccessCredentialsScope(scope.(string)))
 		}
@@ -124,7 +124,7 @@ func resourceServiceAccountAccessCredentialCreate(ctx context.Context, d *schema
 	return diag.FromErr(fmt.Errorf("failed to create service account access credential"))
 }
 
-func resourceServiceAccountAccessCredentialRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceServiceAccountAccessCredentialRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -171,7 +171,7 @@ func resourceServiceAccountAccessCredentialRead(ctx context.Context, d *schema.R
 	return nil
 }
 
-func resourceServiceAccountAccessCredentialDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceServiceAccountAccessCredentialDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)

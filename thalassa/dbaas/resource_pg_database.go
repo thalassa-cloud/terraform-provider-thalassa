@@ -30,7 +30,7 @@ func resourcePgDatabase() *schema.Resource {
 				Required:    true,
 				ForceNew:    true,
 				Description: "The name of the database",
-				ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
+				ValidateFunc: func(val any, key string) (warns []string, errs []error) {
 					if strings.TrimSpace(val.(string)) == "" {
 						errs = append(errs, fmt.Errorf("database name is required"))
 					}
@@ -70,7 +70,7 @@ func resourcePgDatabase() *schema.Resource {
 	}
 }
 
-func resourcePgDatabaseCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourcePgDatabaseCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -173,7 +173,7 @@ func resourcePgDatabaseCreate(ctx context.Context, d *schema.ResourceData, m int
 	return diag.FromErr(fmt.Errorf("database not found"))
 }
 
-func resourcePgDatabaseRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourcePgDatabaseRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
@@ -222,7 +222,7 @@ func resourcePgDatabaseRead(ctx context.Context, d *schema.ResourceData, m inter
 	return diag.FromErr(fmt.Errorf("database not found"))
 }
 
-func resourcePgDatabaseUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourcePgDatabaseUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -286,7 +286,7 @@ func resourcePgDatabaseUpdate(ctx context.Context, d *schema.ResourceData, m int
 	return diag.FromErr(fmt.Errorf("database not found"))
 }
 
-func resourcePgDatabaseDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourcePgDatabaseDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)

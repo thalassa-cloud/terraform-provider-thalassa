@@ -22,7 +22,7 @@ func resourceKubernetesNodePool() *schema.Resource {
 		ReadContext:   resourceKubernetesNodePoolRead,
 		UpdateContext: resourceKubernetesNodePoolUpdate,
 		DeleteContext: resourceKubernetesNodePoolDelete,
-		CustomizeDiff: func(ctx context.Context, d *schema.ResourceDiff, m interface{}) error {
+		CustomizeDiff: func(ctx context.Context, d *schema.ResourceDiff, m any) error {
 			// If autoscaling is enabled, replicas must be unset by the user
 			if d.Get("enable_autoscaling").(bool) {
 				if _, ok := d.GetOk("replicas"); ok {
@@ -189,7 +189,7 @@ func resourceKubernetesNodePool() *schema.Resource {
 							Type:        schema.TypeString,
 							Optional:    true,
 							Description: "Key of the taint",
-							ValidateFunc: func(v interface{}, k string) (ws []string, errors []error) {
+							ValidateFunc: func(v any, k string) (ws []string, errors []error) {
 								if _, ok := v.(string); !ok {
 									errors = append(errors, fmt.Errorf("expected key to be a string"))
 								}
@@ -248,7 +248,7 @@ func resourceKubernetesNodePool() *schema.Resource {
 	}
 }
 
-func resourceKubernetesNodePoolCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceKubernetesNodePoolCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -331,7 +331,7 @@ func resourceKubernetesNodePoolCreate(ctx context.Context, d *schema.ResourceDat
 		NodeSettings: kubernetes.KubernetesNodeSettings{
 			Annotations: convert.ConvertToMap(d.Get("node_annotations")),
 			Labels:      convert.ConvertToMap(d.Get("node_labels")),
-			Taints:      convertToNodeTaints(d.Get("node_taints").([]interface{})),
+			Taints:      convertToNodeTaints(d.Get("node_taints").([]any)),
 		},
 		EnableAutoHealing:         d.Get("enable_autohealing").(bool),
 		UpgradeStrategy:           convert.Ptr(kubernetes.KubernetesNodePoolUpgradeStrategy(d.Get("upgrade_strategy").(string))),
@@ -369,7 +369,7 @@ func resourceKubernetesNodePoolCreate(ctx context.Context, d *schema.ResourceDat
 	return resourceKubernetesNodePoolRead(ctx, d, m)
 }
 
-func resourceKubernetesNodePoolRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceKubernetesNodePoolRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -439,7 +439,7 @@ func resourceKubernetesNodePoolRead(ctx context.Context, d *schema.ResourceData,
 	return nil
 }
 
-func resourceKubernetesNodePoolUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceKubernetesNodePoolUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -537,7 +537,7 @@ func resourceKubernetesNodePoolUpdate(ctx context.Context, d *schema.ResourceDat
 		NodeSettings: &kubernetes.KubernetesNodeSettings{
 			Annotations: convert.ConvertToMap(d.Get("node_annotations")),
 			Labels:      convert.ConvertToMap(d.Get("node_labels")),
-			Taints:      convertToNodeTaints(d.Get("node_taints").([]interface{})),
+			Taints:      convertToNodeTaints(d.Get("node_taints").([]any)),
 		},
 	}
 	if securityGroupAttachments, ok := d.GetOk("security_group_attachments"); ok {
@@ -587,7 +587,7 @@ func resourceKubernetesNodePoolUpdate(ctx context.Context, d *schema.ResourceDat
 	return resourceKubernetesNodePoolRead(ctx, d, m)
 }
 
-func resourceKubernetesNodePoolDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceKubernetesNodePoolDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -620,10 +620,10 @@ func resourceKubernetesNodePoolDelete(ctx context.Context, d *schema.ResourceDat
 	return nil
 }
 
-func convertToNodeTaints(taints []interface{}) []kubernetes.NodeTaint {
+func convertToNodeTaints(taints []any) []kubernetes.NodeTaint {
 	nodeTaints := make([]kubernetes.NodeTaint, len(taints))
 	for i, taint := range taints {
-		taintMap := taint.(map[string]interface{})
+		taintMap := taint.(map[string]any)
 		nodeTaints[i] = kubernetes.NodeTaint{
 			Key:      taintMap["key"].(string),
 			Value:    taintMap["value"].(string),
@@ -634,10 +634,10 @@ func convertToNodeTaints(taints []interface{}) []kubernetes.NodeTaint {
 	return nodeTaints
 }
 
-func convertFromNodeTaints(taints []kubernetes.NodeTaint) []interface{} {
-	nodeTaints := make([]interface{}, len(taints))
+func convertFromNodeTaints(taints []kubernetes.NodeTaint) []any {
+	nodeTaints := make([]any, len(taints))
 	for i, taint := range taints {
-		nodeTaints[i] = map[string]interface{}{
+		nodeTaints[i] = map[string]any{
 			"key":      taint.Key,
 			"value":    taint.Value,
 			"operator": taint.Operator,
@@ -647,7 +647,7 @@ func convertFromNodeTaints(taints []kubernetes.NodeTaint) []interface{} {
 	return nodeTaints
 }
 
-func convertToNodeLabels(labels map[string]interface{}) map[string]string {
+func convertToNodeLabels(labels map[string]any) map[string]string {
 	nodeLabels := make(map[string]string)
 	for key, value := range labels {
 		nodeLabels[key] = value.(string)
@@ -655,8 +655,8 @@ func convertToNodeLabels(labels map[string]interface{}) map[string]string {
 	return nodeLabels
 }
 
-func convertFromNodeLabels(labels map[string]string) map[string]interface{} {
-	nodeLabels := make(map[string]interface{})
+func convertFromNodeLabels(labels map[string]string) map[string]any {
+	nodeLabels := make(map[string]any)
 	for key, value := range labels {
 		nodeLabels[key] = value
 	}

@@ -115,7 +115,7 @@ func resourceKubernetesClusterRoleBinding() *schema.Resource {
 	}
 }
 
-func resourceKubernetesClusterRoleBindingCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceKubernetesClusterRoleBindingCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -175,7 +175,7 @@ func resourceKubernetesClusterRoleBindingCreate(ctx context.Context, d *schema.R
 	return resourceKubernetesClusterRoleBindingRead(ctx, d, m)
 }
 
-func resourceKubernetesClusterRoleBindingRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceKubernetesClusterRoleBindingRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -235,13 +235,13 @@ func resourceKubernetesClusterRoleBindingRead(ctx context.Context, d *schema.Res
 	return nil
 }
 
-func resourceKubernetesClusterRoleBindingUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceKubernetesClusterRoleBindingUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	// Note: The API doesn't seem to have an update method for cluster role bindings
 	// This would need to be implemented if the API supports it
 	return diag.Errorf("updating Kubernetes cluster role bindings is not currently supported")
 }
 
-func resourceKubernetesClusterRoleBindingDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceKubernetesClusterRoleBindingDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)

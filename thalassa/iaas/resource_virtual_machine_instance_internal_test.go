@@ -62,7 +62,7 @@ func TestSetMachineTypeField(t *testing.T) {
 
 			d := schema.TestResourceDataRaw(t, map[string]*schema.Schema{
 				"machine_type": {Type: schema.TypeString, Optional: true},
-			}, map[string]interface{}{
+			}, map[string]any{
 				"machine_type": tt.current,
 			})
 

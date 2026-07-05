@@ -26,7 +26,7 @@ var (
 )
 
 func validateOptionalStringInSlice(valid []string) schema.SchemaValidateFunc {
-	return func(v interface{}, k string) (ws []string, es []error) {
+	return func(v any, k string) (ws []string, es []error) {
 		s, ok := v.(string)
 		if !ok {
 			es = append(es, fmt.Errorf("expected string at %s", k))
@@ -193,7 +193,7 @@ func resourceTargetGroup() *schema.Resource {
 	}
 }
 
-func resourceTargetGroupCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceTargetGroupCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error creating client: %w", err))
@@ -230,10 +230,10 @@ func resourceTargetGroupCreate(ctx context.Context, d *schema.ResourceData, m in
 		d.Set("slug", tg.Slug)
 		// Attach targets if specified
 		if attachments, ok := d.GetOk("attachments"); ok {
-			attachmentList := attachments.([]interface{})
+			attachmentList := attachments.([]any)
 			attach := make([]iaas.AttachTarget, len(attachmentList))
 			for i, a := range attachmentList {
-				row := a.(map[string]interface{})
+				row := a.(map[string]any)
 				attach[i] = iaas.AttachTarget{ServerIdentity: row["id"].(string)}
 			}
 			batch := iaas.TargetGroupAttachmentsBatch{
@@ -249,7 +249,7 @@ func resourceTargetGroupCreate(ctx context.Context, d *schema.ResourceData, m in
 	return resourceTargetGroupRead(ctx, d, m)
 }
 
-func resourceTargetGroupRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceTargetGroupRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error creating client: %w", err))
@@ -305,10 +305,10 @@ func resourceTargetGroupRead(ctx context.Context, d *schema.ResourceData, m inte
 
 	// Set targets from attachments
 	if tg.LoadbalancerTargetGroupAttachments != nil {
-		targets := make([]map[string]interface{}, len(tg.LoadbalancerTargetGroupAttachments))
+		targets := make([]map[string]any, len(tg.LoadbalancerTargetGroupAttachments))
 		for i, att := range tg.LoadbalancerTargetGroupAttachments {
 			if att.VirtualMachineInstance != nil {
-				targets[i] = map[string]interface{}{
+				targets[i] = map[string]any{
 					"id": att.VirtualMachineInstance.Identity,
 				}
 			}
@@ -319,7 +319,7 @@ func resourceTargetGroupRead(ctx context.Context, d *schema.ResourceData, m inte
 	return nil
 }
 
-func resourceTargetGroupUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceTargetGroupUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -359,10 +359,10 @@ func resourceTargetGroupUpdate(ctx context.Context, d *schema.ResourceData, m in
 	if tg != nil {
 		// Attach targets if specified
 		if attachments, ok := d.GetOk("attachments"); ok {
-			attachmentList := attachments.([]interface{})
+			attachmentList := attachments.([]any)
 			attachments := make([]iaas.AttachTarget, len(attachmentList))
 			for i, a := range attachmentList {
-				attachment := a.(map[string]interface{})
+				attachment := a.(map[string]any)
 				attachments[i] = iaas.AttachTarget{ServerIdentity: attachment["id"].(string)}
 			}
 			batch := iaas.TargetGroupAttachmentsBatch{
@@ -378,7 +378,7 @@ func resourceTargetGroupUpdate(ctx context.Context, d *schema.ResourceData, m in
 	return resourceTargetGroupRead(ctx, d, m)
 }
 
-func resourceTargetGroupDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceTargetGroupDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error creating client: %w", err))

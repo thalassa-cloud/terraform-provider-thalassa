@@ -18,10 +18,10 @@ func DataSourceKmsKey() *schema.Resource {
 		ReadContext: dataSourceKmsKeyRead,
 		Schema: map[string]*schema.Schema{
 			"id": {
-				Type:         schema.TypeString,
-				Optional:     true,
-				Computed:     true,
-				Description:  "Platform identity of the KMS key.",
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				Description: "Platform identity of the KMS key.",
 			},
 			"organisation_id": {
 				Type:        schema.TypeString,
@@ -110,7 +110,7 @@ func DataSourceKmsKey() *schema.Resource {
 	}
 }
 
-func dataSourceKmsKeyRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataSourceKmsKeyRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)

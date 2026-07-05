@@ -85,7 +85,7 @@ func DataSourceOrganisationMembers() *schema.Resource {
 	}
 }
 
-func dataSourceOrganisationMembersRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataSourceOrganisationMembersRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -109,9 +109,9 @@ func dataSourceOrganisationMembersRead(ctx context.Context, d *schema.ResourceDa
 	}
 
 	// Convert members to Terraform schema format
-	memberList := make([]map[string]interface{}, len(members))
+	memberList := make([]map[string]any, len(members))
 	for i, member := range members {
-		memberMap := map[string]interface{}{
+		memberMap := map[string]any{
 			"identity":    member.Identity,
 			"created_at":  member.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
 			"member_type": string(member.MemberType),
@@ -119,13 +119,13 @@ func dataSourceOrganisationMembersRead(ctx context.Context, d *schema.ResourceDa
 
 		// Add user information if available
 		if member.User != nil {
-			userMap := map[string]interface{}{
+			userMap := map[string]any{
 				"subject":    member.User.Subject,
 				"name":       member.User.Name,
 				"email":      member.User.Email,
 				"created_at": member.User.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
 			}
-			memberMap["user"] = []map[string]interface{}{userMap}
+			memberMap["user"] = []map[string]any{userMap}
 		}
 
 		memberList[i] = memberMap

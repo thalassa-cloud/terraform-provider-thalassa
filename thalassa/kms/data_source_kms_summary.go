@@ -53,7 +53,7 @@ func DataSourceKmsSummary() *schema.Resource {
 	}
 }
 
-func dataSourceKmsSummaryRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataSourceKmsSummaryRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -69,9 +69,9 @@ func dataSourceKmsSummaryRead(ctx context.Context, d *schema.ResourceData, m int
 		return diag.FromErr(err)
 	}
 
-	regions := make([]map[string]interface{}, 0, len(summary.Regions))
+	regions := make([]map[string]any, 0, len(summary.Regions))
 	for _, region := range summary.Regions {
-		regions = append(regions, map[string]interface{}{
+		regions = append(regions, map[string]any{
 			"identity":      region.Identity,
 			"name":          region.Name,
 			"slug":          region.Slug,

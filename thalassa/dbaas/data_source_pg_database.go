@@ -49,7 +49,7 @@ func dataSourcePgDatabase() *schema.Resource {
 	}
 }
 
-func dataSourcePgDatabaseRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataSourcePgDatabaseRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {

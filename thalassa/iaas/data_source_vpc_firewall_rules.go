@@ -138,7 +138,7 @@ func DataSourceVpcFirewallRules() *schema.Resource {
 	}
 }
 
-func dataSourceVpcFirewallRulesRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataSourceVpcFirewallRulesRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	provider := provider.GetProvider(m)
 	vpcIdentity := d.Get("vpc_id").(string)
 
@@ -148,9 +148,9 @@ func dataSourceVpcFirewallRulesRead(ctx context.Context, d *schema.ResourceData,
 	}
 
 	// Convert firewall rules to the expected format
-	rules := make([]map[string]interface{}, len(firewallRules))
+	rules := make([]map[string]any, len(firewallRules))
 	for i, rule := range firewallRules {
-		ruleMap := map[string]interface{}{
+		ruleMap := map[string]any{
 			"id":         rule.Identity,
 			"name":       rule.Name,
 			"action":     rule.Action,
@@ -161,7 +161,7 @@ func dataSourceVpcFirewallRulesRead(ctx context.Context, d *schema.ResourceData,
 		}
 
 		// Set protocols
-		protocols := []map[string]interface{}{
+		protocols := []map[string]any{
 			{
 				"tcp":  rule.Protocols.TCP,
 				"udp":  rule.Protocols.UDP,

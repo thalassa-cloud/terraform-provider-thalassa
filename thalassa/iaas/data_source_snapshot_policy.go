@@ -133,7 +133,7 @@ func DataSourceSnapshotPolicy() *schema.Resource {
 	}
 }
 
-func dataSourceSnapshotPolicyRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataSourceSnapshotPolicyRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -202,7 +202,7 @@ func dataSourceSnapshotPolicyRead(ctx context.Context, d *schema.ResourceData, m
 	}
 
 	// Set target
-	target := map[string]interface{}{
+	target := map[string]any{
 		"type": string(policy.Target.Type),
 	}
 
@@ -215,7 +215,7 @@ func dataSourceSnapshotPolicyRead(ctx context.Context, d *schema.ResourceData, m
 		target["volume_identities"] = policy.Target.VolumeIdentities
 	}
 
-	d.Set("target", []interface{}{target})
+	d.Set("target", []any{target})
 
 	return nil
 }

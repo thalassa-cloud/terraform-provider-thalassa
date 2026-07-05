@@ -68,7 +68,7 @@ func resourceCloudInitTemplate() *schema.Resource {
 
 }
 
-func resourceCloudInitTemplateCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceCloudInitTemplateCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error creating client: %s", err))
@@ -80,10 +80,10 @@ func resourceCloudInitTemplateCreate(ctx context.Context, d *schema.ResourceData
 	}
 
 	if labels, ok := d.GetOk("labels"); ok {
-		create.Labels = convert.ConvertToMap(labels.(map[string]interface{}))
+		create.Labels = convert.ConvertToMap(labels.(map[string]any))
 	}
 	if annotations, ok := d.GetOk("annotations"); ok {
-		create.Annotations = convert.ConvertToMap(annotations.(map[string]interface{}))
+		create.Annotations = convert.ConvertToMap(annotations.(map[string]any))
 	}
 
 	cloudInitTemplate, err := client.IaaS().CreateCloudInitTemplate(ctx, create)
@@ -105,7 +105,7 @@ func resourceCloudInitTemplateCreate(ctx context.Context, d *schema.ResourceData
 	return resourceCloudInitTemplateRead(ctx, d, m)
 }
 
-func resourceCloudInitTemplateRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceCloudInitTemplateRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error creating client: %s", err))
@@ -133,7 +133,7 @@ func resourceCloudInitTemplateRead(ctx context.Context, d *schema.ResourceData, 
 	return nil
 }
 
-func resourceCloudInitTemplateDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceCloudInitTemplateDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error creating client: %s", err))

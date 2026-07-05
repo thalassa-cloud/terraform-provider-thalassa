@@ -226,7 +226,7 @@ func ResourceSecurityGroup() *schema.Resource {
 	}
 }
 
-func resourceSecurityGroupCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceSecurityGroupCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(meta), d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error getting client: %w", err))
@@ -242,11 +242,11 @@ func resourceSecurityGroupCreate(ctx context.Context, d *schema.ResourceData, me
 	}
 
 	if v, ok := d.GetOk("ingress_rule"); ok {
-		createReq.IngressRules = expandSecurityGroupRules(v.([]interface{}))
+		createReq.IngressRules = expandSecurityGroupRules(v.([]any))
 	}
 
 	if v, ok := d.GetOk("egress_rule"); ok {
-		createReq.EgressRules = expandSecurityGroupRules(v.([]interface{}))
+		createReq.EgressRules = expandSecurityGroupRules(v.([]any))
 	}
 
 	securityGroup, err := client.IaaS().CreateSecurityGroup(ctx, createReq)
@@ -258,7 +258,7 @@ func resourceSecurityGroupCreate(ctx context.Context, d *schema.ResourceData, me
 	return resourceSecurityGroupRead(ctx, d, meta)
 }
 
-func resourceSecurityGroupRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceSecurityGroupRead(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(meta), d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error getting security group: %w", err))
@@ -321,7 +321,7 @@ func resourceSecurityGroupRead(ctx context.Context, d *schema.ResourceData, meta
 	return nil
 }
 
-func resourceSecurityGroupUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceSecurityGroupUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(meta), d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error getting client: %w", err))
@@ -347,12 +347,12 @@ func resourceSecurityGroupUpdate(ctx context.Context, d *schema.ResourceData, me
 
 	skip := true
 	if v, ok := d.GetOk("ingress_rule"); ok {
-		updateReq.IngressRules = expandSecurityGroupRules(v.([]interface{}))
+		updateReq.IngressRules = expandSecurityGroupRules(v.([]any))
 		skip = false
 	}
 
 	if v, ok := d.GetOk("egress_rule"); ok {
-		updateReq.EgressRules = expandSecurityGroupRules(v.([]interface{}))
+		updateReq.EgressRules = expandSecurityGroupRules(v.([]any))
 		skip = false
 	}
 
@@ -368,7 +368,7 @@ func resourceSecurityGroupUpdate(ctx context.Context, d *schema.ResourceData, me
 	return resourceSecurityGroupRead(ctx, d, meta)
 }
 
-func resourceSecurityGroupDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceSecurityGroupDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(meta), d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error getting client: %w", err))
@@ -386,10 +386,10 @@ func resourceSecurityGroupDelete(ctx context.Context, d *schema.ResourceData, me
 	return nil
 }
 
-func expandSecurityGroupRules(rules []interface{}) []iaas.SecurityGroupRule {
+func expandSecurityGroupRules(rules []any) []iaas.SecurityGroupRule {
 	expandedRules := make([]iaas.SecurityGroupRule, len(rules))
 	for i, rule := range rules {
-		ruleMap := rule.(map[string]interface{})
+		ruleMap := rule.(map[string]any)
 		expandedRule := iaas.SecurityGroupRule{
 			Name:         ruleMap["name"].(string),
 			IPVersion:    iaas.SecurityGroupIPVersion(ruleMap["ip_version"].(string)),
@@ -414,10 +414,10 @@ func expandSecurityGroupRules(rules []interface{}) []iaas.SecurityGroupRule {
 	return expandedRules
 }
 
-func flattenSecurityGroupRules(rules []iaas.SecurityGroupRule) []map[string]interface{} {
-	flattenedRules := make([]map[string]interface{}, len(rules))
+func flattenSecurityGroupRules(rules []iaas.SecurityGroupRule) []map[string]any {
+	flattenedRules := make([]map[string]any, len(rules))
 	for i, rule := range rules {
-		flattenedRule := map[string]interface{}{
+		flattenedRule := map[string]any{
 			"name":           rule.Name,
 			"ip_version":     rule.IPVersion,
 			"protocol":       rule.Protocol,

@@ -16,15 +16,15 @@ func TestResourceBucketLifecycle(t *testing.T) {
 }
 
 func TestExpandFlattenLifecycleRules(t *testing.T) {
-	raw := map[string]interface{}{
+	raw := map[string]any{
 		"id":     "expire-logs",
 		"prefix": "logs/",
 		"status": string(objectstorage.BucketLifecycleRuleStatusEnabled),
-		"expiration": []interface{}{
-			map[string]interface{}{"days": 30},
+		"expiration": []any{
+			map[string]any{"days": 30},
 		},
 	}
-	set := schema.NewSet(lifecycleRuleHash, []interface{}{raw})
+	set := schema.NewSet(lifecycleRuleHash, []any{raw})
 	rules := expandLifecycleRules(set)
 	assert.Len(t, rules, 1)
 	assert.Equal(t, "expire-logs", rules[0].ID)

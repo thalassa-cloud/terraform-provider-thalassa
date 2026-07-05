@@ -15,7 +15,7 @@ func TestProviderConfigurePreservesAccessTokenForGetClient(t *testing.T) {
 	t.Parallel()
 
 	p := thalassa.Provider()
-	rd := schema.TestResourceDataRaw(t, p.Schema, map[string]interface{}{
+	rd := schema.TestResourceDataRaw(t, p.Schema, map[string]any{
 		"access_token":    "test-access-token",
 		"api":             "https://api.thalassa.cloud",
 		"organisation_id": "org-test",
@@ -26,7 +26,7 @@ func TestProviderConfigurePreservesAccessTokenForGetClient(t *testing.T) {
 
 	resourceData := schema.TestResourceDataRaw(t, map[string]*schema.Schema{
 		"organisation_id": {Type: schema.TypeString, Optional: true},
-	}, map[string]interface{}{})
+	}, map[string]any{})
 
 	client, err := provider.GetClient(provider.GetProvider(configured), resourceData)
 	assert.NoError(t, err)
@@ -37,7 +37,7 @@ func TestProviderConfigurePreservesAllowInsecureOIDC(t *testing.T) {
 	t.Parallel()
 
 	p := thalassa.Provider()
-	rd := schema.TestResourceDataRaw(t, p.Schema, map[string]interface{}{
+	rd := schema.TestResourceDataRaw(t, p.Schema, map[string]any{
 		"client_id":           "client-id",
 		"client_secret":       "client-secret",
 		"allow_insecure_oidc": true,
@@ -50,7 +50,7 @@ func TestProviderConfigurePreservesAllowInsecureOIDC(t *testing.T) {
 
 	resourceData := schema.TestResourceDataRaw(t, map[string]*schema.Schema{
 		"organisation_id": {Type: schema.TypeString, Optional: true},
-	}, map[string]interface{}{})
+	}, map[string]any{})
 
 	client, err := provider.GetClient(provider.GetProvider(configured), resourceData)
 	assert.NoError(t, err)

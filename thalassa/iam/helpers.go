@@ -33,11 +33,11 @@ func valueOrEmptySlice(value []string) []string {
 	return value
 }
 
-func toListOfInterfaces(value []string) []interface{} {
+func toListOfInterfaces(value []string) []any {
 	if value == nil {
-		return []interface{}{}
+		return []any{}
 	}
-	result := make([]interface{}, len(value))
+	result := make([]any, len(value))
 	for i, v := range value {
 		result[i] = v
 	}

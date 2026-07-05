@@ -131,7 +131,7 @@ func ResourceRole() *schema.Resource {
 	}
 }
 
-func resourceRoleCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceRoleCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -164,7 +164,7 @@ func resourceRoleCreate(ctx context.Context, d *schema.ResourceData, m interface
 	return diag.FromErr(fmt.Errorf("failed to create organisation role"))
 }
 
-func resourceRoleRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceRoleRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -204,7 +204,7 @@ func resourceRoleRead(ctx context.Context, d *schema.ResourceData, m interface{}
 			"permissions":         {Type: schema.TypeList, Elem: &schema.Schema{Type: schema.TypeString}},
 			"note":                {Type: schema.TypeString},
 		},
-	}), []interface{}{})
+	}), []any{})
 
 	for _, rule := range role.Rules {
 		ruleMap := map[string]any{
@@ -221,7 +221,7 @@ func resourceRoleRead(ctx context.Context, d *schema.ResourceData, m interface{}
 	return nil
 }
 
-func resourceRoleDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceRoleDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -235,7 +235,7 @@ func resourceRoleDelete(ctx context.Context, d *schema.ResourceData, m interface
 	return nil
 }
 
-func resourceRoleUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceRoleUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -263,7 +263,7 @@ func updateRoleRules(ctx context.Context, client thalassa.Client, roleIdentity s
 	// Find rules to remove
 	toRemove := oldSet.Difference(newSet)
 	for _, rule := range toRemove.List() {
-		ruleMap := rule.(map[string]interface{})
+		ruleMap := rule.(map[string]any)
 		ruleIdentity := ruleMap["identity"].(string)
 
 		if ruleIdentity != "" {
@@ -277,17 +277,17 @@ func updateRoleRules(ctx context.Context, client thalassa.Client, roleIdentity s
 	// Find rules to add
 	toAdd := newSet.Difference(oldSet)
 	for _, rule := range toAdd.List() {
-		ruleMap := rule.(map[string]interface{})
+		ruleMap := rule.(map[string]any)
 
 		// Convert resources list
 		resources := make([]string, 0)
-		for _, r := range ruleMap["resources"].([]interface{}) {
+		for _, r := range ruleMap["resources"].([]any) {
 			resources = append(resources, r.(string))
 		}
 
 		// Convert resource identities list
 		resourceIdentities := make([]string, 0)
-		if ri, ok := ruleMap["resource_identities"].([]interface{}); ok {
+		if ri, ok := ruleMap["resource_identities"].([]any); ok {
 			for _, r := range ri {
 				resourceIdentities = append(resourceIdentities, r.(string))
 			}
@@ -295,7 +295,7 @@ func updateRoleRules(ctx context.Context, client thalassa.Client, roleIdentity s
 
 		// Convert permissions list
 		permissions := make([]string, 0)
-		for _, p := range ruleMap["permissions"].([]interface{}) {
+		for _, p := range ruleMap["permissions"].([]any) {
 			permissions = append(permissions, p.(string))
 		}
 

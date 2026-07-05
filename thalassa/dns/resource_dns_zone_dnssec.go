@@ -91,7 +91,7 @@ func ResourceDnsZoneDnssec() *schema.Resource {
 	}
 }
 
-func resourceDnsZoneDnssecCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceDnsZoneDnssecCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -113,7 +113,7 @@ func resourceDnsZoneDnssecCreate(ctx context.Context, d *schema.ResourceData, m 
 	return resourceDnsZoneDnssecRead(ctx, d, m)
 }
 
-func resourceDnsZoneDnssecRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceDnsZoneDnssecRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -180,7 +180,7 @@ func resourceDnsZoneDnssecRead(ctx context.Context, d *schema.ResourceData, m in
 	return nil
 }
 
-func resourceDnsZoneDnssecDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceDnsZoneDnssecDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)

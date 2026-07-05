@@ -87,7 +87,7 @@ func resourceBlockVolumeAttachment() *schema.Resource {
 	}
 }
 
-func resourceBlockVolumeAttachmentCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceBlockVolumeAttachmentCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -183,7 +183,7 @@ func resourceBlockVolumeAttachmentCreate(ctx context.Context, d *schema.Resource
 	return resourceBlockVolumeAttachmentRead(ctx, d, m)
 }
 
-func resourceBlockVolumeAttachmentRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceBlockVolumeAttachmentRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -226,7 +226,7 @@ func resourceBlockVolumeAttachmentRead(ctx context.Context, d *schema.ResourceDa
 	return nil
 }
 
-func resourceBlockVolumeAttachmentUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceBlockVolumeAttachmentUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -275,7 +275,7 @@ func resourceBlockVolumeAttachmentUpdate(ctx context.Context, d *schema.Resource
 	return nil
 }
 
-func resourceBlockVolumeAttachmentDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceBlockVolumeAttachmentDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)

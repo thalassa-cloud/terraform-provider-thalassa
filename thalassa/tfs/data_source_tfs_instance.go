@@ -130,7 +130,7 @@ func DataSourceTfsInstance() *schema.Resource {
 	}
 }
 
-func dataSourceTfsInstanceRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataSourceTfsInstanceRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -197,9 +197,9 @@ func dataSourceTfsInstanceRead(ctx context.Context, d *schema.ResourceData, m in
 
 	// Set endpoints
 	if len(tfsInstance.Endpoints) > 0 {
-		endpoints := make([]map[string]interface{}, len(tfsInstance.Endpoints))
+		endpoints := make([]map[string]any, len(tfsInstance.Endpoints))
 		for i, endpoint := range tfsInstance.Endpoints {
-			endpointMap := map[string]interface{}{
+			endpointMap := map[string]any{
 				"identity": endpoint.Identity,
 				"address":  endpoint.EndpointAddress,
 				"hostname": endpoint.EndpointHostname,
@@ -209,7 +209,7 @@ func dataSourceTfsInstanceRead(ctx context.Context, d *schema.ResourceData, m in
 		}
 		d.Set("endpoints", endpoints)
 	} else {
-		d.Set("endpoints", []map[string]interface{}{})
+		d.Set("endpoints", []map[string]any{})
 	}
 
 	// Set security group IDs

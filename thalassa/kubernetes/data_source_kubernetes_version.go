@@ -85,7 +85,7 @@ func DataSourceKubernetesVersion() *schema.Resource {
 	}
 }
 
-func dataSourceKubernetesVersionRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataSourceKubernetesVersionRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	provider := provider.GetProvider(m)
 	name := d.Get("name").(string)
 	slug := d.Get("slug").(string)

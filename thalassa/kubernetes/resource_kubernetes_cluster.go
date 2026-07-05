@@ -316,7 +316,7 @@ func resourceKubernetesCluster() *schema.Resource {
 	}
 }
 
-func resourceKubernetesClusterCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceKubernetesClusterCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -454,7 +454,7 @@ func resourceKubernetesClusterCreate(ctx context.Context, d *schema.ResourceData
 	return resourceKubernetesClusterRead(ctx, d, m)
 }
 
-func resourceKubernetesClusterRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceKubernetesClusterRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -522,10 +522,10 @@ func resourceKubernetesClusterRead(ctx context.Context, d *schema.ResourceData, 
 
 	// Set API server ACLs
 	if len(kubernetesCluster.ApiServerACLs.AllowedCIDRs) > 0 {
-		apiServerACLs := map[string]interface{}{
+		apiServerACLs := map[string]any{
 			"allowed_cidrs": kubernetesCluster.ApiServerACLs.AllowedCIDRs,
 		}
-		if err := d.Set("api_server_acls", []interface{}{apiServerACLs}); err != nil {
+		if err := d.Set("api_server_acls", []any{apiServerACLs}); err != nil {
 			return diag.FromErr(fmt.Errorf("error setting api_server_acls: %s", err))
 		}
 	}
@@ -549,7 +549,7 @@ func resourceKubernetesClusterRead(ctx context.Context, d *schema.ResourceData, 
 
 	// Set autoscaler config
 	if kubernetesCluster.AutoscalerConfig != nil {
-		autoscalerConfig := map[string]interface{}{
+		autoscalerConfig := map[string]any{
 			"scale_down_disabled":              kubernetesCluster.AutoscalerConfig.ScaleDownDisabled,
 			"scale_down_delay_after_add":       kubernetesCluster.AutoscalerConfig.ScaleDownDelayAfterAdd,
 			"estimator":                        kubernetesCluster.AutoscalerConfig.Estimator,
@@ -562,7 +562,7 @@ func resourceKubernetesClusterRead(ctx context.Context, d *schema.ResourceData, 
 			"max_graceful_termination_sec":     kubernetesCluster.AutoscalerConfig.MaxGracefulTerminationSec,
 			"enable_proactive_scale_up":        kubernetesCluster.AutoscalerConfig.EnableProactiveScaleUp,
 		}
-		if err := d.Set("autoscaler_config", []interface{}{autoscalerConfig}); err != nil {
+		if err := d.Set("autoscaler_config", []any{autoscalerConfig}); err != nil {
 			return diag.FromErr(fmt.Errorf("error setting autoscaler_config: %s", err))
 		}
 	}
@@ -580,7 +580,7 @@ func resourceKubernetesClusterRead(ctx context.Context, d *schema.ResourceData, 
 	return nil
 }
 
-func resourceKubernetesClusterUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceKubernetesClusterUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -698,10 +698,10 @@ func resourceKubernetesClusterUpdate(ctx context.Context, d *schema.ResourceData
 
 		// Set API server ACLs
 		if len(kubernetesCluster.ApiServerACLs.AllowedCIDRs) > 0 {
-			apiServerACLs := map[string]interface{}{
+			apiServerACLs := map[string]any{
 				"allowed_cidrs": kubernetesCluster.ApiServerACLs.AllowedCIDRs,
 			}
-			if err := d.Set("api_server_acls", []interface{}{apiServerACLs}); err != nil {
+			if err := d.Set("api_server_acls", []any{apiServerACLs}); err != nil {
 				return diag.FromErr(fmt.Errorf("error setting api_server_acls: %s", err))
 			}
 		}
@@ -719,7 +719,7 @@ func resourceKubernetesClusterUpdate(ctx context.Context, d *schema.ResourceData
 
 		// Set autoscaler config
 		if kubernetesCluster.AutoscalerConfig != nil {
-			autoscalerConfig := map[string]interface{}{
+			autoscalerConfig := map[string]any{
 				"scale_down_disabled":              kubernetesCluster.AutoscalerConfig.ScaleDownDisabled,
 				"scale_down_delay_after_add":       kubernetesCluster.AutoscalerConfig.ScaleDownDelayAfterAdd,
 				"estimator":                        kubernetesCluster.AutoscalerConfig.Estimator,
@@ -732,7 +732,7 @@ func resourceKubernetesClusterUpdate(ctx context.Context, d *schema.ResourceData
 				"max_graceful_termination_sec":     kubernetesCluster.AutoscalerConfig.MaxGracefulTerminationSec,
 				"enable_proactive_scale_up":        kubernetesCluster.AutoscalerConfig.EnableProactiveScaleUp,
 			}
-			if err := d.Set("autoscaler_config", []interface{}{autoscalerConfig}); err != nil {
+			if err := d.Set("autoscaler_config", []any{autoscalerConfig}); err != nil {
 				return diag.FromErr(fmt.Errorf("error setting autoscaler_config: %s", err))
 			}
 		}
@@ -754,7 +754,7 @@ func resourceKubernetesClusterUpdate(ctx context.Context, d *schema.ResourceData
 	return resourceKubernetesClusterRead(ctx, d, m)
 }
 
-func resourceKubernetesClusterDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceKubernetesClusterDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -799,12 +799,12 @@ func resourceKubernetesClusterDelete(ctx context.Context, d *schema.ResourceData
 }
 
 // convertApiServerACLs converts the API server ACLs from Terraform schema to the API format
-func convertApiServerACLs(acls interface{}) kubernetes.KubernetesApiServerACLs {
+func convertApiServerACLs(acls any) kubernetes.KubernetesApiServerACLs {
 	if acls == nil {
 		return kubernetes.KubernetesApiServerACLs{}
 	}
 
-	aclsList, ok := acls.([]interface{})
+	aclsList, ok := acls.([]any)
 	if !ok || len(aclsList) == 0 {
 		return kubernetes.KubernetesApiServerACLs{}
 	}
@@ -814,7 +814,7 @@ func convertApiServerACLs(acls interface{}) kubernetes.KubernetesApiServerACLs {
 		return kubernetes.KubernetesApiServerACLs{}
 	}
 
-	acl, ok := first.(map[string]interface{})
+	acl, ok := first.(map[string]any)
 	if !ok || acl == nil {
 		return kubernetes.KubernetesApiServerACLs{}
 	}
@@ -830,7 +830,7 @@ func convertApiServerACLs(acls interface{}) kubernetes.KubernetesApiServerACLs {
 }
 
 // convertAutoscalerConfig converts the autoscaler config from Terraform schema to the API format
-func convertAutoscalerConfig(config interface{}) *kubernetes.AutoscalerConfig {
+func convertAutoscalerConfig(config any) *kubernetes.AutoscalerConfig {
 	// Initialize with default values
 	result := &kubernetes.AutoscalerConfig{
 		ScaleDownDisabled:             false,
@@ -850,7 +850,7 @@ func convertAutoscalerConfig(config interface{}) *kubernetes.AutoscalerConfig {
 		return result
 	}
 
-	configList, ok := config.([]interface{})
+	configList, ok := config.([]any)
 	if !ok || len(configList) == 0 {
 		return result
 	}
@@ -860,7 +860,7 @@ func convertAutoscalerConfig(config interface{}) *kubernetes.AutoscalerConfig {
 		return result
 	}
 
-	cfg, ok := first.(map[string]interface{})
+	cfg, ok := first.(map[string]any)
 	if !ok || cfg == nil {
 		return result
 	}

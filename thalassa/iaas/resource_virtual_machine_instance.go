@@ -161,14 +161,14 @@ func resourceVirtualMachineInstance() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
 		},
-		CustomizeDiff: func(ctx context.Context, diff *schema.ResourceDiff, meta interface{}) error {
+		CustomizeDiff: func(ctx context.Context, diff *schema.ResourceDiff, meta any) error {
 			// Get all values from the diff
 			rootVolumeID := diff.Get("root_volume_id")
 			rootVolumeSize := diff.Get("root_volume_size_gb")
 			rootVolumeType := diff.Get("root_volume_type")
 
 			tflog.Debug(ctx, "Validating root volume combination",
-				map[string]interface{}{
+				map[string]any{
 					"root_volume_id":      rootVolumeID,
 					"root_volume_size_gb": rootVolumeSize,
 					"root_volume_type":    rootVolumeType,
@@ -194,7 +194,7 @@ func resourceVirtualMachineInstance() *schema.Resource {
 	}
 }
 
-func resourceVirtualMachineInstanceCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceVirtualMachineInstanceCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to create Thalassa client: %w", err))
@@ -316,7 +316,7 @@ func resourceVirtualMachineInstanceCreate(ctx context.Context, d *schema.Resourc
 	return resourceVirtualMachineInstanceRead(ctx, d, m)
 }
 
-func resourceVirtualMachineInstanceRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceVirtualMachineInstanceRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to create Thalassa client: %w", err))
@@ -393,7 +393,7 @@ func resourceVirtualMachineInstanceRead(ctx context.Context, d *schema.ResourceD
 	return nil
 }
 
-func resourceVirtualMachineInstanceUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceVirtualMachineInstanceUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to create Thalassa client: %w", err))
@@ -498,7 +498,7 @@ func resourceVirtualMachineInstanceUpdate(ctx context.Context, d *schema.Resourc
 	return resourceVirtualMachineInstanceRead(ctx, d, m)
 }
 
-func resourceVirtualMachineInstanceDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceVirtualMachineInstanceDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to create Thalassa client: %w", err))
@@ -593,10 +593,10 @@ func getAttachedVolumeIds(virtualMachineInstance *iaas.Machine) []string {
 	return attachedVolumeIds
 }
 
-func getInterfaces(virtualMachineInstance *iaas.Machine) []map[string]interface{} {
-	interfaces := []map[string]interface{}{}
+func getInterfaces(virtualMachineInstance *iaas.Machine) []map[string]any {
+	interfaces := []map[string]any{}
 	for _, interf := range virtualMachineInstance.Interfaces {
-		interfaces = append(interfaces, map[string]interface{}{
+		interfaces = append(interfaces, map[string]any{
 			"name":         interf.Name,
 			"mac_address":  interf.MacAddress,
 			"ip_addresses": interf.IPAddresses,
@@ -605,10 +605,10 @@ func getInterfaces(virtualMachineInstance *iaas.Machine) []map[string]interface{
 	return interfaces
 }
 
-func getVolumeAttachments(virtualMachineInstance *iaas.Machine) []map[string]interface{} {
-	volumeAttachments := []map[string]interface{}{}
+func getVolumeAttachments(virtualMachineInstance *iaas.Machine) []map[string]any {
+	volumeAttachments := []map[string]any{}
 	for _, volumeAttachment := range virtualMachineInstance.VolumeAttachments {
-		v := map[string]interface{}{
+		v := map[string]any{
 			"serial": volumeAttachment.Serial,
 		}
 		if volumeAttachment.PersistentVolume != nil {

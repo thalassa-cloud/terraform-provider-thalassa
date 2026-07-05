@@ -86,7 +86,7 @@ func ResourceRoleBinding() *schema.Resource {
 	}
 }
 
-func resourceRoleBindingCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceRoleBindingCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -125,7 +125,7 @@ func resourceRoleBindingCreate(ctx context.Context, d *schema.ResourceData, m in
 	return diag.FromErr(fmt.Errorf("failed to create role binding"))
 }
 
-func resourceRoleBindingRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceRoleBindingRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -180,7 +180,7 @@ func resourceRoleBindingRead(ctx context.Context, d *schema.ResourceData, m inte
 	return nil
 }
 
-func resourceRoleBindingUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceRoleBindingUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	// Role bindings are immutable in the API, so we need to recreate them
 	// This is a common pattern for resources that don't support updates
 	return diag.Diagnostics{
@@ -192,7 +192,7 @@ func resourceRoleBindingUpdate(ctx context.Context, d *schema.ResourceData, m in
 	}
 }
 
-func resourceRoleBindingDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceRoleBindingDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)

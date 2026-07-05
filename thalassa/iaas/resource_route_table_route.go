@@ -77,7 +77,7 @@ func resourceRouteTableRoute() *schema.Resource {
 	}
 }
 
-func resourceRouteTableRouteCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceRouteTableRouteCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -128,7 +128,7 @@ func resourceRouteTableRouteCreate(ctx context.Context, d *schema.ResourceData, 
 	return resourceRouteTableRead(ctx, d, m)
 }
 
-func resourceRouteTableRouteRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceRouteTableRouteRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -165,7 +165,7 @@ func resourceRouteTableRouteRead(ctx context.Context, d *schema.ResourceData, m 
 	return nil
 }
 
-func resourceRouteTableRouteUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceRouteTableRouteUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -230,7 +230,7 @@ func resourceRouteTableRouteUpdate(ctx context.Context, d *schema.ResourceData, 
 	return resourceRouteTableRead(ctx, d, m)
 }
 
-func resourceRouteTableRouteDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceRouteTableRouteDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)

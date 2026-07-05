@@ -39,7 +39,7 @@ func resourcePgRoles() *schema.Resource {
 				Required: true,
 				// ForceNew:    true,
 				Description: "The name of the role",
-				ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
+				ValidateFunc: func(val any, key string) (warns []string, errs []error) {
 					//Field name may only contain lowercase alphanumeric characters & underscores
 					if !regexp.MustCompile(`^[a-z0-9_]+$`).MatchString(val.(string)) {
 						errs = append(errs, fmt.Errorf("name may only contain lowercase alphanumeric characters & underscores"))
@@ -64,7 +64,7 @@ func resourcePgRoles() *schema.Resource {
 				Optional:    true,
 				Default:     -1,
 				Description: "The connection limit of the role",
-				ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
+				ValidateFunc: func(val any, key string) (warns []string, errs []error) {
 					if val.(int) < -1 {
 						errs = append(errs, fmt.Errorf("connection_limit must be greater than -1"))
 					}
@@ -94,7 +94,7 @@ func resourcePgRoles() *schema.Resource {
 	}
 }
 
-func resourcePgRolesCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourcePgRolesCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -177,7 +177,7 @@ func resourcePgRolesCreate(ctx context.Context, d *schema.ResourceData, m interf
 	return resourcePgRolesRead(ctx, d, m)
 }
 
-func resourcePgRolesRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourcePgRolesRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -210,7 +210,7 @@ func resourcePgRolesRead(ctx context.Context, d *schema.ResourceData, m interfac
 	return diag.FromErr(fmt.Errorf("role not found"))
 }
 
-func resourcePgRolesUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourcePgRolesUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -278,7 +278,7 @@ func resourcePgRolesUpdate(ctx context.Context, d *schema.ResourceData, m interf
 	}
 }
 
-func resourcePgRolesDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourcePgRolesDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
