@@ -65,9 +65,7 @@ func dataSourceKmsSummaryRead(ctx context.Context, d *schema.ResourceData, m any
 	}
 
 	d.SetId("kms-summary")
-	if err := d.Set("feature_enabled", summary.FeatureEnabled); err != nil {
-		return diag.FromErr(err)
-	}
+	_ = d.Set("feature_enabled", summary.FeatureEnabled)
 
 	regions := make([]map[string]any, 0, len(summary.Regions))
 	for _, region := range summary.Regions {
@@ -78,9 +76,7 @@ func dataSourceKmsSummaryRead(ctx context.Context, d *schema.ResourceData, m any
 			"kms_available": region.KmsAvailable,
 		})
 	}
-	if err := d.Set("regions", regions); err != nil {
-		return diag.FromErr(err)
-	}
+	_ = d.Set("regions", regions)
 
 	return nil
 }

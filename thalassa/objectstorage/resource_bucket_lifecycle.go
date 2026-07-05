@@ -103,12 +103,8 @@ func resourceBucketLifecycleRead(ctx context.Context, d *schema.ResourceData, m 
 	}
 
 	d.SetId(bucketName)
-	if err := d.Set("bucket_name", bucketName); err != nil {
-		return diag.FromErr(err)
-	}
-	if err := d.Set("rule", flattenLifecycleRules(lifecycle.Rules)); err != nil {
-		return diag.FromErr(err)
-	}
+	_ = d.Set("bucket_name", bucketName)
+	_ = d.Set("rule", flattenLifecycleRules(lifecycle.Rules))
 
 	return nil
 }

@@ -167,10 +167,10 @@ func resourceRoleRuleRead(ctx context.Context, d *schema.ResourceData, m any) di
 	}
 
 	d.SetId(rule.Identity)
-	d.Set("resources", toListOfInterfaces(rule.Resources))
-	d.Set("resource_identities", toListOfInterfaces(rule.ResourceIdentities))
-	d.Set("permissions", toListOfInterfaces(convertPermissionsToStrings(rule.Permissions)))
-	d.Set("note", rule.Note)
+	_ = d.Set("resources", toListOfInterfaces(rule.Resources))
+	_ = d.Set("resource_identities", toListOfInterfaces(rule.ResourceIdentities))
+	_ = d.Set("permissions", toListOfInterfaces(convertPermissionsToStrings(rule.Permissions)))
+	_ = d.Set("note", rule.Note)
 
 	return nil
 }

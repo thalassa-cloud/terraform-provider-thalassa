@@ -127,12 +127,12 @@ func resourcePgGrantCreate(ctx context.Context, d *schema.ResourceData, m any) d
 
 	// Use the grant name as the ID
 	d.SetId(createdGrant.Name)
-	d.Set("name", createdGrant.Name)
-	d.Set("db_cluster_id", dbClusterId)
-	d.Set("role_name", roleName)
-	d.Set("database_name", databaseName)
-	d.Set("read", createdGrant.Read)
-	d.Set("write", createdGrant.Write)
+	_ = d.Set("name", createdGrant.Name)
+	_ = d.Set("db_cluster_id", dbClusterId)
+	_ = d.Set("role_name", roleName)
+	_ = d.Set("database_name", databaseName)
+	_ = d.Set("read", createdGrant.Read)
+	_ = d.Set("write", createdGrant.Write)
 
 	return resourcePgGrantRead(ctx, d, m)
 }

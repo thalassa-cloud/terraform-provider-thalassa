@@ -68,12 +68,12 @@ func dataSourceDbBackupScheduleRead(ctx context.Context, d *schema.ResourceData,
 	for _, backupSchedule := range backupSchedules {
 		if strings.EqualFold(backupSchedule.Name, d.Get("name").(string)) {
 			d.SetId(backupSchedule.Identity)
-			d.Set("name", backupSchedule.Name)
-			d.Set("db_cluster_id", dbClusterId)
-			d.Set("schedule", backupSchedule.Schedule)
-			d.Set("suspended", backupSchedule.Suspended)
-			d.Set("backup_target", backupSchedule.Target)
-			d.Set("retention_policy", backupSchedule.RetentionPolicy)
+			_ = d.Set("name", backupSchedule.Name)
+			_ = d.Set("db_cluster_id", dbClusterId)
+			_ = d.Set("schedule", backupSchedule.Schedule)
+			_ = d.Set("suspended", backupSchedule.Suspended)
+			_ = d.Set("backup_target", backupSchedule.Target)
+			_ = d.Set("retention_policy", backupSchedule.RetentionPolicy)
 			return nil
 		}
 	}

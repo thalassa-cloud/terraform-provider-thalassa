@@ -94,9 +94,9 @@ func resourceSecretVersionImport(ctx context.Context, d *schema.ResourceData, m 
 	if err != nil {
 		return nil, err
 	}
-	d.Set("region", region)
-	d.Set("path", path)
-	d.Set("version", version)
+	_ = d.Set("region", region)
+	_ = d.Set("path", path)
+	_ = d.Set("version", version)
 	return []*schema.ResourceData{d}, nil
 }
 
@@ -130,9 +130,7 @@ func resourceSecretVersionCreate(ctx context.Context, d *schema.ResourceData, m 
 	}
 
 	d.SetId(secretVersionID(region, path, result.Version))
-	if err := d.Set("version", result.Version); err != nil {
-		return diag.FromErr(err)
-	}
+	_ = d.Set("version", result.Version)
 
 	return resourceSecretVersionRead(ctx, d, m)
 }
@@ -169,15 +167,9 @@ func resourceSecretVersionRead(ctx context.Context, d *schema.ResourceData, m an
 		return nil
 	}
 
-	if err := d.Set("region", region); err != nil {
-		return diag.FromErr(err)
-	}
-	if err := d.Set("path", path); err != nil {
-		return diag.FromErr(err)
-	}
-	if err := d.Set("version", version); err != nil {
-		return diag.FromErr(err)
-	}
+	_ = d.Set("region", region)
+	_ = d.Set("path", path)
+	_ = d.Set("version", version)
 
 	return nil
 }

@@ -162,16 +162,16 @@ func resourceServiceAccountRead(ctx context.Context, d *schema.ResourceData, m a
 	}
 
 	d.SetId(account.Identity)
-	d.Set("name", account.Name)
-	d.Set("slug", account.Slug)
-	d.Set("description", account.Description)
-	d.Set("labels", account.Labels)
-	d.Set("annotations", account.Annotations)
-	d.Set("created_at", account.CreatedAt.Format(TimeFormatRFC3339))
-	d.Set("object_version", account.ObjectVersion)
+	_ = d.Set("name", account.Name)
+	_ = d.Set("slug", account.Slug)
+	_ = d.Set("description", account.Description)
+	_ = d.Set("labels", account.Labels)
+	_ = d.Set("annotations", account.Annotations)
+	_ = d.Set("created_at", account.CreatedAt.Format(TimeFormatRFC3339))
+	_ = d.Set("object_version", account.ObjectVersion)
 
 	if account.UpdatedAt != nil {
-		d.Set("updated_at", account.UpdatedAt.Format(TimeFormatRFC3339))
+		_ = d.Set("updated_at", account.UpdatedAt.Format(TimeFormatRFC3339))
 	}
 
 	// Set role bindings
@@ -191,7 +191,7 @@ func resourceServiceAccountRead(ctx context.Context, d *schema.ResourceData, m a
 		}
 		roleBindingsList[i] = bindingMap
 	}
-	d.Set("role_bindings", roleBindingsList)
+	_ = d.Set("role_bindings", roleBindingsList)
 
 	return nil
 }

@@ -169,13 +169,13 @@ func resourceDbBackupScheduleCreate(ctx context.Context, d *schema.ResourceData,
 	}
 
 	d.SetId(createdBackupSchedule.Identity)
-	d.Set("db_cluster_id", dbClusterId)
-	d.Set("name", createdBackupSchedule.Name)
-	d.Set("description", convert.StringValue(createdBackupSchedule.Description))
-	d.Set("labels", createdBackupSchedule.Labels)
-	d.Set("annotations", createdBackupSchedule.Annotations)
-	d.Set("schedule", createdBackupSchedule.Schedule)
-	d.Set("retention_policy", createdBackupSchedule.RetentionPolicy)
+	_ = d.Set("db_cluster_id", dbClusterId)
+	_ = d.Set("name", createdBackupSchedule.Name)
+	_ = d.Set("description", convert.StringValue(createdBackupSchedule.Description))
+	_ = d.Set("labels", createdBackupSchedule.Labels)
+	_ = d.Set("annotations", createdBackupSchedule.Annotations)
+	_ = d.Set("schedule", createdBackupSchedule.Schedule)
+	_ = d.Set("retention_policy", createdBackupSchedule.RetentionPolicy)
 
 	return resourceDbBackupScheduleRead(ctx, d, m)
 }
@@ -198,19 +198,17 @@ func resourceDbBackupScheduleRead(ctx context.Context, d *schema.ResourceData, m
 
 	for _, backupSchedule := range DbBackupSchedules {
 		if backupSchedule.Identity == d.Id() {
-			d.Set("db_cluster_id", dbClusterId)
-			d.Set("name", backupSchedule.Name)
-			d.Set("schedule", backupSchedule.Schedule)
-			d.Set("retention_policy", backupSchedule.RetentionPolicy)
-			d.Set("backup_target", backupSchedule.Target)
-			d.Set("suspended", backupSchedule.Suspended)
-			d.Set("id", backupSchedule.Identity)
-			d.Set("method", backupSchedule.Method)
-			if err := d.Set("description", convert.StringValue(backupSchedule.Description)); err != nil {
-				return diag.FromErr(err)
-			}
-			d.Set("labels", backupSchedule.Labels)
-			d.Set("annotations", backupSchedule.Annotations)
+			_ = d.Set("db_cluster_id", dbClusterId)
+			_ = d.Set("name", backupSchedule.Name)
+			_ = d.Set("schedule", backupSchedule.Schedule)
+			_ = d.Set("retention_policy", backupSchedule.RetentionPolicy)
+			_ = d.Set("backup_target", backupSchedule.Target)
+			_ = d.Set("suspended", backupSchedule.Suspended)
+			_ = d.Set("id", backupSchedule.Identity)
+			_ = d.Set("method", backupSchedule.Method)
+			_ = d.Set("description", convert.StringValue(backupSchedule.Description))
+			_ = d.Set("labels", backupSchedule.Labels)
+			_ = d.Set("annotations", backupSchedule.Annotations)
 			return nil
 		}
 	}

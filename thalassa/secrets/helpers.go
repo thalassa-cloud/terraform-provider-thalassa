@@ -57,38 +57,20 @@ func validateSecretPath(path any, _ string) (warns []string, errs []error) {
 func setSecretState(d interface {
 	Set(string, any) error
 }, secret *tcsecrets.Secret, region string) error {
-	if err := d.Set("region", region); err != nil {
-		return err
-	}
-	if err := d.Set("path", secret.Path); err != nil {
-		return err
-	}
-	if err := d.Set("description", secret.Description); err != nil {
-		return err
-	}
-	if err := d.Set("labels", secret.Labels); err != nil {
-		return err
-	}
-	if err := d.Set("annotations", secret.Annotations); err != nil {
-		return err
-	}
-	if err := d.Set("current_version", secret.CurrentVersion); err != nil {
-		return err
-	}
+	_ = d.Set("region", region)
+	_ = d.Set("path", secret.Path)
+	_ = d.Set("description", secret.Description)
+	_ = d.Set("labels", secret.Labels)
+	_ = d.Set("annotations", secret.Annotations)
+	_ = d.Set("current_version", secret.CurrentVersion)
 	if !secret.CreatedAt.IsZero() {
-		if err := d.Set("created_at", secret.CreatedAt.Format(timeFormatRFC3339)); err != nil {
-			return err
-		}
+		_ = d.Set("created_at", secret.CreatedAt.Format(timeFormatRFC3339))
 	}
 	if !secret.UpdatedAt.IsZero() {
-		if err := d.Set("updated_at", secret.UpdatedAt.Format(timeFormatRFC3339)); err != nil {
-			return err
-		}
+		_ = d.Set("updated_at", secret.UpdatedAt.Format(timeFormatRFC3339))
 	}
 	if secret.LastAccessedAt != nil {
-		if err := d.Set("last_accessed_at", secret.LastAccessedAt.Format(timeFormatRFC3339)); err != nil {
-			return err
-		}
+		_ = d.Set("last_accessed_at", secret.LastAccessedAt.Format(timeFormatRFC3339))
 	}
 	return nil
 }

@@ -178,15 +178,15 @@ func dataSourceTeamRead(ctx context.Context, d *schema.ResourceData, m any) diag
 
 	// Set fields if found
 	d.SetId(team.Identity)
-	d.Set("id", team.Identity)
-	d.Set("name", team.Name)
-	d.Set("slug", team.Slug)
-	d.Set("description", team.Description)
-	d.Set("labels", team.Labels)
-	d.Set("annotations", team.Annotations)
-	d.Set("created_at", team.CreatedAt.Format(TimeFormatRFC3339))
+	_ = d.Set("id", team.Identity)
+	_ = d.Set("name", team.Name)
+	_ = d.Set("slug", team.Slug)
+	_ = d.Set("description", team.Description)
+	_ = d.Set("labels", team.Labels)
+	_ = d.Set("annotations", team.Annotations)
+	_ = d.Set("created_at", team.CreatedAt.Format(TimeFormatRFC3339))
 	if team.UpdatedAt != nil {
-		d.Set("updated_at", team.UpdatedAt.Format(TimeFormatRFC3339))
+		_ = d.Set("updated_at", team.UpdatedAt.Format(TimeFormatRFC3339))
 	}
 
 	// Set members data
@@ -203,7 +203,7 @@ func dataSourceTeamRead(ctx context.Context, d *schema.ResourceData, m any) diag
 		}
 		memberList[i] = memberMap
 	}
-	d.Set("members", memberList)
+	_ = d.Set("members", memberList)
 
 	return diag.Diagnostics{}
 }

@@ -40,7 +40,7 @@ func resourcePgRoles() *schema.Resource {
 				// ForceNew:    true,
 				Description: "The name of the role",
 				ValidateFunc: func(val any, key string) (warns []string, errs []error) {
-					//Field name may only contain lowercase alphanumeric characters & underscores
+					// Field name may only contain lowercase alphanumeric characters & underscores
 					if !regexp.MustCompile(`^[a-z0-9_]+$`).MatchString(val.(string)) {
 						errs = append(errs, fmt.Errorf("name may only contain lowercase alphanumeric characters & underscores"))
 					}
@@ -102,8 +102,7 @@ func resourcePgRolesCreate(ctx context.Context, d *schema.ResourceData, m any) d
 
 	dbClusterId := d.Get("db_cluster_id").(string)
 
-	dbCluster, err := waitForReadyDbCluster(ctx, client, dbClusterId)
-	if err != nil {
+	if _, err := waitForReadyDbCluster(ctx, client, dbClusterId); err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -116,7 +115,7 @@ func resourcePgRolesCreate(ctx context.Context, d *schema.ResourceData, m any) d
 		Login:           d.Get("login").(bool),
 	}
 
-	dbCluster, err = client.DBaaS().GetDbCluster(ctx, dbClusterId)
+	dbCluster, err := client.DBaaS().GetDbCluster(ctx, dbClusterId)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -125,12 +124,12 @@ func resourcePgRolesCreate(ctx context.Context, d *schema.ResourceData, m any) d
 	for _, role := range dbCluster.PostgresRoles {
 		if strings.EqualFold(role.Name, createRole.Name) {
 			d.SetId(role.Identity)
-			d.Set("name", role.Name)
-			d.Set("db_cluster_id", dbClusterId)
-			d.Set("connection_limit", role.ConnectionLimit)
-			d.Set("create_db", role.CreateDb)
-			d.Set("create_role", role.CreateRole)
-			d.Set("login", role.Login)
+			_ = d.Set("name", role.Name)
+			_ = d.Set("db_cluster_id", dbClusterId)
+			_ = d.Set("connection_limit", role.ConnectionLimit)
+			_ = d.Set("create_db", role.CreateDb)
+			_ = d.Set("create_role", role.CreateRole)
+			_ = d.Set("login", role.Login)
 			return resourcePgRolesRead(ctx, d, m)
 		}
 	}
@@ -157,12 +156,12 @@ func resourcePgRolesCreate(ctx context.Context, d *schema.ResourceData, m any) d
 			for _, role := range dbCluster.PostgresRoles {
 				if strings.EqualFold(role.Name, createRole.Name) {
 					d.SetId(role.Identity)
-					d.Set("name", role.Name)
-					d.Set("db_cluster_id", dbClusterId)
-					d.Set("connection_limit", role.ConnectionLimit)
-					d.Set("create_db", role.CreateDb)
-					d.Set("create_role", role.CreateRole)
-					d.Set("login", role.Login)
+					_ = d.Set("name", role.Name)
+					_ = d.Set("db_cluster_id", dbClusterId)
+					_ = d.Set("connection_limit", role.ConnectionLimit)
+					_ = d.Set("create_db", role.CreateDb)
+					_ = d.Set("create_role", role.CreateRole)
+					_ = d.Set("login", role.Login)
 					found = true
 					break
 				}
@@ -197,12 +196,12 @@ func resourcePgRolesRead(ctx context.Context, d *schema.ResourceData, m any) dia
 
 	for _, role := range dbCluster.PostgresRoles {
 		if role.Identity == id {
-			d.Set("name", role.Name)
-			d.Set("db_cluster_id", dbClusterId)
-			d.Set("connection_limit", role.ConnectionLimit)
-			d.Set("create_db", role.CreateDb)
-			d.Set("create_role", role.CreateRole)
-			d.Set("login", role.Login)
+			_ = d.Set("name", role.Name)
+			_ = d.Set("db_cluster_id", dbClusterId)
+			_ = d.Set("connection_limit", role.ConnectionLimit)
+			_ = d.Set("create_db", role.CreateDb)
+			_ = d.Set("create_role", role.CreateRole)
+			_ = d.Set("login", role.Login)
 			return nil
 		}
 	}
@@ -265,12 +264,12 @@ func resourcePgRolesUpdate(ctx context.Context, d *schema.ResourceData, m any) d
 		}
 		for _, role := range dbCluster.PostgresRoles {
 			if role.Identity == roleID {
-				d.Set("name", role.Name)
-				d.Set("db_cluster_id", dbClusterId)
-				d.Set("connection_limit", role.ConnectionLimit)
-				d.Set("create_db", role.CreateDb)
-				d.Set("create_role", role.CreateRole)
-				d.Set("login", role.Login)
+				_ = d.Set("name", role.Name)
+				_ = d.Set("db_cluster_id", dbClusterId)
+				_ = d.Set("connection_limit", role.ConnectionLimit)
+				_ = d.Set("create_db", role.CreateDb)
+				_ = d.Set("create_role", role.CreateRole)
+				_ = d.Set("login", role.Login)
 				return nil
 			}
 		}

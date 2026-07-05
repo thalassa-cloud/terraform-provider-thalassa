@@ -213,7 +213,7 @@ func resourceKmsKeyCreate(ctx context.Context, d *schema.ResourceData, m any) di
 		}
 	}
 
-	return resourceKmsKeyReadWithKey(ctx, d, m, region, key)
+	return resourceKmsKeyReadWithKey(d, region, key)
 }
 
 func resourceKmsKeyRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
@@ -234,19 +234,17 @@ func resourceKmsKeyRead(ctx context.Context, d *schema.ResourceData, m any) diag
 		return diag.FromErr(fmt.Errorf("reading KMS key: %w", err))
 	}
 
-	return resourceKmsKeyReadWithKey(ctx, d, m, region, key)
+	return resourceKmsKeyReadWithKey(d, region, key)
 }
 
-func resourceKmsKeyReadWithKey(ctx context.Context, d *schema.ResourceData, m any, region string, key *tckms.KmsKey) diag.Diagnostics {
+func resourceKmsKeyReadWithKey(d *schema.ResourceData, region string, key *tckms.KmsKey) diag.Diagnostics {
 	if err := setKmsKeyState(d, key, region); err != nil {
 		return diag.FromErr(err)
 	}
 
 	desiredStatus := d.Get("status").(string)
 	if desiredStatus == "" || key.Status == tckms.KmsKeyStatusPendingDeletion {
-		if err := d.Set("status", string(key.Status)); err != nil {
-			return diag.FromErr(err)
-		}
+		_ = d.Set("status", string(key.Status))
 	}
 
 	return nil
@@ -265,9 +263,7 @@ func resourceKmsKeyUpdate(ctx context.Context, d *schema.ResourceData, m any) di
 		if err := client.KMS().CancelDeletion(ctx, region, identity); err != nil {
 			return diag.FromErr(fmt.Errorf("cancelling KMS key deletion: %w", err))
 		}
-		if err := d.Set("cancel_scheduled_deletion", false); err != nil {
-			return diag.FromErr(err)
-		}
+		_ = d.Set("cancel_scheduled_deletion", false)
 	}
 
 	if d.HasChange("key_rotation_enabled") || d.HasChange("rotation_period_in_days") {
@@ -298,9 +294,7 @@ func resourceKmsKeyUpdate(ctx context.Context, d *schema.ResourceData, m any) di
 		}
 	}
 
-	if d.HasChanges("description", "labels", "annotations") {
-		// Metadata updates are not exposed by the KMS API; only rotation and status are mutable.
-	}
+	// Metadata updates are not exposed by the KMS API; only rotation and status are mutable.
 
 	return resourceKmsKeyRead(ctx, d, m)
 }

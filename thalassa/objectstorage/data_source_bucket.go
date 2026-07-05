@@ -91,19 +91,19 @@ func dataSourceBucketRead(ctx context.Context, d *schema.ResourceData, m any) di
 	}
 
 	d.SetId(bucket.Identity)
-	d.Set("id", bucket.Identity)
-	d.Set("name", bucket.Name)
-	d.Set("status", bucket.Status)
-	d.Set("endpoint", bucket.Endpoint)
-	d.Set("versioning", bucket.Versioning == objectstorage.ObjectStorageBucketVersioningEnabled)
-	d.Set("object_lock_enabled", bucket.ObjectLockEnabled)
+	_ = d.Set("id", bucket.Identity)
+	_ = d.Set("name", bucket.Name)
+	_ = d.Set("status", bucket.Status)
+	_ = d.Set("endpoint", bucket.Endpoint)
+	_ = d.Set("versioning", bucket.Versioning == objectstorage.ObjectStorageBucketVersioningEnabled)
+	_ = d.Set("object_lock_enabled", bucket.ObjectLockEnabled)
 
 	if bucket.Region != nil {
-		d.Set("region", bucket.Region.Identity)
+		_ = d.Set("region", bucket.Region.Identity)
 	}
 
 	// Set policy as JSON string if available
-	d.Set("policy", bucket.Policy)
+	_ = d.Set("policy", bucket.Policy)
 
 	return diag.Diagnostics{}
 }

@@ -98,17 +98,11 @@ func resourceSecretAccessPolicyRead(ctx context.Context, d *schema.ResourceData,
 		return diag.FromErr(fmt.Errorf("reading secret access policy: %w", err))
 	}
 
-	if err := d.Set("region", region); err != nil {
-		return diag.FromErr(err)
-	}
-	if err := d.Set("path", path); err != nil {
-		return diag.FromErr(err)
-	}
+	_ = d.Set("region", region)
+	_ = d.Set("path", path)
 
 	if secret.AccessPolicy != nil {
-		if err := d.Set("statement", flattenAccessPolicyStatements(secret.AccessPolicy.Statements)); err != nil {
-			return diag.FromErr(err)
-		}
+		_ = d.Set("statement", flattenAccessPolicyStatements(secret.AccessPolicy.Statements))
 	}
 
 	return nil

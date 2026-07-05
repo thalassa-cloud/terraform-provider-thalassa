@@ -22,33 +22,17 @@ var dnsRecordTypes = []string{
 func setDnsZoneState(d interface {
 	Set(string, any) error
 }, zone *tcdns.DnsZone) error {
-	if err := d.Set("zone_name", zone.Name); err != nil {
-		return err
-	}
-	if err := d.Set("slug", zone.Slug); err != nil {
-		return err
-	}
-	if err := d.Set("description", zone.Description); err != nil {
-		return err
-	}
-	if err := d.Set("labels", zone.Labels); err != nil {
-		return err
-	}
-	if err := d.Set("annotations", zone.Annotations); err != nil {
-		return err
-	}
-	if err := d.Set("object_version", zone.ObjectVersion); err != nil {
-		return err
-	}
+	_ = d.Set("zone_name", zone.Name)
+	_ = d.Set("slug", zone.Slug)
+	_ = d.Set("description", zone.Description)
+	_ = d.Set("labels", zone.Labels)
+	_ = d.Set("annotations", zone.Annotations)
+	_ = d.Set("object_version", zone.ObjectVersion)
 	if !zone.CreatedAt.IsZero() {
-		if err := d.Set("created_at", zone.CreatedAt.Format(timeFormatRFC3339)); err != nil {
-			return err
-		}
+		_ = d.Set("created_at", zone.CreatedAt.Format(timeFormatRFC3339))
 	}
 	if zone.UpdatedAt != nil {
-		if err := d.Set("updated_at", zone.UpdatedAt.Format(timeFormatRFC3339)); err != nil {
-			return err
-		}
+		_ = d.Set("updated_at", zone.UpdatedAt.Format(timeFormatRFC3339))
 	}
 	return nil
 }
@@ -56,30 +40,16 @@ func setDnsZoneState(d interface {
 func setDnsRecordState(d interface {
 	Set(string, any) error
 }, record *tcdns.DnsRecord, zoneID string) error {
-	if err := d.Set("zone_id", zoneID); err != nil {
-		return err
-	}
-	if err := d.Set("name", record.Name); err != nil {
-		return err
-	}
-	if err := d.Set("type", string(record.Type)); err != nil {
-		return err
-	}
-	if err := d.Set("ttl", record.TTL); err != nil {
-		return err
-	}
-	if err := d.Set("values", record.Values); err != nil {
-		return err
-	}
+	_ = d.Set("zone_id", zoneID)
+	_ = d.Set("name", record.Name)
+	_ = d.Set("type", string(record.Type))
+	_ = d.Set("ttl", record.TTL)
+	_ = d.Set("values", record.Values)
 	if !record.CreatedAt.IsZero() {
-		if err := d.Set("created_at", record.CreatedAt.Format(timeFormatRFC3339)); err != nil {
-			return err
-		}
+		_ = d.Set("created_at", record.CreatedAt.Format(timeFormatRFC3339))
 	}
 	if record.UpdatedAt != nil {
-		if err := d.Set("updated_at", record.UpdatedAt.Format(timeFormatRFC3339)); err != nil {
-			return err
-		}
+		_ = d.Set("updated_at", record.UpdatedAt.Format(timeFormatRFC3339))
 	}
 	return nil
 }

@@ -143,7 +143,7 @@ func resourceTeamCreate(ctx context.Context, d *schema.ResourceData, m any) diag
 	}
 	if team != nil {
 		d.SetId(team.Identity)
-		d.Set("slug", team.Slug)
+		_ = d.Set("slug", team.Slug)
 
 		err = updateTeamMembers(ctx, client, team.Identity, d)
 		if err != nil {
@@ -175,14 +175,14 @@ func resourceTeamRead(ctx context.Context, d *schema.ResourceData, m any) diag.D
 	}
 
 	d.SetId(team.Identity)
-	d.Set("name", team.Name)
-	d.Set("slug", team.Slug)
-	d.Set("description", team.Description)
-	d.Set("labels", team.Labels)
-	d.Set("annotations", team.Annotations)
-	d.Set("created_at", team.CreatedAt.Format(TimeFormatRFC3339))
+	_ = d.Set("name", team.Name)
+	_ = d.Set("slug", team.Slug)
+	_ = d.Set("description", team.Description)
+	_ = d.Set("labels", team.Labels)
+	_ = d.Set("annotations", team.Annotations)
+	_ = d.Set("created_at", team.CreatedAt.Format(TimeFormatRFC3339))
 	if team.UpdatedAt != nil {
-		d.Set("updated_at", team.UpdatedAt.Format(TimeFormatRFC3339))
+		_ = d.Set("updated_at", team.UpdatedAt.Format(TimeFormatRFC3339))
 	}
 
 	// Set members data
@@ -219,7 +219,7 @@ func resourceTeamRead(ctx context.Context, d *schema.ResourceData, m any) diag.D
 		}
 		memberSet.Add(memberMap)
 	}
-	d.Set("members", memberSet)
+	_ = d.Set("members", memberSet)
 
 	return nil
 }
@@ -244,13 +244,13 @@ func resourceTeamUpdate(ctx context.Context, d *schema.ResourceData, m any) diag
 		return diag.FromErr(fmt.Errorf("error updating team: %s", err))
 	}
 	if team != nil {
-		d.Set("name", team.Name)
-		d.Set("description", team.Description)
-		d.Set("slug", team.Slug)
-		d.Set("labels", team.Labels)
-		d.Set("annotations", team.Annotations)
+		_ = d.Set("name", team.Name)
+		_ = d.Set("description", team.Description)
+		_ = d.Set("slug", team.Slug)
+		_ = d.Set("labels", team.Labels)
+		_ = d.Set("annotations", team.Annotations)
 		if team.UpdatedAt != nil {
-			d.Set("updated_at", team.UpdatedAt.Format(TimeFormatRFC3339))
+			_ = d.Set("updated_at", team.UpdatedAt.Format(TimeFormatRFC3339))
 		}
 	}
 

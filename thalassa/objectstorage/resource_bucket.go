@@ -193,25 +193,25 @@ func resourceBucketRead(ctx context.Context, d *schema.ResourceData, m any) diag
 	}
 
 	d.SetId(bucket.Identity)
-	d.Set("name", bucket.Name)
-	d.Set("status", bucket.Status)
-	d.Set("endpoint", bucket.Endpoint)
+	_ = d.Set("name", bucket.Name)
+	_ = d.Set("status", bucket.Status)
+	_ = d.Set("endpoint", bucket.Endpoint)
 	if bucket.Region != nil {
 		currentRegion := d.Get("region").(string)
 		switch currentRegion {
 		case "":
-			d.Set("region", bucket.Region.Slug)
+			_ = d.Set("region", bucket.Region.Slug)
 		case bucket.Region.Slug:
-			d.Set("region", bucket.Region.Slug)
+			_ = d.Set("region", bucket.Region.Slug)
 		case bucket.Region.Identity:
-			d.Set("region", bucket.Region.Identity)
+			_ = d.Set("region", bucket.Region.Identity)
 		default:
-			d.Set("region", bucket.Region.Slug)
+			_ = d.Set("region", bucket.Region.Slug)
 		}
 	}
-	d.Set("policy", bucket.Policy)
-	d.Set("versioning", bucket.Versioning == objectstorage.ObjectStorageBucketVersioningEnabled)
-	d.Set("object_lock_enabled", bucket.ObjectLockEnabled)
+	_ = d.Set("policy", bucket.Policy)
+	_ = d.Set("versioning", bucket.Versioning == objectstorage.ObjectStorageBucketVersioningEnabled)
+	_ = d.Set("object_lock_enabled", bucket.ObjectLockEnabled)
 
 	return nil
 }

@@ -32,57 +32,25 @@ var kmsKeyStatuses = []string{
 func setKmsKeyState(d interface {
 	Set(string, any) error
 }, key *tckms.KmsKey, region string) error {
-	if err := d.Set("region", region); err != nil {
-		return err
-	}
-	if err := d.Set("name", key.Name); err != nil {
-		return err
-	}
-	if err := d.Set("slug", key.Slug); err != nil {
-		return err
-	}
-	if err := d.Set("description", key.Description); err != nil {
-		return err
-	}
-	if err := d.Set("labels", key.Labels); err != nil {
-		return err
-	}
-	if err := d.Set("annotations", key.Annotations); err != nil {
-		return err
-	}
-	if err := d.Set("key_type", string(key.KeyType)); err != nil {
-		return err
-	}
-	if err := d.Set("status", string(key.Status)); err != nil {
-		return err
-	}
-	if err := d.Set("export_allowed", key.ExportAllowed); err != nil {
-		return err
-	}
-	if err := d.Set("imported", key.Imported); err != nil {
-		return err
-	}
-	if err := d.Set("key_rotation_enabled", key.KeyRotationEnabled); err != nil {
-		return err
-	}
-	if err := d.Set("rotation_period_in_days", key.RotationPeriodInDays); err != nil {
-		return err
-	}
-	if err := d.Set("latest_version", key.LatestVersion); err != nil {
-		return err
-	}
-	if err := d.Set("object_version", key.ObjectVersion); err != nil {
-		return err
-	}
+	_ = d.Set("region", region)
+	_ = d.Set("name", key.Name)
+	_ = d.Set("slug", key.Slug)
+	_ = d.Set("description", key.Description)
+	_ = d.Set("labels", key.Labels)
+	_ = d.Set("annotations", key.Annotations)
+	_ = d.Set("key_type", string(key.KeyType))
+	_ = d.Set("status", string(key.Status))
+	_ = d.Set("export_allowed", key.ExportAllowed)
+	_ = d.Set("imported", key.Imported)
+	_ = d.Set("key_rotation_enabled", key.KeyRotationEnabled)
+	_ = d.Set("rotation_period_in_days", key.RotationPeriodInDays)
+	_ = d.Set("latest_version", key.LatestVersion)
+	_ = d.Set("object_version", key.ObjectVersion)
 	if !key.CreatedAt.IsZero() {
-		if err := d.Set("created_at", key.CreatedAt.Format(timeFormatRFC3339)); err != nil {
-			return err
-		}
+		_ = d.Set("created_at", key.CreatedAt.Format(timeFormatRFC3339))
 	}
 	if !key.UpdatedAt.IsZero() {
-		if err := d.Set("updated_at", key.UpdatedAt.Format(timeFormatRFC3339)); err != nil {
-			return err
-		}
+		_ = d.Set("updated_at", key.UpdatedAt.Format(timeFormatRFC3339))
 	}
 	return nil
 }

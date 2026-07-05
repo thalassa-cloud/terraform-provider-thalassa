@@ -137,7 +137,7 @@ func dataSourceOrganisationMembersRead(ctx context.Context, d *schema.ResourceDa
 		resourceID = fmt.Sprintf("organisation-members-%s-%d", emailFilter, len(members))
 	}
 	d.SetId(resourceID)
-	d.Set("members", memberList)
+	_ = d.Set("members", memberList)
 
 	return diag.Diagnostics{}
 }

@@ -185,15 +185,15 @@ func resourceRoleRead(ctx context.Context, d *schema.ResourceData, m any) diag.D
 	}
 
 	d.SetId(role.Identity)
-	d.Set("name", role.Name)
-	d.Set("slug", role.Slug)
-	d.Set("description", role.Description)
-	d.Set("labels", role.Labels)
-	d.Set("annotations", role.Annotations)
-	d.Set("created_at", role.CreatedAt.Format(TimeFormatRFC3339))
-	d.Set("updated_at", role.UpdatedAt.Format(TimeFormatRFC3339))
-	d.Set("role_is_read_only", role.IsReadOnly)
-	d.Set("system", role.System)
+	_ = d.Set("name", role.Name)
+	_ = d.Set("slug", role.Slug)
+	_ = d.Set("description", role.Description)
+	_ = d.Set("labels", role.Labels)
+	_ = d.Set("annotations", role.Annotations)
+	_ = d.Set("created_at", role.CreatedAt.Format(TimeFormatRFC3339))
+	_ = d.Set("updated_at", role.UpdatedAt.Format(TimeFormatRFC3339))
+	_ = d.Set("role_is_read_only", role.IsReadOnly)
+	_ = d.Set("system", role.System)
 
 	// Set rules
 	rulesSet := schema.NewSet(schema.HashResource(&schema.Resource{
@@ -216,7 +216,7 @@ func resourceRoleRead(ctx context.Context, d *schema.ResourceData, m any) diag.D
 		}
 		rulesSet.Add(ruleMap)
 	}
-	d.Set("rules", rulesSet)
+	_ = d.Set("rules", rulesSet)
 
 	return nil
 }

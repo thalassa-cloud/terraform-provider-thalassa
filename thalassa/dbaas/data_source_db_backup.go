@@ -205,32 +205,32 @@ func dataSourceDbBackupRead(ctx context.Context, d *schema.ResourceData, m any) 
 
 	// Set the resource data
 	d.SetId(backup.Identity)
-	d.Set("identity", backup.Identity)
-	d.Set("delete_protection", backup.DeleteProtection)
-	d.Set("backup_trigger", backup.BackupTrigger)
-	d.Set("engine_type", backup.EngineType)
-	d.Set("engine_version", backup.EngineVersion)
-	d.Set("backup_type", backup.BackupType)
-	d.Set("online", backup.Online)
-	d.Set("status", backup.Status)
-	d.Set("status_message", backup.StatusMessage)
-	d.Set("begin_lsn", backup.BeginLSN)
-	d.Set("end_lsn", backup.EndLSN)
-	d.Set("begin_wal", backup.BeginWAL)
-	d.Set("end_wal", backup.EndWAL)
-	d.Set("created_at", backup.CreatedAt.Format(time.RFC3339))
+	_ = d.Set("identity", backup.Identity)
+	_ = d.Set("delete_protection", backup.DeleteProtection)
+	_ = d.Set("backup_trigger", backup.BackupTrigger)
+	_ = d.Set("engine_type", backup.EngineType)
+	_ = d.Set("engine_version", backup.EngineVersion)
+	_ = d.Set("backup_type", backup.BackupType)
+	_ = d.Set("online", backup.Online)
+	_ = d.Set("status", backup.Status)
+	_ = d.Set("status_message", backup.StatusMessage)
+	_ = d.Set("begin_lsn", backup.BeginLSN)
+	_ = d.Set("end_lsn", backup.EndLSN)
+	_ = d.Set("begin_wal", backup.BeginWAL)
+	_ = d.Set("end_wal", backup.EndWAL)
+	_ = d.Set("created_at", backup.CreatedAt.Format(time.RFC3339))
 
 	if backup.Labels != nil {
-		d.Set("labels", backup.Labels)
+		_ = d.Set("labels", backup.Labels)
 	}
 	if backup.Annotations != nil {
-		d.Set("annotations", backup.Annotations)
+		_ = d.Set("annotations", backup.Annotations)
 	}
 	if backup.StartedAt != nil {
-		d.Set("started_at", backup.StartedAt.Format(time.RFC3339))
+		_ = d.Set("started_at", backup.StartedAt.Format(time.RFC3339))
 	}
 	if backup.StoppedAt != nil {
-		d.Set("stopped_at", backup.StoppedAt.Format(time.RFC3339))
+		_ = d.Set("stopped_at", backup.StoppedAt.Format(time.RFC3339))
 	}
 
 	return nil

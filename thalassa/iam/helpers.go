@@ -26,13 +26,6 @@ func convertStringsToPermissions(permissions []string) []iam.PermissionType {
 	return result
 }
 
-func valueOrEmptySlice(value []string) []string {
-	if value == nil {
-		return []string{}
-	}
-	return value
-}
-
 func toListOfInterfaces(value []string) []any {
 	if value == nil {
 		return []any{}

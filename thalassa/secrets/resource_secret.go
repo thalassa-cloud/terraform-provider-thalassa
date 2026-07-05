@@ -133,8 +133,8 @@ func resourceSecretImport(ctx context.Context, d *schema.ResourceData, m any) ([
 	if err != nil {
 		return nil, err
 	}
-	d.Set("region", region)
-	d.Set("path", path)
+	_ = d.Set("region", region)
+	_ = d.Set("path", path)
 	return []*schema.ResourceData{d}, nil
 }
 
@@ -194,9 +194,7 @@ func resourceSecretRead(ctx context.Context, d *schema.ResourceData, m any) diag
 		return diag.FromErr(fmt.Errorf("reading secret: %w", err))
 	}
 
-	if err := setSecretState(d, secret, region); err != nil {
-		return diag.FromErr(err)
-	}
+	_ = setSecretState(d, secret, region)
 
 	return nil
 }

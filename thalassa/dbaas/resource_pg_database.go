@@ -110,10 +110,10 @@ func resourcePgDatabaseCreate(ctx context.Context, d *schema.ResourceData, m any
 	for _, database := range dbCluster.PostgresDatabases {
 		if strings.EqualFold(database.Name, d.Get("name").(string)) {
 			d.SetId(database.Identity)
-			d.Set("name", database.Name)
-			d.Set("db_cluster_id", dbClusterId)
-			d.Set("owner_role_id", ownerRoleId)
-			d.Set("connection_limit", database.ConnectionLimit)
+			_ = d.Set("name", database.Name)
+			_ = d.Set("db_cluster_id", dbClusterId)
+			_ = d.Set("owner_role_id", ownerRoleId)
+			_ = d.Set("connection_limit", database.ConnectionLimit)
 			return resourcePgDatabaseRead(ctx, d, m)
 		}
 	}
@@ -146,10 +146,10 @@ func resourcePgDatabaseCreate(ctx context.Context, d *schema.ResourceData, m any
 	for _, database := range dbCluster.PostgresDatabases {
 		if strings.EqualFold(database.Name, createDatabase.Name) {
 			d.SetId(database.Identity)
-			d.Set("name", database.Name)
-			d.Set("db_cluster_id", dbClusterId)
-			d.Set("owner_role_id", ownerRoleId)
-			d.Set("connection_limit", database.ConnectionLimit)
+			_ = d.Set("name", database.Name)
+			_ = d.Set("db_cluster_id", dbClusterId)
+			_ = d.Set("owner_role_id", ownerRoleId)
+			_ = d.Set("connection_limit", database.ConnectionLimit)
 			return resourcePgDatabaseRead(ctx, d, m)
 		}
 	}
@@ -180,10 +180,10 @@ func resourcePgDatabaseRead(ctx context.Context, d *schema.ResourceData, m any) 
 	for _, database := range dbCluster.PostgresDatabases {
 		if strings.EqualFold(database.Name, d.Get("name").(string)) {
 			d.SetId(database.Identity)
-			d.Set("name", database.Name)
-			d.Set("db_cluster_id", dbClusterId)
-			d.Set("owner_role_id", ownerRoleId)
-			d.Set("connection_limit", database.ConnectionLimit)
+			_ = d.Set("name", database.Name)
+			_ = d.Set("db_cluster_id", dbClusterId)
+			_ = d.Set("owner_role_id", ownerRoleId)
+			_ = d.Set("connection_limit", database.ConnectionLimit)
 			return nil
 		}
 	}
@@ -227,10 +227,10 @@ func resourcePgDatabaseUpdate(ctx context.Context, d *schema.ResourceData, m any
 	for _, database := range dbCluster.PostgresDatabases {
 		if strings.EqualFold(database.Name, d.Get("name").(string)) {
 			d.SetId(database.Identity)
-			d.Set("name", database.Name)
-			d.Set("db_cluster_id", dbClusterId)
-			d.Set("owner_role_id", ownerRoleId)
-			d.Set("connection_limit", database.ConnectionLimit)
+			_ = d.Set("name", database.Name)
+			_ = d.Set("db_cluster_id", dbClusterId)
+			_ = d.Set("owner_role_id", ownerRoleId)
+			_ = d.Set("connection_limit", database.ConnectionLimit)
 			return resourcePgDatabaseRead(ctx, d, m)
 		}
 	}
