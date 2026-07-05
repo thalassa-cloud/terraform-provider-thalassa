@@ -98,7 +98,7 @@ func resourceReservedIP() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
 		},
-		CustomizeDiff: func(ctx context.Context, diff *schema.ResourceDiff, meta interface{}) error {
+		CustomizeDiff: func(ctx context.Context, diff *schema.ResourceDiff, meta any) error {
 			_, new := diff.GetChange("description")
 			if new == nil {
 				return diff.SetNew("description", "")
@@ -108,7 +108,7 @@ func resourceReservedIP() *schema.Resource {
 	}
 }
 
-func resourceReservedIPCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceReservedIPCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -183,7 +183,7 @@ func resourceReservedIPCreate(ctx context.Context, d *schema.ResourceData, m int
 	}
 }
 
-func resourceReservedIPRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceReservedIPRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to get client: %w", err))
@@ -204,25 +204,25 @@ func resourceReservedIPRead(ctx context.Context, d *schema.ResourceData, m inter
 	}
 
 	d.SetId(fip.Identity)
-	d.Set("name", fip.Name)
-	d.Set("slug", fip.Slug)
-	d.Set("description", fip.Description)
-	d.Set("labels", fip.Labels)
-	d.Set("annotations", fip.Annotations)
-	d.Set("status", string(fip.Status))
-	d.Set("ipv4_address", fip.IPv4Address)
-	d.Set("ipv6_address", fip.IPv6Address)
-	d.Set("attached_to_resource_type", string(fip.AttachedToResourceType))
-	d.Set("attached_to_resource_identity", fip.AttachedToResourceIdentity)
+	_ = d.Set("name", fip.Name)
+	_ = d.Set("slug", fip.Slug)
+	_ = d.Set("description", fip.Description)
+	_ = d.Set("labels", fip.Labels)
+	_ = d.Set("annotations", fip.Annotations)
+	_ = d.Set("status", string(fip.Status))
+	_ = d.Set("ipv4_address", fip.IPv4Address)
+	_ = d.Set("ipv6_address", fip.IPv6Address)
+	_ = d.Set("attached_to_resource_type", string(fip.AttachedToResourceType))
+	_ = d.Set("attached_to_resource_identity", fip.AttachedToResourceIdentity)
 
 	if fip.Region != nil {
-		d.Set("region", fip.Region.Slug)
+		_ = d.Set("region", fip.Region.Slug)
 	}
 
 	return nil
 }
 
-func resourceReservedIPUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceReservedIPUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to get client: %w", err))
@@ -245,16 +245,16 @@ func resourceReservedIPUpdate(ctx context.Context, d *schema.ResourceData, m int
 		return diag.FromErr(fmt.Errorf("failed to update reserved IP: %w", err))
 	}
 	if fip != nil {
-		d.Set("name", fip.Name)
-		d.Set("description", fip.Description)
-		d.Set("slug", fip.Slug)
-		d.Set("labels", fip.Labels)
-		d.Set("annotations", fip.Annotations)
+		_ = d.Set("name", fip.Name)
+		_ = d.Set("description", fip.Description)
+		_ = d.Set("slug", fip.Slug)
+		_ = d.Set("labels", fip.Labels)
+		_ = d.Set("annotations", fip.Annotations)
 	}
 	return resourceReservedIPRead(ctx, d, m)
 }
 
-func resourceReservedIPDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceReservedIPDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to get client: %w", err))

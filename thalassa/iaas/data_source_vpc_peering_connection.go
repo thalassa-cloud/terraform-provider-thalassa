@@ -177,7 +177,7 @@ func DataSourceVpcPeeringConnection() *schema.Resource {
 	}
 }
 
-func dataSourceVpcPeeringConnectionRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataSourceVpcPeeringConnectionRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	provider := provider.GetProvider(m)
 	identity := d.Get("identity").(string)
 	name := d.Get("name").(string)

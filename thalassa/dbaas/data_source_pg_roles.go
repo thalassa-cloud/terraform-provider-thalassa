@@ -59,7 +59,7 @@ func dataSourcePgRoles() *schema.Resource {
 	}
 }
 
-func dataSourcePgRolesRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataSourcePgRolesRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -74,12 +74,12 @@ func dataSourcePgRolesRead(ctx context.Context, d *schema.ResourceData, m interf
 	for _, role := range dbCluster.PostgresRoles {
 		if strings.EqualFold(role.Name, d.Get("name").(string)) {
 			d.SetId(role.Identity)
-			d.Set("name", role.Name)
-			d.Set("db_cluster_id", dbClusterId)
-			d.Set("connection_limit", role.ConnectionLimit)
-			d.Set("create_db", role.CreateDb)
-			d.Set("create_role", role.CreateRole)
-			d.Set("login", role.Login)
+			_ = d.Set("name", role.Name)
+			_ = d.Set("db_cluster_id", dbClusterId)
+			_ = d.Set("connection_limit", role.ConnectionLimit)
+			_ = d.Set("create_db", role.CreateDb)
+			_ = d.Set("create_role", role.CreateRole)
+			_ = d.Set("login", role.Login)
 			return nil
 		}
 	}

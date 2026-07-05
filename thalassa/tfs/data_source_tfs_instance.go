@@ -130,7 +130,7 @@ func DataSourceTfsInstance() *schema.Resource {
 	}
 }
 
-func dataSourceTfsInstanceRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataSourceTfsInstanceRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -169,37 +169,37 @@ func dataSourceTfsInstanceRead(ctx context.Context, d *schema.ResourceData, m in
 
 	// Set the ID and other attributes
 	d.SetId(tfsInstance.Identity)
-	d.Set("id", tfsInstance.Identity)
-	d.Set("name", tfsInstance.Name)
-	d.Set("slug", tfsInstance.Slug)
-	d.Set("status", string(tfsInstance.Status))
-	d.Set("delete_protection", tfsInstance.DeleteProtection)
-	d.Set("labels", tfsInstance.Labels)
-	d.Set("annotations", tfsInstance.Annotations)
+	_ = d.Set("id", tfsInstance.Identity)
+	_ = d.Set("name", tfsInstance.Name)
+	_ = d.Set("slug", tfsInstance.Slug)
+	_ = d.Set("status", string(tfsInstance.Status))
+	_ = d.Set("delete_protection", tfsInstance.DeleteProtection)
+	_ = d.Set("labels", tfsInstance.Labels)
+	_ = d.Set("annotations", tfsInstance.Annotations)
 
 	if tfsInstance.Description != nil {
-		d.Set("description", *tfsInstance.Description)
+		_ = d.Set("description", *tfsInstance.Description)
 	}
 
 	if tfsInstance.Region != nil {
-		d.Set("region", tfsInstance.Region.Identity)
+		_ = d.Set("region", tfsInstance.Region.Identity)
 	}
 
 	if tfsInstance.Vpc != nil {
-		d.Set("vpc_id", tfsInstance.Vpc.Identity)
+		_ = d.Set("vpc_id", tfsInstance.Vpc.Identity)
 	}
 
 	if tfsInstance.Subnet != nil {
-		d.Set("subnet_id", tfsInstance.Subnet.Identity)
+		_ = d.Set("subnet_id", tfsInstance.Subnet.Identity)
 	}
 
-	d.Set("size_gb", tfsInstance.SizeGB)
+	_ = d.Set("size_gb", tfsInstance.SizeGB)
 
 	// Set endpoints
 	if len(tfsInstance.Endpoints) > 0 {
-		endpoints := make([]map[string]interface{}, len(tfsInstance.Endpoints))
+		endpoints := make([]map[string]any, len(tfsInstance.Endpoints))
 		for i, endpoint := range tfsInstance.Endpoints {
-			endpointMap := map[string]interface{}{
+			endpointMap := map[string]any{
 				"identity": endpoint.Identity,
 				"address":  endpoint.EndpointAddress,
 				"hostname": endpoint.EndpointHostname,
@@ -207,9 +207,9 @@ func dataSourceTfsInstanceRead(ctx context.Context, d *schema.ResourceData, m in
 			}
 			endpoints[i] = endpointMap
 		}
-		d.Set("endpoints", endpoints)
+		_ = d.Set("endpoints", endpoints)
 	} else {
-		d.Set("endpoints", []map[string]interface{}{})
+		_ = d.Set("endpoints", []map[string]any{})
 	}
 
 	// Set security group IDs
@@ -218,9 +218,9 @@ func dataSourceTfsInstanceRead(ctx context.Context, d *schema.ResourceData, m in
 		for i, sg := range tfsInstance.SecurityGroups {
 			securityGroupIds[i] = sg.Identity
 		}
-		d.Set("security_group_ids", securityGroupIds)
+		_ = d.Set("security_group_ids", securityGroupIds)
 	} else {
-		d.Set("security_group_ids", []string{})
+		_ = d.Set("security_group_ids", []string{})
 	}
 
 	return nil

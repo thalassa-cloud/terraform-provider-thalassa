@@ -221,7 +221,7 @@ func resourceVpcPeeringConnection() *schema.Resource {
 	}
 }
 
-func resourceVpcPeeringConnectionCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceVpcPeeringConnectionCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -257,7 +257,7 @@ func resourceVpcPeeringConnectionCreate(ctx context.Context, d *schema.ResourceD
 	return resourceVpcPeeringConnectionRead(ctx, d, m)
 }
 
-func resourceVpcPeeringConnectionRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceVpcPeeringConnectionRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -275,7 +275,7 @@ func resourceVpcPeeringConnectionRead(ctx context.Context, d *schema.ResourceDat
 	return setVpcPeeringConnectionData(d, peeringConnection)
 }
 
-func resourceVpcPeeringConnectionUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceVpcPeeringConnectionUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -295,7 +295,7 @@ func resourceVpcPeeringConnectionUpdate(ctx context.Context, d *schema.ResourceD
 	}
 
 	// check if an update is needed
-	if peeringConnection.Name == d.Get("name").(string) && peeringConnection.Description == d.Get("description").(string) && reflect.DeepEqual(peeringConnection.Labels, convert.ConvertToMap(d.Get("labels"))) && reflect.DeepEqual(peeringConnection.Annotations, convert.ConvertToMap(d.Get("annotations"))) {
+	if vpcPeeringConnectionMetadataMatchesState(peeringConnection, d) {
 		return setVpcPeeringConnectionData(d, peeringConnection)
 	}
 
@@ -314,7 +314,7 @@ func resourceVpcPeeringConnectionUpdate(ctx context.Context, d *schema.ResourceD
 	return setVpcPeeringConnectionData(d, peeringConnection)
 }
 
-func resourceVpcPeeringConnectionDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceVpcPeeringConnectionDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -351,77 +351,85 @@ func resourceVpcPeeringConnectionDelete(ctx context.Context, d *schema.ResourceD
 	return nil
 }
 
+func vpcPeeringConnectionMetadataMatchesState(connection *iaas.VpcPeeringConnection, d *schema.ResourceData) bool {
+	return connection.Name == d.Get("name").(string) &&
+		connection.Description == d.Get("description").(string) &&
+		reflect.DeepEqual(connection.Labels, convert.ConvertToMap(d.Get("labels"))) &&
+		reflect.DeepEqual(connection.Annotations, convert.ConvertToMap(d.Get("annotations")))
+}
+
 func setVpcPeeringConnectionData(d *schema.ResourceData, connection *iaas.VpcPeeringConnection) diag.Diagnostics {
 	d.SetId(connection.Identity)
-	d.Set("name", connection.Name)
-	d.Set("description", connection.Description)
-	d.Set("status", connection.Status)
-	d.Set("created_at", connection.CreatedAt.Format(time.RFC3339))
-	d.Set("updated_at", connection.UpdatedAt.Format(time.RFC3339))
+	_ = d.Set("name", connection.Name)
+	_ = d.Set("description", connection.Description)
+	_ = d.Set("status", connection.Status)
+	_ = d.Set("created_at", connection.CreatedAt.Format(time.RFC3339))
+	_ = d.Set("updated_at", connection.UpdatedAt.Format(time.RFC3339))
 
 	if connection.StatusMessage != nil {
-		d.Set("status_message", *connection.StatusMessage)
+		_ = d.Set("status_message", *connection.StatusMessage)
 	}
 	if connection.ExpiresAt != nil {
-		d.Set("expires_at", connection.ExpiresAt.Format(time.RFC3339))
+		_ = d.Set("expires_at", connection.ExpiresAt.Format(time.RFC3339))
 	}
 	if connection.RequesterNextHopIP != nil {
-		d.Set("requester_next_hop_ip", *connection.RequesterNextHopIP)
+		_ = d.Set("requester_next_hop_ip", *connection.RequesterNextHopIP)
 	}
 	if connection.AccepterNextHopIP != nil {
-		d.Set("accepter_next_hop_ip", *connection.AccepterNextHopIP)
+		_ = d.Set("accepter_next_hop_ip", *connection.AccepterNextHopIP)
 	}
 
 	// Set labels and annotations
 	if connection.Labels != nil {
-		d.Set("labels", connection.Labels)
+		_ = d.Set("labels", connection.Labels)
 	}
 	if connection.Annotations != nil {
-		d.Set("annotations", connection.Annotations)
+		_ = d.Set("annotations", connection.Annotations)
 	}
 
-	// Set requester VPC information
 	if connection.RequesterVpc != nil {
-		requesterVpc := []map[string]interface{}{
+		_ = d.Set("requester_vpc_id", connection.RequesterVpc.Identity)
+		requesterVpc := []map[string]any{
 			{
 				"identity": connection.RequesterVpc.Identity,
 				"name":     connection.RequesterVpc.Name,
 			},
 		}
-		d.Set("requester_vpc", requesterVpc)
+		_ = d.Set("requester_vpc", requesterVpc)
 	}
 
 	// Set accepter VPC information
 	if connection.AccepterVpc != nil {
-		accepterVpc := []map[string]interface{}{
+		_ = d.Set("accepter_vpc_id", connection.AccepterVpc.Identity)
+		accepterVpc := []map[string]any{
 			{
 				"identity": connection.AccepterVpc.Identity,
 				"name":     connection.AccepterVpc.Name,
 			},
 		}
-		d.Set("accepter_vpc", accepterVpc)
+		_ = d.Set("accepter_vpc", accepterVpc)
 	}
 
 	// Set requester organisation information
 	if connection.RequesterOrganisation != nil {
-		requesterOrg := []map[string]interface{}{
+		requesterOrg := []map[string]any{
 			{
 				"identity": connection.RequesterOrganisation.Identity,
 				"name":     connection.RequesterOrganisation.Name,
 			},
 		}
-		d.Set("requester_organisation", requesterOrg)
+		_ = d.Set("requester_organisation", requesterOrg)
 	}
 
 	// Set accepter organisation information
 	if connection.AccepterOrganisation != nil {
-		accepterOrg := []map[string]interface{}{
+		accepterOrg := []map[string]any{
 			{
 				"identity": connection.AccepterOrganisation.Identity,
 				"name":     connection.AccepterOrganisation.Name,
 			},
 		}
-		d.Set("accepter_organisation", accepterOrg)
+		_ = d.Set("accepter_organisation", accepterOrg)
 	}
 
 	return nil

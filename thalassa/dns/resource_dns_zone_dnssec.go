@@ -91,7 +91,7 @@ func ResourceDnsZoneDnssec() *schema.Resource {
 	}
 }
 
-func resourceDnsZoneDnssecCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceDnsZoneDnssecCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -113,7 +113,7 @@ func resourceDnsZoneDnssecCreate(ctx context.Context, d *schema.ResourceData, m 
 	return resourceDnsZoneDnssecRead(ctx, d, m)
 }
 
-func resourceDnsZoneDnssecRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceDnsZoneDnssecRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -139,48 +139,30 @@ func resourceDnsZoneDnssecRead(ctx context.Context, d *schema.ResourceData, m in
 	}
 
 	d.SetId(zoneID)
-	if err := d.Set("zone_id", zoneID); err != nil {
-		return diag.FromErr(err)
-	}
-	if err := d.Set("enabled", status.Enabled); err != nil {
-		return diag.FromErr(err)
-	}
-	if err := d.Set("ds_delegated", status.DsDelegated); err != nil {
-		return diag.FromErr(err)
-	}
-	if err := d.Set("ds_records", flattenDsRecords(status.DsRecords)); err != nil {
-		return diag.FromErr(err)
-	}
+	_ = d.Set("zone_id", zoneID)
+	_ = d.Set("enabled", status.Enabled)
+	_ = d.Set("ds_delegated", status.DsDelegated)
+	_ = d.Set("ds_records", flattenDsRecords(status.DsRecords))
 	if status.Region != "" {
-		if err := d.Set("region", status.Region); err != nil {
-			return diag.FromErr(err)
-		}
+		_ = d.Set("region", status.Region)
 	}
 	if status.KmsKeyIdentity != "" {
-		if err := d.Set("kms_key_id", status.KmsKeyIdentity); err != nil {
-			return diag.FromErr(err)
-		}
+		_ = d.Set("kms_key_id", status.KmsKeyIdentity)
 	}
 	if status.LastSignedAt != nil {
-		if err := d.Set("last_signed_at", status.LastSignedAt.Format(timeFormatRFC3339)); err != nil {
-			return diag.FromErr(err)
-		}
+		_ = d.Set("last_signed_at", status.LastSignedAt.Format(timeFormatRFC3339))
 	}
 	if status.LastSignError != nil {
-		if err := d.Set("last_sign_error", *status.LastSignError); err != nil {
-			return diag.FromErr(err)
-		}
+		_ = d.Set("last_sign_error", *status.LastSignError)
 	}
 	if status.NextDsProbeAt != nil {
-		if err := d.Set("next_ds_probe_at", status.NextDsProbeAt.Format(timeFormatRFC3339)); err != nil {
-			return diag.FromErr(err)
-		}
+		_ = d.Set("next_ds_probe_at", status.NextDsProbeAt.Format(timeFormatRFC3339))
 	}
 
 	return nil
 }
 
-func resourceDnsZoneDnssecDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceDnsZoneDnssecDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)

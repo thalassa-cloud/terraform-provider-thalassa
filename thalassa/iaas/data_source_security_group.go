@@ -186,7 +186,7 @@ func DataSourceSecurityGroup() *schema.Resource {
 	}
 }
 
-func dataSourceSecurityGroupRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func dataSourceSecurityGroupRead(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(meta), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -236,32 +236,14 @@ func dataSourceSecurityGroupRead(ctx context.Context, d *schema.ResourceData, me
 
 	// Set the ID and other attributes
 	d.SetId(securityGroup.Identity)
-	if err := d.Set("name", securityGroup.Name); err != nil {
-		return diag.FromErr(err)
-	}
-	if err := d.Set("description", securityGroup.Description); err != nil {
-		return diag.FromErr(err)
-	}
-	if err := d.Set("vpc_identity", securityGroup.Vpc.Identity); err != nil {
-		return diag.FromErr(err)
-	}
-	if err := d.Set("allow_same_group_traffic", securityGroup.AllowSameGroupTraffic); err != nil {
-		return diag.FromErr(err)
-	}
-	if err := d.Set("ingress_rules", flattenSecurityGroupRules(securityGroup.IngressRules)); err != nil {
-		return diag.FromErr(err)
-	}
-	if err := d.Set("egress_rules", flattenSecurityGroupRules(securityGroup.EgressRules)); err != nil {
-		return diag.FromErr(err)
-	}
-	if err := d.Set("created_at", securityGroup.CreatedAt.Format(time.RFC3339)); err != nil {
-		return diag.FromErr(err)
-	}
-	if err := d.Set("updated_at", securityGroup.UpdatedAt.Format(time.RFC3339)); err != nil {
-		return diag.FromErr(err)
-	}
-	if err := d.Set("status", securityGroup.Status); err != nil {
-		return diag.FromErr(err)
-	}
+	_ = d.Set("name", securityGroup.Name)
+	_ = d.Set("description", securityGroup.Description)
+	_ = d.Set("vpc_identity", securityGroup.Vpc.Identity)
+	_ = d.Set("allow_same_group_traffic", securityGroup.AllowSameGroupTraffic)
+	_ = d.Set("ingress_rules", flattenSecurityGroupRules(securityGroup.IngressRules))
+	_ = d.Set("egress_rules", flattenSecurityGroupRules(securityGroup.EgressRules))
+	_ = d.Set("created_at", securityGroup.CreatedAt.Format(time.RFC3339))
+	_ = d.Set("updated_at", securityGroup.UpdatedAt.Format(time.RFC3339))
+	_ = d.Set("status", securityGroup.Status)
 	return nil
 }

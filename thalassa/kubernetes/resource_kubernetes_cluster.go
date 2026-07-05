@@ -18,7 +18,10 @@ import (
 
 func resourceKubernetesCluster() *schema.Resource {
 	return &schema.Resource{
-		Description:   "Manages a Kubernetes cluster in the Thalassa cloud platform. This resource supports both managed clusters and hosted control plane clusters, allowing you to deploy production-ready Kubernetes environments with configurable networking, security policies, and auto-upgrade capabilities. The cluster can be customized with specific CNI plugins (Cilium or custom), network CIDRs, pod security standards, audit logging, and API server access controls.",
+		Description: "Manages a Kubernetes cluster on the Thalassa cloud platform. " +
+			"Supports managed clusters and hosted control plane clusters with configurable networking, " +
+			"security policies, auto-upgrade, CNI plugins, network CIDRs, pod security standards, " +
+			"audit logging, and API server access controls.",
 		CreateContext: resourceKubernetesClusterCreate,
 		ReadContext:   resourceKubernetesClusterRead,
 		UpdateContext: resourceKubernetesClusterUpdate,
@@ -107,7 +110,8 @@ func resourceKubernetesCluster() *schema.Resource {
 				ForceNew:     true,
 				Default:      "cilium", // Default to Cilium
 				ValidateFunc: validate.StringInSlice([]string{"cilium", "custom"}, false),
-				Description:  "CNI plugin installed in the Kubernetes Cluster. Must be one of: cilium, custom. Default: cilium. If custom, you must install your own CNI provider and configuration, otherwise Kubernetes Nodes will not function correctly.",
+				Description: "CNI plugin for the cluster. Must be cilium or custom. Default: cilium. " +
+					"If custom, install your own CNI provider or nodes will not function correctly.",
 			},
 			"networking_service_cidr": {
 				Type:         schema.TypeString,
@@ -305,9 +309,10 @@ func resourceKubernetesCluster() *schema.Resource {
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 			"disable_public_endpoint": {
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Description: "Disable public endpoint of the Kubernetes Cluster. When set to true, the Kubernetes Cluster will only be accessible via the private VPC endpoint and the user will need to provide a solution to access the Kubernetes API server.",
+				Type:     schema.TypeBool,
+				Optional: true,
+				Description: "Disable the public Kubernetes API endpoint. When true, access the API only " +
+					"via the private VPC endpoint and provide your own connectivity.",
 			},
 		},
 		Importer: &schema.ResourceImporter{
@@ -316,7 +321,7 @@ func resourceKubernetesCluster() *schema.Resource {
 	}
 }
 
-func resourceKubernetesClusterCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceKubernetesClusterCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -422,8 +427,8 @@ func resourceKubernetesClusterCreate(ctx context.Context, d *schema.ResourceData
 	}
 	if kubernetesCluster != nil {
 		d.SetId(kubernetesCluster.Identity)
-		d.Set("slug", kubernetesCluster.Slug)
-		d.Set("status", kubernetesCluster.Status)
+		_ = d.Set("slug", kubernetesCluster.Slug)
+		_ = d.Set("status", kubernetesCluster.Status)
 	}
 
 	ctxWithTimeout, cancel := context.WithTimeout(ctx, 20*time.Minute)
@@ -444,8 +449,8 @@ func resourceKubernetesClusterCreate(ctx context.Context, d *schema.ResourceData
 			return diag.FromErr(fmt.Errorf("cluster is in error state: %s", kubernetesCluster.StatusMessage))
 		}
 		if strings.EqualFold(kubernetesCluster.Status, "ready") {
-			d.Set("kubernetes_api_server_endpoint", kubernetesCluster.APIServerURL)
-			d.Set("kubernetes_api_server_ca_certificate", kubernetesCluster.APIServerCA)
+			_ = d.Set("kubernetes_api_server_endpoint", kubernetesCluster.APIServerURL)
+			_ = d.Set("kubernetes_api_server_ca_certificate", kubernetesCluster.APIServerCA)
 			break
 		}
 		time.Sleep(1 * time.Second)
@@ -454,7 +459,7 @@ func resourceKubernetesClusterCreate(ctx context.Context, d *schema.ResourceData
 	return resourceKubernetesClusterRead(ctx, d, m)
 }
 
-func resourceKubernetesClusterRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceKubernetesClusterRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -476,80 +481,73 @@ func resourceKubernetesClusterRead(ctx context.Context, d *schema.ResourceData, 
 	// Only set cluster_version in state if it was defined in the configuration.
 	// This avoids introducing a value into state that the user did not specify.
 	if _, hasVersion := d.GetOk("cluster_version"); hasVersion {
-		currentlyConfiguredVersion := d.Get("cluster_version").(string)
-		if !(kubernetesCluster.ClusterVersion.Name == currentlyConfiguredVersion || kubernetesCluster.ClusterVersion.Slug == currentlyConfiguredVersion || kubernetesCluster.ClusterVersion.Identity == currentlyConfiguredVersion) {
-			d.Set("cluster_version", kubernetesCluster.ClusterVersion.Slug)
-		} else {
-			d.Set("cluster_version", currentlyConfiguredVersion)
-		}
+		_ = d.Set("cluster_version", resolvedClusterVersionReference(d.Get("cluster_version").(string), kubernetesCluster.ClusterVersion))
 	} else {
-		d.Set("cluster_version", nil)
+		_ = d.Set("cluster_version", nil)
 	}
 
 	d.SetId(kubernetesCluster.Identity)
-	d.Set("name", kubernetesCluster.Name)
-	d.Set("slug", kubernetesCluster.Slug)
-	d.Set("description", kubernetesCluster.Description)
-	d.Set("labels", kubernetesCluster.Labels)
-	d.Set("annotations", kubernetesCluster.Annotations)
-	d.Set("cluster_type", kubernetesCluster.ClusterType)
-	d.Set("delete_protection", kubernetesCluster.DeleteProtection)
-	d.Set("networking_cni", kubernetesCluster.Configuration.Networking.CNI)
-	d.Set("networking_service_cidr", kubernetesCluster.Configuration.Networking.ServiceCIDR)
-	d.Set("networking_pod_cidr", kubernetesCluster.Configuration.Networking.PodCIDR)
+	_ = d.Set("name", kubernetesCluster.Name)
+	_ = d.Set("slug", kubernetesCluster.Slug)
+	_ = d.Set("description", kubernetesCluster.Description)
+	_ = d.Set("labels", kubernetesCluster.Labels)
+	_ = d.Set("annotations", kubernetesCluster.Annotations)
+	_ = d.Set("cluster_type", kubernetesCluster.ClusterType)
+	_ = d.Set("delete_protection", kubernetesCluster.DeleteProtection)
+	_ = d.Set("networking_cni", kubernetesCluster.Configuration.Networking.CNI)
+	_ = d.Set("networking_service_cidr", kubernetesCluster.Configuration.Networking.ServiceCIDR)
+	_ = d.Set("networking_pod_cidr", kubernetesCluster.Configuration.Networking.PodCIDR)
 	if kubernetesCluster.Configuration.Networking.KubeProxyMode != nil {
-		d.Set("networking_kube_proxy_mode", string(*kubernetesCluster.Configuration.Networking.KubeProxyMode))
+		_ = d.Set("networking_kube_proxy_mode", string(*kubernetesCluster.Configuration.Networking.KubeProxyMode))
 	}
 	if kubernetesCluster.Configuration.Networking.KubeProxyDeployment != nil {
-		d.Set("networking_kube_proxy_deployment", string(*kubernetesCluster.Configuration.Networking.KubeProxyDeployment))
+		_ = d.Set("networking_kube_proxy_deployment", string(*kubernetesCluster.Configuration.Networking.KubeProxyDeployment))
 	}
-	d.Set("pod_security_standards_profile", kubernetesCluster.PodSecurityStandardsProfile)
-	d.Set("audit_log_profile", kubernetesCluster.AuditLogProfile)
-	d.Set("default_network_policy", kubernetesCluster.DefaultNetworkPolicy)
-	d.Set("status", kubernetesCluster.Status)
-	d.Set("kubernetes_api_server_endpoint", kubernetesCluster.APIServerURL)
-	d.Set("kubernetes_api_server_ca_certificate", kubernetesCluster.APIServerCA)
+	_ = d.Set("pod_security_standards_profile", kubernetesCluster.PodSecurityStandardsProfile)
+	_ = d.Set("audit_log_profile", kubernetesCluster.AuditLogProfile)
+	_ = d.Set("default_network_policy", kubernetesCluster.DefaultNetworkPolicy)
+	_ = d.Set("status", kubernetesCluster.Status)
+	_ = d.Set("kubernetes_api_server_endpoint", kubernetesCluster.APIServerURL)
+	_ = d.Set("kubernetes_api_server_ca_certificate", kubernetesCluster.APIServerCA)
 	if kubernetesCluster.InternalEndpoint != nil {
-		d.Set("internal_endpoint", *kubernetesCluster.InternalEndpoint)
+		_ = d.Set("internal_endpoint", *kubernetesCluster.InternalEndpoint)
 	}
 	if kubernetesCluster.AdvertisePort != nil {
-		d.Set("advertise_port", *kubernetesCluster.AdvertisePort)
+		_ = d.Set("advertise_port", *kubernetesCluster.AdvertisePort)
 	}
 	if kubernetesCluster.KonnectivityPort != nil {
-		d.Set("konnectivity_port", *kubernetesCluster.KonnectivityPort)
+		_ = d.Set("konnectivity_port", *kubernetesCluster.KonnectivityPort)
 	}
-	d.Set("disable_public_endpoint", kubernetesCluster.DisablePublicEndpoint)
+	_ = d.Set("disable_public_endpoint", kubernetesCluster.DisablePublicEndpoint)
 
 	// Set API server ACLs
 	if len(kubernetesCluster.ApiServerACLs.AllowedCIDRs) > 0 {
-		apiServerACLs := map[string]interface{}{
+		apiServerACLs := map[string]any{
 			"allowed_cidrs": kubernetesCluster.ApiServerACLs.AllowedCIDRs,
 		}
-		if err := d.Set("api_server_acls", []interface{}{apiServerACLs}); err != nil {
-			return diag.FromErr(fmt.Errorf("error setting api_server_acls: %s", err))
-		}
+		_ = d.Set("api_server_acls", []any{apiServerACLs})
 	}
 
 	securityGroupAttachments := []string{}
 	for _, sg := range kubernetesCluster.SecurityGroups {
 		securityGroupAttachments = append(securityGroupAttachments, sg.Identity)
 	}
-	d.Set("security_group_attachments", securityGroupAttachments)
+	_ = d.Set("security_group_attachments", securityGroupAttachments)
 
 	// Set auto upgrade policy
-	d.Set("auto_upgrade_policy", kubernetesCluster.AutoUpgradePolicy)
+	_ = d.Set("auto_upgrade_policy", kubernetesCluster.AutoUpgradePolicy)
 
 	// Set maintenance settings
 	if kubernetesCluster.MaintenanceDay != nil {
-		d.Set("maintenance_day", int(*kubernetesCluster.MaintenanceDay))
+		_ = d.Set("maintenance_day", int(*kubernetesCluster.MaintenanceDay))
 	}
 	if kubernetesCluster.MaintenanceStartAt != nil {
-		d.Set("maintenance_start_at", int(*kubernetesCluster.MaintenanceStartAt))
+		_ = d.Set("maintenance_start_at", int(*kubernetesCluster.MaintenanceStartAt))
 	}
 
 	// Set autoscaler config
 	if kubernetesCluster.AutoscalerConfig != nil {
-		autoscalerConfig := map[string]interface{}{
+		autoscalerConfig := map[string]any{
 			"scale_down_disabled":              kubernetesCluster.AutoscalerConfig.ScaleDownDisabled,
 			"scale_down_delay_after_add":       kubernetesCluster.AutoscalerConfig.ScaleDownDelayAfterAdd,
 			"estimator":                        kubernetesCluster.AutoscalerConfig.Estimator,
@@ -562,25 +560,23 @@ func resourceKubernetesClusterRead(ctx context.Context, d *schema.ResourceData, 
 			"max_graceful_termination_sec":     kubernetesCluster.AutoscalerConfig.MaxGracefulTerminationSec,
 			"enable_proactive_scale_up":        kubernetesCluster.AutoscalerConfig.EnableProactiveScaleUp,
 		}
-		if err := d.Set("autoscaler_config", []interface{}{autoscalerConfig}); err != nil {
-			return diag.FromErr(fmt.Errorf("error setting autoscaler_config: %s", err))
-		}
+		_ = d.Set("autoscaler_config", []any{autoscalerConfig})
 	}
 
 	if kubernetesCluster.VPC != nil {
-		d.Set("vpc_id", kubernetesCluster.VPC.Identity)
+		_ = d.Set("vpc_id", kubernetesCluster.VPC.Identity)
 	}
 	if kubernetesCluster.Subnet != nil {
-		d.Set("subnet_id", kubernetesCluster.Subnet.Identity)
+		_ = d.Set("subnet_id", kubernetesCluster.Subnet.Identity)
 	}
 	if kubernetesCluster.Region != nil {
-		d.Set("region", kubernetesCluster.Region.Identity)
+		_ = d.Set("region", kubernetesCluster.Region.Identity)
 	}
 
 	return nil
 }
 
-func resourceKubernetesClusterUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceKubernetesClusterUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics { //nolint:gocyclo // update maps many optional cluster settings
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -659,67 +655,60 @@ func resourceKubernetesClusterUpdate(ctx context.Context, d *schema.ResourceData
 
 		currentlyConfiguredVersionInt, ok := d.GetOk("cluster_version")
 		if ok {
-			currentlyConfiguredVersion := currentlyConfiguredVersionInt.(string)
-			if !(kubernetesCluster.ClusterVersion.Name == currentlyConfiguredVersion || kubernetesCluster.ClusterVersion.Slug == currentlyConfiguredVersion || kubernetesCluster.ClusterVersion.Identity == currentlyConfiguredVersion) {
-				d.Set("cluster_version", kubernetesCluster.ClusterVersion.Slug)
-			} else {
-				d.Set("cluster_version", currentlyConfiguredVersion)
-			}
+			_ = d.Set("cluster_version", resolvedClusterVersionReference(currentlyConfiguredVersionInt.(string), kubernetesCluster.ClusterVersion))
 		}
 
-		d.Set("name", kubernetesCluster.Name)
-		d.Set("description", kubernetesCluster.Description)
-		d.Set("slug", kubernetesCluster.Slug)
-		d.Set("status", kubernetesCluster.Status)
+		_ = d.Set("name", kubernetesCluster.Name)
+		_ = d.Set("description", kubernetesCluster.Description)
+		_ = d.Set("slug", kubernetesCluster.Slug)
+		_ = d.Set("status", kubernetesCluster.Status)
 		if kubernetesCluster.VPC != nil {
-			d.Set("vpc_id", kubernetesCluster.VPC.Identity)
+			_ = d.Set("vpc_id", kubernetesCluster.VPC.Identity)
 		}
 		if kubernetesCluster.Subnet != nil {
-			d.Set("subnet_id", kubernetesCluster.Subnet.Identity)
+			_ = d.Set("subnet_id", kubernetesCluster.Subnet.Identity)
 		}
 
-		d.Set("labels", kubernetesCluster.Labels)
-		d.Set("annotations", kubernetesCluster.Annotations)
-		d.Set("cluster_type", kubernetesCluster.ClusterType)
-		d.Set("delete_protection", kubernetesCluster.DeleteProtection)
-		d.Set("networking_cni", kubernetesCluster.Configuration.Networking.CNI)
-		d.Set("networking_service_cidr", kubernetesCluster.Configuration.Networking.ServiceCIDR)
-		d.Set("networking_pod_cidr", kubernetesCluster.Configuration.Networking.PodCIDR)
+		_ = d.Set("labels", kubernetesCluster.Labels)
+		_ = d.Set("annotations", kubernetesCluster.Annotations)
+		_ = d.Set("cluster_type", kubernetesCluster.ClusterType)
+		_ = d.Set("delete_protection", kubernetesCluster.DeleteProtection)
+		_ = d.Set("networking_cni", kubernetesCluster.Configuration.Networking.CNI)
+		_ = d.Set("networking_service_cidr", kubernetesCluster.Configuration.Networking.ServiceCIDR)
+		_ = d.Set("networking_pod_cidr", kubernetesCluster.Configuration.Networking.PodCIDR)
 		if kubernetesCluster.Configuration.Networking.KubeProxyMode != nil {
-			d.Set("networking_kube_proxy_mode", string(*kubernetesCluster.Configuration.Networking.KubeProxyMode))
+			_ = d.Set("networking_kube_proxy_mode", string(*kubernetesCluster.Configuration.Networking.KubeProxyMode))
 		}
 		if kubernetesCluster.Configuration.Networking.KubeProxyDeployment != nil {
-			d.Set("networking_kube_proxy_deployment", string(*kubernetesCluster.Configuration.Networking.KubeProxyDeployment))
+			_ = d.Set("networking_kube_proxy_deployment", string(*kubernetesCluster.Configuration.Networking.KubeProxyDeployment))
 		}
-		d.Set("pod_security_standards_profile", kubernetesCluster.PodSecurityStandardsProfile)
-		d.Set("audit_log_profile", kubernetesCluster.AuditLogProfile)
-		d.Set("default_network_policy", kubernetesCluster.DefaultNetworkPolicy)
-		d.Set("disable_public_endpoint", kubernetesCluster.DisablePublicEndpoint)
+		_ = d.Set("pod_security_standards_profile", kubernetesCluster.PodSecurityStandardsProfile)
+		_ = d.Set("audit_log_profile", kubernetesCluster.AuditLogProfile)
+		_ = d.Set("default_network_policy", kubernetesCluster.DefaultNetworkPolicy)
+		_ = d.Set("disable_public_endpoint", kubernetesCluster.DisablePublicEndpoint)
 
 		// Set API server ACLs
 		if len(kubernetesCluster.ApiServerACLs.AllowedCIDRs) > 0 {
-			apiServerACLs := map[string]interface{}{
+			apiServerACLs := map[string]any{
 				"allowed_cidrs": kubernetesCluster.ApiServerACLs.AllowedCIDRs,
 			}
-			if err := d.Set("api_server_acls", []interface{}{apiServerACLs}); err != nil {
-				return diag.FromErr(fmt.Errorf("error setting api_server_acls: %s", err))
-			}
+			_ = d.Set("api_server_acls", []any{apiServerACLs})
 		}
 
 		// Set auto upgrade policy
-		d.Set("auto_upgrade_policy", kubernetesCluster.AutoUpgradePolicy)
+		_ = d.Set("auto_upgrade_policy", kubernetesCluster.AutoUpgradePolicy)
 
 		// Set maintenance settings
 		if kubernetesCluster.MaintenanceDay != nil {
-			d.Set("maintenance_day", int(*kubernetesCluster.MaintenanceDay))
+			_ = d.Set("maintenance_day", int(*kubernetesCluster.MaintenanceDay))
 		}
 		if kubernetesCluster.MaintenanceStartAt != nil {
-			d.Set("maintenance_start_at", int(*kubernetesCluster.MaintenanceStartAt))
+			_ = d.Set("maintenance_start_at", int(*kubernetesCluster.MaintenanceStartAt))
 		}
 
 		// Set autoscaler config
 		if kubernetesCluster.AutoscalerConfig != nil {
-			autoscalerConfig := map[string]interface{}{
+			autoscalerConfig := map[string]any{
 				"scale_down_disabled":              kubernetesCluster.AutoscalerConfig.ScaleDownDisabled,
 				"scale_down_delay_after_add":       kubernetesCluster.AutoscalerConfig.ScaleDownDelayAfterAdd,
 				"estimator":                        kubernetesCluster.AutoscalerConfig.Estimator,
@@ -732,20 +721,18 @@ func resourceKubernetesClusterUpdate(ctx context.Context, d *schema.ResourceData
 				"max_graceful_termination_sec":     kubernetesCluster.AutoscalerConfig.MaxGracefulTerminationSec,
 				"enable_proactive_scale_up":        kubernetesCluster.AutoscalerConfig.EnableProactiveScaleUp,
 			}
-			if err := d.Set("autoscaler_config", []interface{}{autoscalerConfig}); err != nil {
-				return diag.FromErr(fmt.Errorf("error setting autoscaler_config: %s", err))
-			}
+			_ = d.Set("autoscaler_config", []any{autoscalerConfig})
 		}
 
 		// Set computed fields
 		if kubernetesCluster.InternalEndpoint != nil {
-			d.Set("internal_endpoint", *kubernetesCluster.InternalEndpoint)
+			_ = d.Set("internal_endpoint", *kubernetesCluster.InternalEndpoint)
 		}
 		if kubernetesCluster.AdvertisePort != nil {
-			d.Set("advertise_port", *kubernetesCluster.AdvertisePort)
+			_ = d.Set("advertise_port", *kubernetesCluster.AdvertisePort)
 		}
 		if kubernetesCluster.KonnectivityPort != nil {
-			d.Set("konnectivity_port", *kubernetesCluster.KonnectivityPort)
+			_ = d.Set("konnectivity_port", *kubernetesCluster.KonnectivityPort)
 		}
 
 		return nil
@@ -754,7 +741,7 @@ func resourceKubernetesClusterUpdate(ctx context.Context, d *schema.ResourceData
 	return resourceKubernetesClusterRead(ctx, d, m)
 }
 
-func resourceKubernetesClusterDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceKubernetesClusterDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -799,12 +786,12 @@ func resourceKubernetesClusterDelete(ctx context.Context, d *schema.ResourceData
 }
 
 // convertApiServerACLs converts the API server ACLs from Terraform schema to the API format
-func convertApiServerACLs(acls interface{}) kubernetes.KubernetesApiServerACLs {
+func convertApiServerACLs(acls any) kubernetes.KubernetesApiServerACLs {
 	if acls == nil {
 		return kubernetes.KubernetesApiServerACLs{}
 	}
 
-	aclsList, ok := acls.([]interface{})
+	aclsList, ok := acls.([]any)
 	if !ok || len(aclsList) == 0 {
 		return kubernetes.KubernetesApiServerACLs{}
 	}
@@ -814,7 +801,7 @@ func convertApiServerACLs(acls interface{}) kubernetes.KubernetesApiServerACLs {
 		return kubernetes.KubernetesApiServerACLs{}
 	}
 
-	acl, ok := first.(map[string]interface{})
+	acl, ok := first.(map[string]any)
 	if !ok || acl == nil {
 		return kubernetes.KubernetesApiServerACLs{}
 	}
@@ -830,7 +817,7 @@ func convertApiServerACLs(acls interface{}) kubernetes.KubernetesApiServerACLs {
 }
 
 // convertAutoscalerConfig converts the autoscaler config from Terraform schema to the API format
-func convertAutoscalerConfig(config interface{}) *kubernetes.AutoscalerConfig {
+func convertAutoscalerConfig(config any) *kubernetes.AutoscalerConfig {
 	// Initialize with default values
 	result := &kubernetes.AutoscalerConfig{
 		ScaleDownDisabled:             false,
@@ -850,7 +837,7 @@ func convertAutoscalerConfig(config interface{}) *kubernetes.AutoscalerConfig {
 		return result
 	}
 
-	configList, ok := config.([]interface{})
+	configList, ok := config.([]any)
 	if !ok || len(configList) == 0 {
 		return result
 	}
@@ -860,7 +847,7 @@ func convertAutoscalerConfig(config interface{}) *kubernetes.AutoscalerConfig {
 		return result
 	}
 
-	cfg, ok := first.(map[string]interface{})
+	cfg, ok := first.(map[string]any)
 	if !ok || cfg == nil {
 		return result
 	}

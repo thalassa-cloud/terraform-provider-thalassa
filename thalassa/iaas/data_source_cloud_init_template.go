@@ -46,7 +46,7 @@ func dataSourceCloudInitTemplate() *schema.Resource {
 	}
 }
 
-func dataSourceCloudInitTemplateRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataSourceCloudInitTemplateRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -58,15 +58,15 @@ func dataSourceCloudInitTemplateRead(ctx context.Context, d *schema.ResourceData
 	}
 
 	d.SetId(cloudInitTemplate.Identity)
-	d.Set("name", cloudInitTemplate.Name)
-	d.Set("content", cloudInitTemplate.Content)
-	d.Set("slug", cloudInitTemplate.Slug)
+	_ = d.Set("name", cloudInitTemplate.Name)
+	_ = d.Set("content", cloudInitTemplate.Content)
+	_ = d.Set("slug", cloudInitTemplate.Slug)
 
 	if cloudInitTemplate.Labels != nil {
-		d.Set("labels", cloudInitTemplate.Labels)
+		_ = d.Set("labels", cloudInitTemplate.Labels)
 	}
 	if cloudInitTemplate.Annotations != nil {
-		d.Set("annotations", cloudInitTemplate.Annotations)
+		_ = d.Set("annotations", cloudInitTemplate.Annotations)
 	}
 
 	return nil

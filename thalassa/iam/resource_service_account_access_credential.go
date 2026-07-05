@@ -78,7 +78,7 @@ func ResourceServiceAccountAccessCredential() *schema.Resource {
 	}
 }
 
-func resourceServiceAccountAccessCredentialCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceServiceAccountAccessCredentialCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -88,7 +88,7 @@ func resourceServiceAccountAccessCredentialCreate(ctx context.Context, d *schema
 
 	// Convert scopes list
 	scopes := make([]iam.AccessCredentialsScope, 0)
-	if s, ok := d.Get("scopes").([]interface{}); ok {
+	if s, ok := d.Get("scopes").([]any); ok {
 		for _, scope := range s {
 			scopes = append(scopes, iam.AccessCredentialsScope(scope.(string)))
 		}
@@ -116,15 +116,15 @@ func resourceServiceAccountAccessCredentialCreate(ctx context.Context, d *schema
 
 	if credential != nil {
 		d.SetId(credential.Identity)
-		d.Set("access_key", credential.AccessKey)
-		d.Set("access_secret", credential.AccessSecret)
+		_ = d.Set("access_key", credential.AccessKey)
+		_ = d.Set("access_secret", credential.AccessSecret)
 		return resourceServiceAccountAccessCredentialRead(ctx, d, m)
 	}
 
 	return diag.FromErr(fmt.Errorf("failed to create service account access credential"))
 }
 
-func resourceServiceAccountAccessCredentialRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceServiceAccountAccessCredentialRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -158,20 +158,20 @@ func resourceServiceAccountAccessCredentialRead(ctx context.Context, d *schema.R
 	}
 
 	d.SetId(credential.Identity)
-	d.Set("access_key", credential.AccessKey)
-	d.Set("created_at", credential.CreatedAt.Format(TimeFormatRFC3339))
+	_ = d.Set("access_key", credential.AccessKey)
+	_ = d.Set("created_at", credential.CreatedAt.Format(TimeFormatRFC3339))
 
 	if credential.LastUsedAt != nil {
-		d.Set("last_used_at", credential.LastUsedAt.Format(TimeFormatRFC3339))
+		_ = d.Set("last_used_at", credential.LastUsedAt.Format(TimeFormatRFC3339))
 	}
 	if credential.ExpiresAt != nil {
-		d.Set("expires_at", credential.ExpiresAt.Format(TimeFormatRFC3339))
+		_ = d.Set("expires_at", credential.ExpiresAt.Format(TimeFormatRFC3339))
 	}
 
 	return nil
 }
 
-func resourceServiceAccountAccessCredentialDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceServiceAccountAccessCredentialDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)

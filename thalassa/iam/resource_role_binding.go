@@ -86,7 +86,7 @@ func ResourceRoleBinding() *schema.Resource {
 	}
 }
 
-func resourceRoleBindingCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceRoleBindingCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -125,7 +125,7 @@ func resourceRoleBindingCreate(ctx context.Context, d *schema.ResourceData, m in
 	return diag.FromErr(fmt.Errorf("failed to create role binding"))
 }
 
-func resourceRoleBindingRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceRoleBindingRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -159,28 +159,28 @@ func resourceRoleBindingRead(ctx context.Context, d *schema.ResourceData, m inte
 	}
 
 	d.SetId(binding.Identity)
-	d.Set("name", binding.Name)
-	d.Set("description", binding.Description)
-	d.Set("labels", binding.Labels)
-	d.Set("annotations", binding.Annotations)
-	d.Set("created_at", binding.CreatedAt.Format(time.RFC3339))
-	d.Set("updated_at", binding.UpdatedAt.Format(time.RFC3339))
+	_ = d.Set("name", binding.Name)
+	_ = d.Set("description", binding.Description)
+	_ = d.Set("labels", binding.Labels)
+	_ = d.Set("annotations", binding.Annotations)
+	_ = d.Set("created_at", binding.CreatedAt.Format(time.RFC3339))
+	_ = d.Set("updated_at", binding.UpdatedAt.Format(time.RFC3339))
 
 	// Set the appropriate identity field based on what's bound
 	if binding.AppUser != nil {
-		d.Set("user_id", binding.AppUser.Subject)
+		_ = d.Set("user_id", binding.AppUser.Subject)
 	}
 	if binding.OrganisationTeam != nil {
-		d.Set("team_id", binding.OrganisationTeam.Identity)
+		_ = d.Set("team_id", binding.OrganisationTeam.Identity)
 	}
 	if binding.ServiceAccount != nil {
-		d.Set("service_account_id", binding.ServiceAccount.Identity)
+		_ = d.Set("service_account_id", binding.ServiceAccount.Identity)
 	}
 
 	return nil
 }
 
-func resourceRoleBindingUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceRoleBindingUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	// Role bindings are immutable in the API, so we need to recreate them
 	// This is a common pattern for resources that don't support updates
 	return diag.Diagnostics{
@@ -192,7 +192,7 @@ func resourceRoleBindingUpdate(ctx context.Context, d *schema.ResourceData, m in
 	}
 }
 
-func resourceRoleBindingDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceRoleBindingDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)

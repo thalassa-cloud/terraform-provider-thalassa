@@ -70,7 +70,7 @@ func resourceDbBackupSchedule() *schema.Resource {
 				Optional:    true,
 				Default:     "7d",
 				Description: "The retention policy of the database backup schedule (7d, 14d, 30d, 90d, 180d, 365d, 730d)",
-				ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
+				ValidateFunc: func(val any, key string) (warns []string, errs []error) {
 					if !regexp.MustCompile(`^[1-9][0-9]*d$`).MatchString(val.(string)) {
 						errs = append(errs, fmt.Errorf("retention_policy must be in the format of <number>d (e.g. 7d, 9d, 14d, etc)"))
 					}
@@ -83,7 +83,7 @@ func resourceDbBackupSchedule() *schema.Resource {
 				Optional:    true,
 				Description: "The cron schedule of the database backup schedule (0 0 * * *)",
 				Default:     "0 0 * * *",
-				ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
+				ValidateFunc: func(val any, key string) (warns []string, errs []error) {
 					if !regexp.MustCompile(`^[0-9,\-\*]+ [0-9,\-\*]+ [0-9,\-\*]+ [0-9,\-\*]+ [0-9,\-\*]+$`).MatchString(val.(string)) {
 						errs = append(errs, fmt.Errorf("schedule must be in valid cron format (e.g. 0 0 * * *)"))
 					}
@@ -103,7 +103,7 @@ func resourceDbBackupSchedule() *schema.Resource {
 				Default:     "barman",
 				ForceNew:    true,
 				Description: "The method of the backup schedule (barman)",
-				ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
+				ValidateFunc: func(val any, key string) (warns []string, errs []error) {
 					if val.(string) != "barman" {
 						errs = append(errs, fmt.Errorf("method must be 'barman'"))
 					}
@@ -115,7 +115,7 @@ func resourceDbBackupSchedule() *schema.Resource {
 	}
 }
 
-func resourceDbBackupScheduleCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceDbBackupScheduleCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -169,18 +169,18 @@ func resourceDbBackupScheduleCreate(ctx context.Context, d *schema.ResourceData,
 	}
 
 	d.SetId(createdBackupSchedule.Identity)
-	d.Set("db_cluster_id", dbClusterId)
-	d.Set("name", createdBackupSchedule.Name)
-	d.Set("description", createdBackupSchedule.Description)
-	d.Set("labels", createdBackupSchedule.Labels)
-	d.Set("annotations", createdBackupSchedule.Annotations)
-	d.Set("schedule", createdBackupSchedule.Schedule)
-	d.Set("retention_policy", createdBackupSchedule.RetentionPolicy)
+	_ = d.Set("db_cluster_id", dbClusterId)
+	_ = d.Set("name", createdBackupSchedule.Name)
+	_ = d.Set("description", convert.StringValue(createdBackupSchedule.Description))
+	_ = d.Set("labels", createdBackupSchedule.Labels)
+	_ = d.Set("annotations", createdBackupSchedule.Annotations)
+	_ = d.Set("schedule", createdBackupSchedule.Schedule)
+	_ = d.Set("retention_policy", createdBackupSchedule.RetentionPolicy)
 
 	return resourceDbBackupScheduleRead(ctx, d, m)
 }
 
-func resourceDbBackupScheduleRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceDbBackupScheduleRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -198,26 +198,24 @@ func resourceDbBackupScheduleRead(ctx context.Context, d *schema.ResourceData, m
 
 	for _, backupSchedule := range DbBackupSchedules {
 		if backupSchedule.Identity == d.Id() {
-			d.Set("db_cluster_id", dbClusterId)
-			d.Set("name", backupSchedule.Name)
-			d.Set("schedule", backupSchedule.Schedule)
-			d.Set("retention_policy", backupSchedule.RetentionPolicy)
-			d.Set("backup_target", backupSchedule.Target)
-			d.Set("suspended", backupSchedule.Suspended)
-			d.Set("id", backupSchedule.Identity)
-			d.Set("method", backupSchedule.Method)
-			if backupSchedule.Description != nil {
-				d.Set("description", *backupSchedule.Description)
-			}
-			d.Set("labels", backupSchedule.Labels)
-			d.Set("annotations", backupSchedule.Annotations)
+			_ = d.Set("db_cluster_id", dbClusterId)
+			_ = d.Set("name", backupSchedule.Name)
+			_ = d.Set("schedule", backupSchedule.Schedule)
+			_ = d.Set("retention_policy", backupSchedule.RetentionPolicy)
+			_ = d.Set("backup_target", backupSchedule.Target)
+			_ = d.Set("suspended", backupSchedule.Suspended)
+			_ = d.Set("id", backupSchedule.Identity)
+			_ = d.Set("method", backupSchedule.Method)
+			_ = d.Set("description", convert.StringValue(backupSchedule.Description))
+			_ = d.Set("labels", backupSchedule.Labels)
+			_ = d.Set("annotations", backupSchedule.Annotations)
 			return nil
 		}
 	}
 	return diag.FromErr(fmt.Errorf("backup schedule not found"))
 }
 
-func resourceDbBackupScheduleUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceDbBackupScheduleUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -272,7 +270,7 @@ func resourceDbBackupScheduleUpdate(ctx context.Context, d *schema.ResourceData,
 	return resourceDbBackupScheduleRead(ctx, d, m)
 }
 
-func resourceDbBackupScheduleDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceDbBackupScheduleDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error getting db cluster: %w", err))

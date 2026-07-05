@@ -27,7 +27,7 @@ func defaultAutoscalerConfig() *kubernetes.AutoscalerConfig {
 func TestConvertAutoscalerConfig(t *testing.T) {
 	tests := []struct {
 		name     string
-		config   interface{}
+		config   any
 		expected *kubernetes.AutoscalerConfig
 	}{
 		{
@@ -37,12 +37,12 @@ func TestConvertAutoscalerConfig(t *testing.T) {
 		},
 		{
 			name:     "empty list returns default config",
-			config:   []interface{}{},
+			config:   []any{},
 			expected: defaultAutoscalerConfig(),
 		},
 		{
 			name:     "nil first element returns default config",
-			config:   []interface{}{nil},
+			config:   []any{nil},
 			expected: defaultAutoscalerConfig(),
 		},
 		{
@@ -52,18 +52,18 @@ func TestConvertAutoscalerConfig(t *testing.T) {
 		},
 		{
 			name:     "invalid first element (not a map) returns default config",
-			config:   []interface{}{"not a map"},
+			config:   []any{"not a map"},
 			expected: defaultAutoscalerConfig(),
 		},
 		{
 			name:     "empty map returns default config",
-			config:   []interface{}{map[string]interface{}{}},
+			config:   []any{map[string]any{}},
 			expected: defaultAutoscalerConfig(),
 		},
 		{
 			name: "all fields set with custom values",
-			config: []interface{}{
-				map[string]interface{}{
+			config: []any{
+				map[string]any{
 					"scale_down_disabled":              true,
 					"scale_down_delay_after_add":       "15m",
 					"estimator":                        "least-waste",
@@ -93,8 +93,8 @@ func TestConvertAutoscalerConfig(t *testing.T) {
 		},
 		{
 			name: "partial fields set, others use defaults",
-			config: []interface{}{
-				map[string]interface{}{
+			config: []any{
+				map[string]any{
 					"scale_down_disabled":              true,
 					"estimator":                        "most-pods",
 					"scale_down_utilization_threshold": 0.75,
@@ -110,8 +110,8 @@ func TestConvertAutoscalerConfig(t *testing.T) {
 		},
 		{
 			name: "fields with nil values use defaults",
-			config: []interface{}{
-				map[string]interface{}{
+			config: []any{
+				map[string]any{
 					"scale_down_disabled":              nil,
 					"scale_down_delay_after_add":       nil,
 					"estimator":                        nil,
@@ -129,8 +129,8 @@ func TestConvertAutoscalerConfig(t *testing.T) {
 		},
 		{
 			name: "boolean fields with false values",
-			config: []interface{}{
-				map[string]interface{}{
+			config: []any{
+				map[string]any{
 					"scale_down_disabled":           false,
 					"ignore_daemonsets_utilization": false,
 					"balance_similar_node_groups":   false,
@@ -141,8 +141,8 @@ func TestConvertAutoscalerConfig(t *testing.T) {
 		},
 		{
 			name: "integer fields with zero and negative values",
-			config: []interface{}{
-				map[string]interface{}{
+			config: []any{
+				map[string]any{
 					"expendable_pods_priority_cutoff": 0,
 					"max_graceful_termination_sec":    0,
 				},
@@ -156,8 +156,8 @@ func TestConvertAutoscalerConfig(t *testing.T) {
 		},
 		{
 			name: "float field with various threshold values",
-			config: []interface{}{
-				map[string]interface{}{
+			config: []any{
+				map[string]any{
 					"scale_down_utilization_threshold": 0.3,
 				},
 			},
@@ -169,8 +169,8 @@ func TestConvertAutoscalerConfig(t *testing.T) {
 		},
 		{
 			name: "string fields with custom time and estimator values",
-			config: []interface{}{
-				map[string]interface{}{
+			config: []any{
+				map[string]any{
 					"scale_down_delay_after_add": "30m",
 					"scale_down_unneeded_time":   "1h",
 					"estimator":                  "least-waste",

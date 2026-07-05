@@ -49,7 +49,7 @@ func dataSourcePgDatabase() *schema.Resource {
 	}
 }
 
-func dataSourcePgDatabaseRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataSourcePgDatabaseRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
@@ -66,10 +66,10 @@ func dataSourcePgDatabaseRead(ctx context.Context, d *schema.ResourceData, m int
 	for _, database := range dbCluster.PostgresDatabases {
 		if strings.EqualFold(database.Name, d.Get("name").(string)) {
 			d.SetId(database.Identity)
-			d.Set("name", database.Name)
-			d.Set("db_cluster_id", dbClusterId)
-			d.Set("owner_role_id", database.Owner)
-			d.Set("connection_limit", database.ConnectionLimit)
+			_ = d.Set("name", database.Name)
+			_ = d.Set("db_cluster_id", dbClusterId)
+			_ = d.Set("owner_role_id", database.Owner)
+			_ = d.Set("connection_limit", database.ConnectionLimit)
 			return nil
 		}
 	}

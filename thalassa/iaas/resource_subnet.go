@@ -17,7 +17,9 @@ import (
 
 func resourceSubnet() *schema.Resource {
 	return &schema.Resource{
-		Description:   "Create an subnet in a VPC. Subnets are used to create a network for your resources. A VPC can have multiple subnets, and each subnet must have a different CIDR block. IPv4, IPv6 and Dual-stack subnets are supported. After creationg the CIDR cannot be changed.",
+		Description: "Create a subnet in a VPC. Subnets provide network segments for resources. " +
+			"A VPC can have multiple subnets with unique CIDR blocks. IPv4, IPv6, and dual-stack are supported. " +
+			"The CIDR cannot be changed after creation.",
 		CreateContext: resourceSubnetCreate,
 		ReadContext:   resourceSubnetRead,
 		UpdateContext: resourceSubnetUpdate,
@@ -119,7 +121,7 @@ func resourceSubnet() *schema.Resource {
 	}
 }
 
-func resourceSubnetCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceSubnetCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -145,9 +147,9 @@ func resourceSubnetCreate(ctx context.Context, d *schema.ResourceData, m interfa
 	}
 	if subnet != nil {
 		d.SetId(subnet.Identity)
-		d.Set("slug", subnet.Slug)
-		d.Set("type", subnet.Type)
-		d.Set("status", subnet.Status)
+		_ = d.Set("slug", subnet.Slug)
+		_ = d.Set("type", subnet.Type)
+		_ = d.Set("status", subnet.Status)
 
 		// wait until the subnet is ready
 		ctxWithTimeout, cancel := context.WithTimeout(ctx, 20*time.Minute)
@@ -156,16 +158,17 @@ func resourceSubnetCreate(ctx context.Context, d *schema.ResourceData, m interfa
 		if subnet, err = client.IaaS().WaitUntilSubnetReady(ctxWithTimeout, subnet.Identity); err != nil {
 			return diag.FromErr(fmt.Errorf("error waiting for subnet to be ready: %w", err))
 		}
-		d.Set("status", subnet.Status)
-		d.Set("ipv4_addresses_used", subnet.V4usingIPs)
-		d.Set("ipv4_addresses_available", subnet.V4availableIPs)
-		d.Set("ipv6_addresses_used", subnet.V6usingIPs)
-		d.Set("ipv6_addresses_available", subnet.V6availableIPs)
+
+		_ = d.Set("status", subnet.Status)
+		_ = d.Set("ipv4_addresses_used", subnet.V4usingIPs)
+		_ = d.Set("ipv4_addresses_available", subnet.V4availableIPs)
+		_ = d.Set("ipv6_addresses_used", subnet.V6usingIPs)
+		_ = d.Set("ipv6_addresses_available", subnet.V6availableIPs)
 	}
 	return resourceSubnetRead(ctx, d, m)
 }
 
-func resourceSubnetRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceSubnetRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -186,26 +189,32 @@ func resourceSubnetRead(ctx context.Context, d *schema.ResourceData, m interface
 	}
 
 	d.SetId(subnet.Identity)
-	d.Set("name", subnet.Name)
-	d.Set("slug", subnet.Slug)
-	d.Set("description", subnet.Description)
-	d.Set("labels", subnet.Labels)
-	d.Set("annotations", subnet.Annotations)
-	if subnet.RouteTable != nil {
-		d.Set("route_table_id", subnet.RouteTable.Identity)
+	_ = d.Set("name", subnet.Name)
+	_ = d.Set("slug", subnet.Slug)
+	_ = d.Set("description", subnet.Description)
+	_ = d.Set("labels", subnet.Labels)
+	_ = d.Set("annotations", subnet.Annotations)
+	_ = d.Set("cidr", subnet.Cidr)
+	if subnet.Vpc != nil {
+		_ = d.Set("vpc_id", subnet.Vpc.Identity)
+	} else if subnet.VpcIdentity != "" {
+		_ = d.Set("vpc_id", subnet.VpcIdentity)
 	}
-	d.Set("status", subnet.Status)
-	d.Set("type", subnet.Type)
+	if subnet.RouteTable != nil {
+		_ = d.Set("route_table_id", subnet.RouteTable.Identity)
+	}
+	_ = d.Set("status", subnet.Status)
+	_ = d.Set("type", subnet.Type)
 
-	d.Set("ipv4_addresses_used", subnet.V4usingIPs)
-	d.Set("ipv4_addresses_available", subnet.V4availableIPs)
-	d.Set("ipv6_addresses_used", subnet.V6usingIPs)
-	d.Set("ipv6_addresses_available", subnet.V6availableIPs)
+	_ = d.Set("ipv4_addresses_used", subnet.V4usingIPs)
+	_ = d.Set("ipv4_addresses_available", subnet.V4availableIPs)
+	_ = d.Set("ipv6_addresses_used", subnet.V6usingIPs)
+	_ = d.Set("ipv6_addresses_available", subnet.V6availableIPs)
 
 	return nil
 }
 
-func resourceSubnetUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceSubnetUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error creating client: %w", err))
@@ -229,18 +238,18 @@ func resourceSubnetUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 		return diag.FromErr(fmt.Errorf("error updating subnet: %w", err))
 	}
 	if subnet != nil {
-		d.Set("name", subnet.Name)
-		d.Set("description", subnet.Description)
-		d.Set("slug", subnet.Slug)
-		d.Set("labels", subnet.Labels)
-		d.Set("annotations", subnet.Annotations)
-		d.Set("ipv4_addresses_used", subnet.V4usingIPs)
-		d.Set("ipv4_addresses_available", subnet.V4availableIPs)
-		d.Set("ipv6_addresses_used", subnet.V6usingIPs)
-		d.Set("ipv6_addresses_available", subnet.V6availableIPs)
+		_ = d.Set("name", subnet.Name)
+		_ = d.Set("description", subnet.Description)
+		_ = d.Set("slug", subnet.Slug)
+		_ = d.Set("labels", subnet.Labels)
+		_ = d.Set("annotations", subnet.Annotations)
+		_ = d.Set("ipv4_addresses_used", subnet.V4usingIPs)
+		_ = d.Set("ipv4_addresses_available", subnet.V4availableIPs)
+		_ = d.Set("ipv6_addresses_used", subnet.V6usingIPs)
+		_ = d.Set("ipv6_addresses_available", subnet.V6availableIPs)
 
 		if subnet.RouteTable != nil {
-			d.Set("route_table_id", subnet.RouteTable.Identity)
+			_ = d.Set("route_table_id", subnet.RouteTable.Identity)
 		}
 
 		ctxWithTimeout, cancel := context.WithTimeout(ctx, 20*time.Minute)
@@ -250,23 +259,26 @@ func resourceSubnetUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 			return diag.FromErr(fmt.Errorf("error waiting for subnet to be ready: %w", err))
 		}
 
-		d.Set("status", subnet.Status)
-		d.Set("ipv4_addresses_used", subnet.V4usingIPs)
-		d.Set("ipv4_addresses_available", subnet.V4availableIPs)
-		d.Set("ipv6_addresses_used", subnet.V6usingIPs)
-		d.Set("ipv6_addresses_available", subnet.V6availableIPs)
+		_ = d.Set("status", subnet.Status)
+		_ = d.Set("ipv4_addresses_used", subnet.V4usingIPs)
+		_ = d.Set("ipv4_addresses_available", subnet.V4availableIPs)
+		_ = d.Set("ipv6_addresses_used", subnet.V6usingIPs)
+		_ = d.Set("ipv6_addresses_available", subnet.V6availableIPs)
 	}
 
 	return resourceSubnetRead(ctx, d, m)
 }
 
-func resourceSubnetDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceSubnetDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	id := d.Get("id").(string)
+	id := d.Id()
+	if id == "" {
+		return nil
+	}
 
 	err = client.IaaS().DeleteSubnet(ctx, id)
 	if err != nil && !tcclient.IsNotFound(err) {
@@ -275,9 +287,40 @@ func resourceSubnetDelete(ctx context.Context, d *schema.ResourceData, m interfa
 
 	ctxWithTimeout, cancel := context.WithTimeout(ctx, 20*time.Minute)
 	defer cancel()
-	if err := client.IaaS().WaitUntilSubnetDeleted(ctxWithTimeout, id); err != nil {
-		return diag.FromErr(fmt.Errorf("error waiting for subnet to be deleted: %w", err))
+
+	for {
+		select {
+		case <-ctxWithTimeout.Done():
+			return diag.FromErr(fmt.Errorf("timeout waiting for subnet %s to be deleted: %w", id, ctxWithTimeout.Err()))
+		default:
+		}
+
+		subnet, err := client.IaaS().GetSubnet(ctx, id)
+		if err != nil {
+			if tcclient.IsNotFound(err) {
+				d.SetId("")
+				return nil
+			}
+			return diag.FromErr(err)
+		}
+
+		switch subnet.Status {
+		case iaas.SubnetStatusDeleted:
+			d.SetId("")
+			return nil
+		case iaas.SubnetStatusDeleting:
+			// Deletion in progress; keep polling.
+		case iaas.SubnetStatusReady, iaas.SubnetStatusActive:
+			// The delete API can return before the subnet transitions to deleting.
+			if err := client.IaaS().DeleteSubnet(ctx, id); err != nil && !tcclient.IsNotFound(err) {
+				return diag.FromErr(err)
+			}
+		case iaas.SubnetStatusFailed:
+			return diag.FromErr(fmt.Errorf("subnet %s failed to delete (status: %s)", id, subnet.Status))
+		default:
+			return diag.FromErr(fmt.Errorf("subnet %s unexpected status during delete: %s", id, subnet.Status))
+		}
+
+		time.Sleep(iaas.DefaultPollIntervalForWaiting)
 	}
-	d.SetId("")
-	return nil
 }

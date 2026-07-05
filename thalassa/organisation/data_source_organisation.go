@@ -43,7 +43,7 @@ func DataSourceOrganisations() *schema.Resource {
 	}
 }
 
-func dataSourceOrganisationsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataSourceOrganisationsRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	provider := provider.GetProvider(m)
 	slug := d.Get("slug").(string)
 
@@ -55,19 +55,15 @@ func dataSourceOrganisationsRead(ctx context.Context, d *schema.ResourceData, m 
 	for _, org := range organisations {
 		if slug != "" && org.Slug == slug {
 			d.SetId(org.Identity)
-			d.Set("id", org.Identity)
-			d.Set("name", org.Name)
-			d.Set("slug", org.Slug)
-			d.Set("description", org.Description)
+			_ = d.Set("id", org.Identity)
+			_ = d.Set("name", org.Name)
+			_ = d.Set("slug", org.Slug)
+			_ = d.Set("description", org.Description)
 
 			// Set labels and annotations directly
-			if err := d.Set("labels", org.Labels); err != nil {
-				return diag.FromErr(fmt.Errorf("error setting labels: %s", err))
-			}
+			_ = d.Set("labels", org.Labels)
 
-			if err := d.Set("annotations", org.Annotations); err != nil {
-				return diag.FromErr(fmt.Errorf("error setting annotations: %s", err))
-			}
+			_ = d.Set("annotations", org.Annotations)
 
 			return diag.Diagnostics{}
 		}

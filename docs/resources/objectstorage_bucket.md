@@ -9,6 +9,10 @@ description: |-
 
 Create and manage an object storage bucket
 
+See [Object Storage documentation](https://docs.thalassa.cloud/docs/iaas/storage/object-storage/).
+
+Use service account access credentials for programmatic S3 access.
+
 ## Example Usage
 
 ```terraform

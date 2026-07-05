@@ -9,6 +9,8 @@ description: |-
 
 Manages a Kubernetes cluster role for IAM access control. This resource allows you to create, update, and delete Kubernetes cluster roles with associated permission rules.
 
+See [Kubernetes documentation](https://docs.thalassa.cloud/docs/kubernetes/).
+
 ## Important Notes
 
 - **Permission Rules**: Each rule defines access to specific Kubernetes resources with specific verbs (actions)

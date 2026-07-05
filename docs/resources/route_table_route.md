@@ -9,6 +9,8 @@ description: |-
 
 Create an route table route with a destination cidr block, target gateway, target nat gateway and gateway address within a route table.
 
+See [Networking documentation](https://docs.thalassa.cloud/docs/iaas/networking/).
+
 ## Example Usage
 
 ```terraform

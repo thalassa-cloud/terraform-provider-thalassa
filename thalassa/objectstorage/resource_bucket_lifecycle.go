@@ -44,22 +44,22 @@ func resourceBucketLifecycle() *schema.Resource {
 	}
 }
 
-func resourceBucketLifecycleCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceBucketLifecycleCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	return resourceBucketLifecycleApply(ctx, d, m)
 }
 
-func resourceBucketLifecycleUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceBucketLifecycleUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	return resourceBucketLifecycleApply(ctx, d, m)
 }
 
-func resourceBucketLifecycleApply(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceBucketLifecycleApply(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	bucketName := d.Get("bucket_name").(string)
-	rules := expandLifecycleRules(d.Get("rule").(*schema.Set))
+	rules := expandLifecycleRules(d.Get("rule").([]any))
 
 	if lifecycleHasNoncurrentRules(rules) {
 		bucket, err := client.ObjectStorage().GetBucket(ctx, bucketName)
@@ -82,7 +82,7 @@ func resourceBucketLifecycleApply(ctx context.Context, d *schema.ResourceData, m
 	return resourceBucketLifecycleRead(ctx, d, m)
 }
 
-func resourceBucketLifecycleRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceBucketLifecycleRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -103,17 +103,13 @@ func resourceBucketLifecycleRead(ctx context.Context, d *schema.ResourceData, m 
 	}
 
 	d.SetId(bucketName)
-	if err := d.Set("bucket_name", bucketName); err != nil {
-		return diag.FromErr(err)
-	}
-	if err := d.Set("rule", flattenLifecycleRules(lifecycle.Rules)); err != nil {
-		return diag.FromErr(err)
-	}
+	_ = d.Set("bucket_name", bucketName)
+	_ = d.Set("rule", flattenLifecycleRules(lifecycle.Rules))
 
 	return nil
 }
 
-func resourceBucketLifecycleDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceBucketLifecycleDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)

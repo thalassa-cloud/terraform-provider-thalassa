@@ -1,11 +1,13 @@
 package secrets
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"strings"
 	"time"
 
+	tcclient "github.com/thalassa-cloud/client-go/pkg/client"
 	tcsecrets "github.com/thalassa-cloud/client-go/secrets"
 )
 
@@ -43,7 +45,7 @@ func parseSecretVersionID(id string) (region, path string, version int, err erro
 	return region, path, version, err
 }
 
-func validateSecretPath(path interface{}, _ string) (warns []string, errs []error) {
+func validateSecretPath(path any, _ string) (warns []string, errs []error) {
 	p, ok := path.(string)
 	if !ok {
 		return nil, []error{fmt.Errorf("path must be a string")}
@@ -55,73 +57,60 @@ func validateSecretPath(path interface{}, _ string) (warns []string, errs []erro
 }
 
 func setSecretState(d interface {
-	Set(string, interface{}) error
+	Set(string, any) error
 }, secret *tcsecrets.Secret, region string) error {
-	if err := d.Set("region", region); err != nil {
-		return err
-	}
-	if err := d.Set("path", secret.Path); err != nil {
-		return err
-	}
-	if err := d.Set("description", secret.Description); err != nil {
-		return err
-	}
-	if err := d.Set("labels", secret.Labels); err != nil {
-		return err
-	}
-	if err := d.Set("annotations", secret.Annotations); err != nil {
-		return err
-	}
-	if err := d.Set("current_version", secret.CurrentVersion); err != nil {
-		return err
+	_ = d.Set("region", region)
+	_ = d.Set("path", secret.Path)
+	_ = d.Set("description", secret.Description)
+	_ = d.Set("labels", secret.Labels)
+	_ = d.Set("annotations", secret.Annotations)
+	_ = d.Set("current_version", secret.CurrentVersion)
+	if secret.KmsKey != nil && secret.KmsKey.Identity != "" {
+		_ = d.Set("kms_key_id", secret.KmsKey.Identity)
 	}
 	if !secret.CreatedAt.IsZero() {
-		if err := d.Set("created_at", secret.CreatedAt.Format(timeFormatRFC3339)); err != nil {
-			return err
-		}
+		_ = d.Set("created_at", secret.CreatedAt.Format(timeFormatRFC3339))
 	}
 	if !secret.UpdatedAt.IsZero() {
-		if err := d.Set("updated_at", secret.UpdatedAt.Format(timeFormatRFC3339)); err != nil {
-			return err
-		}
+		_ = d.Set("updated_at", secret.UpdatedAt.Format(timeFormatRFC3339))
 	}
 	if secret.LastAccessedAt != nil {
-		if err := d.Set("last_accessed_at", secret.LastAccessedAt.Format(timeFormatRFC3339)); err != nil {
-			return err
-		}
+		_ = d.Set("last_accessed_at", secret.LastAccessedAt.Format(timeFormatRFC3339))
 	}
 	return nil
 }
 
-func expandGenerateSecret(raw []interface{}) *tcsecrets.GenerateSecret {
+func expandGenerateSecret(raw []any) *tcsecrets.GenerateSecret {
 	if len(raw) == 0 {
 		return nil
 	}
-	block := raw[0].(map[string]interface{})
+	block := raw[0].(map[string]any)
 	gen := &tcsecrets.GenerateSecret{}
 	if v, ok := block["byte_length"].(int); ok && v > 0 {
+		gen.ByteLength = v
+	} else if v, ok := block["length"].(int); ok && v > 0 {
 		gen.ByteLength = v
 	}
 	return gen
 }
 
-func expandAccessPolicyStatements(raw []interface{}) []tcsecrets.SecretPolicyStatement {
+func expandAccessPolicyStatements(raw []any) []tcsecrets.SecretPolicyStatement {
 	if len(raw) == 0 {
 		return nil
 	}
 	statements := make([]tcsecrets.SecretPolicyStatement, 0, len(raw))
 	for _, item := range raw {
-		block := item.(map[string]interface{})
+		block := item.(map[string]any)
 		stmt := tcsecrets.SecretPolicyStatement{
 			Effect: block["effect"].(string),
 		}
-		if v, ok := block["actions"].([]interface{}); ok {
+		if v, ok := block["actions"].([]any); ok {
 			stmt.Actions = make([]string, len(v))
 			for i, a := range v {
 				stmt.Actions[i] = a.(string)
 			}
 		}
-		if v, ok := block["principals"].([]interface{}); ok {
+		if v, ok := block["principals"].([]any); ok {
 			stmt.Principals = make([]string, len(v))
 			for i, p := range v {
 				stmt.Principals[i] = p.(string)
@@ -132,25 +121,45 @@ func expandAccessPolicyStatements(raw []interface{}) []tcsecrets.SecretPolicySta
 	return statements
 }
 
-func flattenAccessPolicyStatements(statements []tcsecrets.SecretPolicyStatement) []map[string]interface{} {
+func flattenAccessPolicyStatements(statements []tcsecrets.SecretPolicyStatement) []map[string]any {
 	if len(statements) == 0 {
 		return nil
 	}
-	result := make([]map[string]interface{}, 0, len(statements))
+	result := make([]map[string]any, 0, len(statements))
 	for _, stmt := range statements {
-		actions := make([]interface{}, len(stmt.Actions))
+		actions := make([]any, len(stmt.Actions))
 		for i, a := range stmt.Actions {
 			actions[i] = a
 		}
-		principals := make([]interface{}, len(stmt.Principals))
+		principals := make([]any, len(stmt.Principals))
 		for i, p := range stmt.Principals {
 			principals[i] = p
 		}
-		result = append(result, map[string]interface{}{
+		result = append(result, map[string]any{
 			"effect":     stmt.Effect,
 			"actions":    actions,
 			"principals": principals,
 		})
 	}
 	return result
+}
+
+func secretVersionExists(ctx context.Context, client interface {
+	GetSecretValue(context.Context, string, string, *int) (*tcsecrets.GetSecretValueResponse, error)
+}, region, path string, version int, secret *tcsecrets.Secret) (bool, error) {
+	for _, v := range secret.Versions {
+		if v.Version == version {
+			return true, nil
+		}
+	}
+
+	_, err := client.GetSecretValue(ctx, region, path, &version)
+	if err == nil {
+		return true, nil
+	}
+	if tcclient.IsNotFound(err) {
+		return false, nil
+	}
+
+	return false, err
 }

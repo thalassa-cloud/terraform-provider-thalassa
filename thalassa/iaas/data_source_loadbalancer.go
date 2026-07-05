@@ -156,7 +156,7 @@ func DataSourceLoadBalancer() *schema.Resource {
 	}
 }
 
-func dataSourceLoadBalancerRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataSourceLoadBalancerRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics { //nolint:gocyclo // maps many optional load balancer attributes
 	provider := provider.GetProvider(m)
 
 	// Build filters based on provided criteria
@@ -165,7 +165,7 @@ func dataSourceLoadBalancerRead(ctx context.Context, d *schema.ResourceData, m i
 	subnetID := d.Get("subnet_id").(string)
 	region := d.Get("region").(string)
 	status := d.Get("status").(string)
-	labels := d.Get("labels").(map[string]interface{})
+	labels := d.Get("labels").(map[string]any)
 
 	// Add VPC filter
 	if vpcID != "" {
@@ -247,32 +247,31 @@ func dataSourceLoadBalancerRead(ctx context.Context, d *schema.ResourceData, m i
 
 	// Set the resource data
 	d.SetId(loadBalancer.Identity)
-	d.Set("id", loadBalancer.Identity)
-	d.Set("name", loadBalancer.Name)
-	d.Set("slug", loadBalancer.Slug)
-	d.Set("description", loadBalancer.Description)
+	_ = d.Set("id", loadBalancer.Identity)
+	_ = d.Set("name", loadBalancer.Name)
+	_ = d.Set("slug", loadBalancer.Slug)
+	_ = d.Set("description", loadBalancer.Description)
 	if len(loadBalancer.ExternalIpAddresses) > 0 {
-		d.Set("ip_address", loadBalancer.ExternalIpAddresses[0])
+		_ = d.Set("ip_address", loadBalancer.ExternalIpAddresses[0])
 	}
-	d.Set("external_ip_addresses", loadBalancer.ExternalIpAddresses)
-	d.Set("delete_protection", loadBalancer.DeleteProtection)
-	// Note: Internal field is not available on VpcLoadbalancer type
-	d.Set("status", loadBalancer.Status)
-	d.Set("labels", loadBalancer.Labels)
-	d.Set("annotations", loadBalancer.Annotations)
-	d.Set("created_at", loadBalancer.CreatedAt.Format(time.RFC3339))
+	_ = d.Set("external_ip_addresses", loadBalancer.ExternalIpAddresses)
+	_ = d.Set("delete_protection", loadBalancer.DeleteProtection)
+	_ = d.Set("status", loadBalancer.Status)
+	_ = d.Set("labels", loadBalancer.Labels)
+	_ = d.Set("annotations", loadBalancer.Annotations)
+	_ = d.Set("created_at", loadBalancer.CreatedAt.Format(time.RFC3339))
 	if !loadBalancer.UpdatedAt.IsZero() {
-		d.Set("updated_at", loadBalancer.UpdatedAt.Format(time.RFC3339))
+		_ = d.Set("updated_at", loadBalancer.UpdatedAt.Format(time.RFC3339))
 	}
 
 	// Set VPC information
 	if loadBalancer.Vpc != nil {
-		d.Set("vpc_id", loadBalancer.Vpc.Identity)
+		_ = d.Set("vpc_id", loadBalancer.Vpc.Identity)
 	}
 
 	// Set subnet information
 	if loadBalancer.Subnet != nil {
-		d.Set("subnet_id", loadBalancer.Subnet.Identity)
+		_ = d.Set("subnet_id", loadBalancer.Subnet.Identity)
 	}
 
 	// Note: Region information is not directly available on VpcLoadbalancer
@@ -283,7 +282,7 @@ func dataSourceLoadBalancerRead(ctx context.Context, d *schema.ResourceData, m i
 		for i, sg := range loadBalancer.SecurityGroups {
 			securityGroupIDs[i] = sg.Identity
 		}
-		d.Set("security_group_attachments", securityGroupIDs)
+		_ = d.Set("security_group_attachments", securityGroupIDs)
 	}
 
 	// Note: Listeners information would need separate API call to fetch

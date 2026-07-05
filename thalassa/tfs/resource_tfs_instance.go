@@ -152,7 +152,7 @@ func resourceTfsInstance() *schema.Resource {
 	}
 }
 
-func resourceTfsInstanceCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceTfsInstanceCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -229,8 +229,8 @@ func resourceTfsInstanceCreate(ctx context.Context, d *schema.ResourceData, m in
 
 	if tfsInstance != nil {
 		d.SetId(tfsInstance.Identity)
-		d.Set("slug", tfsInstance.Slug)
-		d.Set("status", string(tfsInstance.Status))
+		_ = d.Set("slug", tfsInstance.Slug)
+		_ = d.Set("status", string(tfsInstance.Status))
 	}
 
 	if d.Get("wait_until_available").(bool) {
@@ -246,7 +246,7 @@ func resourceTfsInstanceCreate(ctx context.Context, d *schema.ResourceData, m in
 	return resourceTfsInstanceRead(ctx, d, m)
 }
 
-func resourceTfsInstanceRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceTfsInstanceRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to create Thalassa client: %w", err))
@@ -267,45 +267,45 @@ func resourceTfsInstanceRead(ctx context.Context, d *schema.ResourceData, m inte
 	}
 
 	d.SetId(tfsInstance.Identity)
-	d.Set("name", tfsInstance.Name)
-	d.Set("slug", tfsInstance.Slug)
-	d.Set("status", string(tfsInstance.Status))
-	d.Set("delete_protection", tfsInstance.DeleteProtection)
-	d.Set("labels", tfsInstance.Labels)
-	d.Set("annotations", tfsInstance.Annotations)
-	d.Set("size_gb", tfsInstance.SizeGB)
+	_ = d.Set("name", tfsInstance.Name)
+	_ = d.Set("slug", tfsInstance.Slug)
+	_ = d.Set("status", string(tfsInstance.Status))
+	_ = d.Set("delete_protection", tfsInstance.DeleteProtection)
+	_ = d.Set("labels", tfsInstance.Labels)
+	_ = d.Set("annotations", tfsInstance.Annotations)
+	_ = d.Set("size_gb", tfsInstance.SizeGB)
 
 	if tfsInstance.Description != nil {
-		d.Set("description", *tfsInstance.Description)
+		_ = d.Set("description", *tfsInstance.Description)
 	}
 
 	if tfsInstance.Region != nil {
 		currentRegion := d.Get("region").(string)
 		switch currentRegion {
 		case "":
-			d.Set("region", tfsInstance.Region.Slug)
+			_ = d.Set("region", tfsInstance.Region.Slug)
 		case tfsInstance.Region.Slug:
-			d.Set("region", tfsInstance.Region.Slug)
+			_ = d.Set("region", tfsInstance.Region.Slug)
 		case tfsInstance.Region.Identity:
-			d.Set("region", tfsInstance.Region.Identity)
+			_ = d.Set("region", tfsInstance.Region.Identity)
 		default:
-			d.Set("region", tfsInstance.Region.Slug)
+			_ = d.Set("region", tfsInstance.Region.Slug)
 		}
 	}
 
 	if tfsInstance.Vpc != nil {
-		d.Set("vpc_id", tfsInstance.Vpc.Identity)
+		_ = d.Set("vpc_id", tfsInstance.Vpc.Identity)
 	}
 
 	if tfsInstance.Subnet != nil {
-		d.Set("subnet_id", tfsInstance.Subnet.Identity)
+		_ = d.Set("subnet_id", tfsInstance.Subnet.Identity)
 	}
 
 	// Set endpoints
 	if len(tfsInstance.Endpoints) > 0 {
-		endpoints := make([]map[string]interface{}, len(tfsInstance.Endpoints))
+		endpoints := make([]map[string]any, len(tfsInstance.Endpoints))
 		for i, endpoint := range tfsInstance.Endpoints {
-			endpointMap := map[string]interface{}{
+			endpointMap := map[string]any{
 				"identity": endpoint.Identity,
 				"address":  endpoint.EndpointAddress,
 				"hostname": endpoint.EndpointHostname,
@@ -313,9 +313,9 @@ func resourceTfsInstanceRead(ctx context.Context, d *schema.ResourceData, m inte
 			}
 			endpoints[i] = endpointMap
 		}
-		d.Set("endpoints", endpoints)
+		_ = d.Set("endpoints", endpoints)
 	} else {
-		d.Set("endpoints", []map[string]interface{}{})
+		_ = d.Set("endpoints", []map[string]any{})
 	}
 
 	// Set security group IDs
@@ -324,15 +324,15 @@ func resourceTfsInstanceRead(ctx context.Context, d *schema.ResourceData, m inte
 		for i, sg := range tfsInstance.SecurityGroups {
 			securityGroupIds[i] = sg.Identity
 		}
-		d.Set("security_group_ids", securityGroupIds)
+		_ = d.Set("security_group_ids", securityGroupIds)
 	} else {
-		d.Set("security_group_ids", []string{})
+		_ = d.Set("security_group_ids", []string{})
 	}
 
 	return nil
 }
 
-func resourceTfsInstanceUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceTfsInstanceUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to create Thalassa client: %w", err))
@@ -361,16 +361,16 @@ func resourceTfsInstanceUpdate(ctx context.Context, d *schema.ResourceData, m in
 	}
 
 	if tfsInstance != nil {
-		d.Set("name", tfsInstance.Name)
+		_ = d.Set("name", tfsInstance.Name)
 		if tfsInstance.Description != nil {
-			d.Set("description", *tfsInstance.Description)
+			_ = d.Set("description", *tfsInstance.Description)
 		}
-		d.Set("slug", tfsInstance.Slug)
-		d.Set("status", string(tfsInstance.Status))
-		d.Set("labels", tfsInstance.Labels)
-		d.Set("annotations", tfsInstance.Annotations)
-		d.Set("delete_protection", tfsInstance.DeleteProtection)
-		d.Set("size_gb", tfsInstance.SizeGB)
+		_ = d.Set("slug", tfsInstance.Slug)
+		_ = d.Set("status", string(tfsInstance.Status))
+		_ = d.Set("labels", tfsInstance.Labels)
+		_ = d.Set("annotations", tfsInstance.Annotations)
+		_ = d.Set("delete_protection", tfsInstance.DeleteProtection)
+		_ = d.Set("size_gb", tfsInstance.SizeGB)
 
 		// Set security group IDs
 		if len(tfsInstance.SecurityGroups) > 0 {
@@ -378,16 +378,16 @@ func resourceTfsInstanceUpdate(ctx context.Context, d *schema.ResourceData, m in
 			for i, sg := range tfsInstance.SecurityGroups {
 				securityGroupIds[i] = sg.Identity
 			}
-			d.Set("security_group_ids", securityGroupIds)
+			_ = d.Set("security_group_ids", securityGroupIds)
 		} else {
-			d.Set("security_group_ids", []string{})
+			_ = d.Set("security_group_ids", []string{})
 		}
 
 		// Set endpoints
 		if len(tfsInstance.Endpoints) > 0 {
-			endpoints := make([]map[string]interface{}, len(tfsInstance.Endpoints))
+			endpoints := make([]map[string]any, len(tfsInstance.Endpoints))
 			for i, endpoint := range tfsInstance.Endpoints {
-				endpointMap := map[string]interface{}{
+				endpointMap := map[string]any{
 					"identity": endpoint.Identity,
 					"address":  endpoint.EndpointAddress,
 					"hostname": endpoint.EndpointHostname,
@@ -395,9 +395,9 @@ func resourceTfsInstanceUpdate(ctx context.Context, d *schema.ResourceData, m in
 				}
 				endpoints[i] = endpointMap
 			}
-			d.Set("endpoints", endpoints)
+			_ = d.Set("endpoints", endpoints)
 		} else {
-			d.Set("endpoints", []map[string]interface{}{})
+			_ = d.Set("endpoints", []map[string]any{})
 		}
 
 		return nil
@@ -406,7 +406,7 @@ func resourceTfsInstanceUpdate(ctx context.Context, d *schema.ResourceData, m in
 	return resourceTfsInstanceRead(ctx, d, m)
 }
 
-func resourceTfsInstanceDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceTfsInstanceDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to create Thalassa client: %w", err))

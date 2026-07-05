@@ -123,7 +123,7 @@ func resourceLoadBalancer() *schema.Resource {
 	}
 }
 
-func resourceLoadBalancerCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceLoadBalancerCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -161,18 +161,18 @@ func resourceLoadBalancerCreate(ctx context.Context, d *schema.ResourceData, m i
 		return diag.FromErr(fmt.Errorf("error creating loadbalancer: %s", err))
 	}
 	d.SetId(loadbalancer.Identity)
-	d.Set("name", loadbalancer.Name)
-	d.Set("slug", loadbalancer.Slug)
-	d.Set("description", loadbalancer.Description)
-	d.Set("labels", loadbalancer.Labels)
-	d.Set("annotations", loadbalancer.Annotations)
-	d.Set("subnet_id", loadbalancer.Subnet.Identity)
-	d.Set("vpc_id", loadbalancer.Vpc.Identity)
+	_ = d.Set("name", loadbalancer.Name)
+	_ = d.Set("slug", loadbalancer.Slug)
+	_ = d.Set("description", loadbalancer.Description)
+	_ = d.Set("labels", loadbalancer.Labels)
+	_ = d.Set("annotations", loadbalancer.Annotations)
+	_ = d.Set("subnet_id", loadbalancer.Subnet.Identity)
+	_ = d.Set("vpc_id", loadbalancer.Vpc.Identity)
 	if d.Get("delete_protection") != nil {
-		d.Set("delete_protection", d.Get("delete_protection").(bool))
+		_ = d.Set("delete_protection", d.Get("delete_protection").(bool))
 	}
 	if d.Get("internal") != nil {
-		d.Set("internal", d.Get("internal").(bool))
+		_ = d.Set("internal", d.Get("internal").(bool))
 	}
 
 	// wait until the loadbalancer is ready
@@ -190,9 +190,9 @@ func resourceLoadBalancerCreate(ctx context.Context, d *schema.ResourceData, m i
 		}
 		if loadbalancer.Status == "ready" {
 			if len(loadbalancer.ExternalIpAddresses) > 0 {
-				d.Set("ip_address", loadbalancer.ExternalIpAddresses[0])
+				_ = d.Set("ip_address", loadbalancer.ExternalIpAddresses[0])
 			}
-			d.Set("external_ip_addresses", loadbalancer.ExternalIpAddresses)
+			_ = d.Set("external_ip_addresses", loadbalancer.ExternalIpAddresses)
 			break
 		}
 	}
@@ -200,7 +200,7 @@ func resourceLoadBalancerCreate(ctx context.Context, d *schema.ResourceData, m i
 	return resourceLoadBalancerRead(ctx, d, m)
 }
 
-func resourceLoadBalancerRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceLoadBalancerRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -221,31 +221,31 @@ func resourceLoadBalancerRead(ctx context.Context, d *schema.ResourceData, m int
 	}
 
 	d.SetId(loadbalancer.Identity)
-	d.Set("name", loadbalancer.Name)
-	d.Set("slug", loadbalancer.Slug)
-	d.Set("description", loadbalancer.Description)
-	d.Set("labels", loadbalancer.Labels)
-	d.Set("annotations", loadbalancer.Annotations)
-	d.Set("subnet_id", loadbalancer.Subnet.Identity)
-	d.Set("vpc_id", loadbalancer.Vpc.Identity)
-	d.Set("reserved_ip_id", loadbalancer.ReservedIpIdentity)
+	_ = d.Set("name", loadbalancer.Name)
+	_ = d.Set("slug", loadbalancer.Slug)
+	_ = d.Set("description", loadbalancer.Description)
+	_ = d.Set("labels", loadbalancer.Labels)
+	_ = d.Set("annotations", loadbalancer.Annotations)
+	_ = d.Set("subnet_id", loadbalancer.Subnet.Identity)
+	_ = d.Set("vpc_id", loadbalancer.Vpc.Identity)
+	_ = d.Set("reserved_ip_id", loadbalancer.ReservedIpIdentity)
 	if len(loadbalancer.ExternalIpAddresses) > 0 {
-		d.Set("ip_address", loadbalancer.ExternalIpAddresses[0])
+		_ = d.Set("ip_address", loadbalancer.ExternalIpAddresses[0])
 	}
-	d.Set("external_ip_addresses", loadbalancer.ExternalIpAddresses)
-	d.Set("delete_protection", loadbalancer.DeleteProtection)
+	_ = d.Set("external_ip_addresses", loadbalancer.ExternalIpAddresses)
+	_ = d.Set("delete_protection", loadbalancer.DeleteProtection)
 
 	// d.Set("internal", loadbalancer.InternalLoadbalancer)
 	securityGroupAttachments := make([]string, len(loadbalancer.SecurityGroups))
 	for i, securityGroup := range loadbalancer.SecurityGroups {
 		securityGroupAttachments[i] = securityGroup.Identity
 	}
-	d.Set("security_group_attachments", securityGroupAttachments)
+	_ = d.Set("security_group_attachments", securityGroupAttachments)
 
 	return nil
 }
 
-func resourceLoadBalancerUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceLoadBalancerUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -275,12 +275,12 @@ func resourceLoadBalancerUpdate(ctx context.Context, d *schema.ResourceData, m i
 		return diag.FromErr(err)
 	}
 	if loadbalancer != nil {
-		d.Set("name", loadbalancer.Name)
-		d.Set("description", loadbalancer.Description)
-		d.Set("slug", loadbalancer.Slug)
-		d.Set("labels", loadbalancer.Labels)
-		d.Set("annotations", loadbalancer.Annotations)
-		d.Set("reserved_ip_id", loadbalancer.ReservedIpIdentity)
+		_ = d.Set("name", loadbalancer.Name)
+		_ = d.Set("description", loadbalancer.Description)
+		_ = d.Set("slug", loadbalancer.Slug)
+		_ = d.Set("labels", loadbalancer.Labels)
+		_ = d.Set("annotations", loadbalancer.Annotations)
+		_ = d.Set("reserved_ip_id", loadbalancer.ReservedIpIdentity)
 		// d.Set("delete_protection", loadbalancer.DeleteProtection)
 		return nil
 	}
@@ -309,7 +309,7 @@ func resourceLoadBalancerUpdate(ctx context.Context, d *schema.ResourceData, m i
 	return resourceLoadBalancerRead(ctx, d, m)
 }
 
-func resourceLoadBalancerDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceLoadBalancerDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)

@@ -7,8 +7,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	tcsecrets "github.com/thalassa-cloud/client-go/secrets"
 	tcclient "github.com/thalassa-cloud/client-go/pkg/client"
+	tcsecrets "github.com/thalassa-cloud/client-go/secrets"
 
 	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/convert"
 	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/provider"
@@ -74,13 +74,10 @@ func ResourceSecretVersion() *schema.Resource {
 				ConflictsWith: []string{"secret_string", "secret_key_values"},
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"length": {
-							Type:     schema.TypeInt,
-							Optional: true,
-						},
-						"character_set": {
-							Type:     schema.TypeString,
-							Optional: true,
+						"byte_length": {
+							Type:        schema.TypeInt,
+							Optional:    true,
+							Description: "Byte length of the generated secret.",
 						},
 					},
 				},
@@ -89,18 +86,18 @@ func ResourceSecretVersion() *schema.Resource {
 	}
 }
 
-func resourceSecretVersionImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+func resourceSecretVersionImport(ctx context.Context, d *schema.ResourceData, m any) ([]*schema.ResourceData, error) {
 	region, path, version, err := parseSecretVersionID(d.Id())
 	if err != nil {
 		return nil, err
 	}
-	d.Set("region", region)
-	d.Set("path", path)
-	d.Set("version", version)
+	_ = d.Set("region", region)
+	_ = d.Set("path", path)
+	_ = d.Set("version", version)
 	return []*schema.ResourceData{d}, nil
 }
 
-func resourceSecretVersionCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceSecretVersionCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -117,7 +114,7 @@ func resourceSecretVersionCreate(ctx context.Context, d *schema.ResourceData, m 
 		putReq.SecretKeyValues = convert.ConvertToMap(v)
 	}
 	if v, ok := d.GetOk("generate_secret"); ok {
-		putReq.GenerateSecret = expandGenerateSecret(v.([]interface{}))
+		putReq.GenerateSecret = expandGenerateSecret(v.([]any))
 	}
 
 	if putReq.SecretString == "" && len(putReq.SecretKeyValues) == 0 && putReq.GenerateSecret == nil {
@@ -130,14 +127,12 @@ func resourceSecretVersionCreate(ctx context.Context, d *schema.ResourceData, m 
 	}
 
 	d.SetId(secretVersionID(region, path, result.Version))
-	if err := d.Set("version", result.Version); err != nil {
-		return diag.FromErr(err)
-	}
+	_ = d.Set("version", result.Version)
 
 	return resourceSecretVersionRead(ctx, d, m)
 }
 
-func resourceSecretVersionRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceSecretVersionRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -157,32 +152,23 @@ func resourceSecretVersionRead(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(fmt.Errorf("reading secret metadata: %w", err))
 	}
 
-	found := false
-	for _, v := range secret.Versions {
-		if v.Version == version {
-			found = true
-			break
-		}
+	found, err := secretVersionExists(ctx, client.Secrets(), region, path, version, secret)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("verifying secret version: %w", err))
 	}
 	if !found {
 		d.SetId("")
 		return nil
 	}
 
-	if err := d.Set("region", region); err != nil {
-		return diag.FromErr(err)
-	}
-	if err := d.Set("path", path); err != nil {
-		return diag.FromErr(err)
-	}
-	if err := d.Set("version", version); err != nil {
-		return diag.FromErr(err)
-	}
+	_ = d.Set("region", region)
+	_ = d.Set("path", path)
+	_ = d.Set("version", version)
 
 	return nil
 }
 
-func resourceSecretVersionDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceSecretVersionDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)

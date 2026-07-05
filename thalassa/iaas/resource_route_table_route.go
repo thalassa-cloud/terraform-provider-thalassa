@@ -77,7 +77,7 @@ func resourceRouteTableRoute() *schema.Resource {
 	}
 }
 
-func resourceRouteTableRouteCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceRouteTableRouteCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -128,7 +128,7 @@ func resourceRouteTableRouteCreate(ctx context.Context, d *schema.ResourceData, 
 	return resourceRouteTableRead(ctx, d, m)
 }
 
-func resourceRouteTableRouteRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceRouteTableRouteRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -149,23 +149,23 @@ func resourceRouteTableRouteRead(ctx context.Context, d *schema.ResourceData, m 
 	}
 
 	d.SetId(route.Identity)
-	d.Set("destination_cidr", route.DestinationCidrBlock)
+	_ = d.Set("destination_cidr", route.DestinationCidrBlock)
 	if route.TargetGateway != nil {
-		d.Set("target_gateway", route.TargetGateway.Identity)
+		_ = d.Set("target_gateway", route.TargetGateway.Identity)
 	}
 	if route.TargetNatGateway != nil {
-		d.Set("target_natgateway", route.TargetNatGateway.Identity)
+		_ = d.Set("target_natgateway", route.TargetNatGateway.Identity)
 	}
 	if route.TargetVpcPeeringConnection != nil {
-		d.Set("target_vpc_peering_connection", route.TargetVpcPeeringConnection.Identity)
+		_ = d.Set("target_vpc_peering_connection", route.TargetVpcPeeringConnection.Identity)
 	}
 	if route.GatewayAddress != nil {
-		d.Set("gateway_address", route.GatewayAddress)
+		_ = d.Set("gateway_address", route.GatewayAddress)
 	}
 	return nil
 }
 
-func resourceRouteTableRouteUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceRouteTableRouteUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -230,7 +230,7 @@ func resourceRouteTableRouteUpdate(ctx context.Context, d *schema.ResourceData, 
 	return resourceRouteTableRead(ctx, d, m)
 }
 
-func resourceRouteTableRouteDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceRouteTableRouteDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)

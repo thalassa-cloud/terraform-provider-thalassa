@@ -66,7 +66,7 @@ func DataSourceRegions() *schema.Resource {
 	}
 }
 
-func dataSourceRegionsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataSourceRegionsRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -78,10 +78,10 @@ func dataSourceRegionsRead(ctx context.Context, d *schema.ResourceData, m interf
 	}
 	d.SetId("regions")
 
-	regionsList := []map[string]interface{}{}
+	regionsList := []map[string]any{}
 
 	for _, region := range regions {
-		regionsList = append(regionsList, map[string]interface{}{
+		regionsList = append(regionsList, map[string]any{
 			"id":          region.Identity,
 			"name":        region.Name,
 			"slug":        region.Slug,
@@ -91,7 +91,7 @@ func dataSourceRegionsRead(ctx context.Context, d *schema.ResourceData, m interf
 		})
 	}
 
-	d.Set("regions", regionsList)
+	_ = d.Set("regions", regionsList)
 
 	return nil
 }

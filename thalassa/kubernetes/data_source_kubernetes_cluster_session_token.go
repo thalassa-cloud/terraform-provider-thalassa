@@ -55,7 +55,7 @@ func dataSourceKubernetesClusterSessionToken() *schema.Resource {
 	}
 }
 
-func dataSourceKubernetesClusterSessionTokenRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataSourceKubernetesClusterSessionTokenRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -72,11 +72,11 @@ func dataSourceKubernetesClusterSessionTokenRead(ctx context.Context, d *schema.
 	}
 
 	d.SetId(sessionToken.Identity)
-	d.Set("username", sessionToken.Username)
-	d.Set("api_server_url", sessionToken.APIServerURL)
-	d.Set("ca_certificate", sessionToken.CACertificate)
-	d.Set("token", sessionToken.Token)
-	d.Set("kubeconfig", sessionToken.Kubeconfig)
+	_ = d.Set("username", sessionToken.Username)
+	_ = d.Set("api_server_url", sessionToken.APIServerURL)
+	_ = d.Set("ca_certificate", sessionToken.CACertificate)
+	_ = d.Set("token", sessionToken.Token)
+	_ = d.Set("kubeconfig", sessionToken.Kubeconfig)
 
 	return nil
 }

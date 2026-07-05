@@ -26,18 +26,11 @@ func convertStringsToPermissions(permissions []string) []iam.PermissionType {
 	return result
 }
 
-func valueOrEmptySlice(value []string) []string {
+func toListOfInterfaces(value []string) []any {
 	if value == nil {
-		return []string{}
+		return []any{}
 	}
-	return value
-}
-
-func toListOfInterfaces(value []string) []interface{} {
-	if value == nil {
-		return []interface{}{}
-	}
-	result := make([]interface{}, len(value))
+	result := make([]any, len(value))
 	for i, v := range value {
 		result[i] = v
 	}

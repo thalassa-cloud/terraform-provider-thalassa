@@ -9,7 +9,7 @@ description: |-
 
 Manage access policy for a secret in Thalassa Secrets Manager
 
-~> **Early access:** Secrets Manager is in early access. The API and Terraform resource schema may change in future provider releases.
+~> **Early access:** Secrets Manager is in early access. The Secrets Manager feature gate must be enabled for your organisation. The API and Terraform resource schema may change in future provider releases.
 
 See [Secrets Manager documentation](https://docs.thalassa.cloud/docs/secrets-manager/).
 

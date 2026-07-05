@@ -56,7 +56,7 @@ func DataSourceMachineImage() *schema.Resource {
 	}
 }
 
-func dataSourceMachineImageRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataSourceMachineImageRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to get client: %w", err))
@@ -73,15 +73,13 @@ func dataSourceMachineImageRead(ctx context.Context, d *schema.ResourceData, m i
 	for _, machineImage := range machineImages {
 		if slug != "" && strings.EqualFold(machineImage.Slug, slug) || name != "" && strings.EqualFold(machineImage.Name, name) {
 			d.SetId(machineImage.Identity)
-			d.Set("id", machineImage.Identity)
-			d.Set("name", machineImage.Name)
-			d.Set("slug", machineImage.Slug)
-			d.Set("description", machineImage.Description)
-			d.Set("architecture", machineImage.Architecture)
+			_ = d.Set("id", machineImage.Identity)
+			_ = d.Set("name", machineImage.Name)
+			_ = d.Set("slug", machineImage.Slug)
+			_ = d.Set("description", machineImage.Description)
+			_ = d.Set("architecture", machineImage.Architecture)
 			// Set labels and annotations directly
-			if err := d.Set("labels", machineImage.Labels); err != nil {
-				return diag.FromErr(fmt.Errorf("error setting labels: %s", err))
-			}
+			_ = d.Set("labels", machineImage.Labels)
 			return diag.Diagnostics{}
 		}
 	}

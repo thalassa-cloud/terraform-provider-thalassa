@@ -7,6 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	iaas "github.com/thalassa-cloud/client-go/iaas"
+	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/convert"
 	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/provider"
 )
 
@@ -69,7 +70,7 @@ func DataSourceVpcDefaultRouteTable() *schema.Resource {
 	}
 }
 
-func dataSourceVpcDefaultRouteTableRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataSourceVpcDefaultRouteTableRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	prov := provider.GetProvider(m)
 	vpcID := d.Get("vpc_id").(string)
 
@@ -99,22 +100,20 @@ func dataSourceVpcDefaultRouteTableRead(ctx context.Context, d *schema.ResourceD
 
 func setDefaultRouteTable(d *schema.ResourceData, rt *iaas.RouteTable) diag.Diagnostics {
 	d.SetId(rt.Identity)
-	d.Set("id", rt.Identity)
-	d.Set("name", rt.Name)
-	d.Set("slug", rt.Slug)
-	if rt.Description != nil {
-		d.Set("description", *rt.Description)
-	}
+	_ = d.Set("id", rt.Identity)
+	_ = d.Set("name", rt.Name)
+	_ = d.Set("slug", rt.Slug)
+	_ = d.Set("description", convert.StringValue(rt.Description))
 	if rt.Labels != nil {
-		d.Set("labels", rt.Labels)
+		_ = d.Set("labels", rt.Labels)
 	}
 	if rt.Annotations != nil {
-		d.Set("annotations", rt.Annotations)
+		_ = d.Set("annotations", rt.Annotations)
 	}
-	d.Set("is_default", rt.IsDefault)
-	d.Set("created_at", rt.CreatedAt.Format("2006-01-02T15:04:05Z07:00"))
+	_ = d.Set("is_default", rt.IsDefault)
+	_ = d.Set("created_at", rt.CreatedAt.Format("2006-01-02T15:04:05Z07:00"))
 	if rt.UpdatedAt != nil {
-		d.Set("updated_at", rt.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"))
+		_ = d.Set("updated_at", rt.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"))
 	}
 	return nil
 }

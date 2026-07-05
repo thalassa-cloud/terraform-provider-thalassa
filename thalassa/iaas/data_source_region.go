@@ -50,7 +50,7 @@ func DataSourceRegion() *schema.Resource {
 	}
 }
 
-func dataSourceRegionRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataSourceRegionRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -65,19 +65,15 @@ func dataSourceRegionRead(ctx context.Context, d *schema.ResourceData, m interfa
 	for _, region := range regions {
 		if slug != "" && region.Slug == slug {
 			d.SetId(region.Identity)
-			d.Set("id", region.Identity)
-			d.Set("name", region.Name)
-			d.Set("slug", region.Slug)
-			d.Set("description", region.Description)
+			_ = d.Set("id", region.Identity)
+			_ = d.Set("name", region.Name)
+			_ = d.Set("slug", region.Slug)
+			_ = d.Set("description", region.Description)
 
 			// Set labels and annotations directly
-			if err := d.Set("labels", region.Labels); err != nil {
-				return diag.FromErr(fmt.Errorf("error setting labels: %s", err))
-			}
+			_ = d.Set("labels", region.Labels)
 
-			if err := d.Set("annotations", region.Annotations); err != nil {
-				return diag.FromErr(fmt.Errorf("error setting annotations: %s", err))
-			}
+			_ = d.Set("annotations", region.Annotations)
 
 			return diag.Diagnostics{}
 		}

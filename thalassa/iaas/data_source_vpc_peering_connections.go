@@ -164,7 +164,7 @@ func DataSourceVpcPeeringConnections() *schema.Resource {
 	}
 }
 
-func dataSourceVpcPeeringConnectionsRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataSourceVpcPeeringConnectionsRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	provider := provider.GetProvider(m)
 
 	peeringConnections, err := provider.Client.IaaS().ListVpcPeeringConnections(ctx, &iaas.ListVpcPeeringConnectionsRequest{})
@@ -173,9 +173,9 @@ func dataSourceVpcPeeringConnectionsRead(ctx context.Context, d *schema.Resource
 	}
 
 	// Convert peering connections to the expected format
-	connections := make([]map[string]interface{}, len(peeringConnections))
+	connections := make([]map[string]any, len(peeringConnections))
 	for i, conn := range peeringConnections {
-		connMap := map[string]interface{}{
+		connMap := map[string]any{
 			"id":          conn.Identity,
 			"name":        conn.Name,
 			"description": conn.Description,
@@ -208,7 +208,7 @@ func dataSourceVpcPeeringConnectionsRead(ctx context.Context, d *schema.Resource
 
 		// Set requester VPC information
 		if conn.RequesterVpc != nil {
-			requesterVpc := []map[string]interface{}{
+			requesterVpc := []map[string]any{
 				{
 					"identity": conn.RequesterVpc.Identity,
 					"name":     conn.RequesterVpc.Name,
@@ -219,7 +219,7 @@ func dataSourceVpcPeeringConnectionsRead(ctx context.Context, d *schema.Resource
 
 		// Set accepter VPC information
 		if conn.AccepterVpc != nil {
-			accepterVpc := []map[string]interface{}{
+			accepterVpc := []map[string]any{
 				{
 					"identity": conn.AccepterVpc.Identity,
 					"name":     conn.AccepterVpc.Name,
@@ -230,7 +230,7 @@ func dataSourceVpcPeeringConnectionsRead(ctx context.Context, d *schema.Resource
 
 		// Set requester organisation information
 		if conn.RequesterOrganisation != nil {
-			requesterOrg := []map[string]interface{}{
+			requesterOrg := []map[string]any{
 				{
 					"identity": conn.RequesterOrganisation.Identity,
 					"name":     conn.RequesterOrganisation.Name,
@@ -241,7 +241,7 @@ func dataSourceVpcPeeringConnectionsRead(ctx context.Context, d *schema.Resource
 
 		// Set accepter organisation information
 		if conn.AccepterOrganisation != nil {
-			accepterOrg := []map[string]interface{}{
+			accepterOrg := []map[string]any{
 				{
 					"identity": conn.AccepterOrganisation.Identity,
 					"name":     conn.AccepterOrganisation.Name,
@@ -254,7 +254,7 @@ func dataSourceVpcPeeringConnectionsRead(ctx context.Context, d *schema.Resource
 	}
 
 	d.SetId(fmt.Sprintf("vpc-peering-connections-%d", len(connections)))
-	d.Set("peering_connections", connections)
+	_ = d.Set("peering_connections", connections)
 
 	return nil
 }

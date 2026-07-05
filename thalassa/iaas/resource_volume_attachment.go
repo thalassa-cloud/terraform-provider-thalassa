@@ -87,7 +87,7 @@ func resourceBlockVolumeAttachment() *schema.Resource {
 	}
 }
 
-func resourceBlockVolumeAttachmentCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceBlockVolumeAttachmentCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -183,7 +183,7 @@ func resourceBlockVolumeAttachmentCreate(ctx context.Context, d *schema.Resource
 	return resourceBlockVolumeAttachmentRead(ctx, d, m)
 }
 
-func resourceBlockVolumeAttachmentRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceBlockVolumeAttachmentRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -208,8 +208,8 @@ func resourceBlockVolumeAttachmentRead(ctx context.Context, d *schema.ResourceDa
 		for _, att := range volume.Attachments {
 			if att.AttachedToResourceType == ResourceVolumeAttachmentVirtualMachine && att.AttachedToIdentity == vmiID {
 				found = true
-				d.Set("serial", att.Serial)
-				d.Set("description", att.Description)
+				_ = d.Set("serial", att.Serial)
+				_ = d.Set("description", att.Description)
 				break
 			}
 		}
@@ -220,13 +220,13 @@ func resourceBlockVolumeAttachmentRead(ctx context.Context, d *schema.ResourceDa
 		return nil
 	}
 
-	d.Set("volume_id", volumeID)
-	d.Set("vmi_id", vmiID)
+	_ = d.Set("volume_id", volumeID)
+	_ = d.Set("vmi_id", vmiID)
 
 	return nil
 }
 
-func resourceBlockVolumeAttachmentUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceBlockVolumeAttachmentUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -275,7 +275,7 @@ func resourceBlockVolumeAttachmentUpdate(ctx context.Context, d *schema.Resource
 	return nil
 }
 
-func resourceBlockVolumeAttachmentDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceBlockVolumeAttachmentDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)

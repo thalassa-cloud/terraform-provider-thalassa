@@ -151,7 +151,7 @@ func resourceKubernetesClusterRole() *schema.Resource {
 	}
 }
 
-func resourceKubernetesClusterRoleCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceKubernetesClusterRoleCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -171,19 +171,19 @@ func resourceKubernetesClusterRoleCreate(ctx context.Context, d *schema.Resource
 
 	if role != nil {
 		d.SetId(role.Identity)
-		d.Set("slug", role.Slug)
-		d.Set("system", role.System)
-		d.Set("created_at", role.CreatedAt.Format(time.RFC3339))
+		_ = d.Set("slug", role.Slug)
+		_ = d.Set("system", role.System)
+		_ = d.Set("created_at", role.CreatedAt.Format(time.RFC3339))
 		if role.UpdatedAt != nil {
-			d.Set("updated_at", role.UpdatedAt.Format(time.RFC3339))
+			_ = d.Set("updated_at", role.UpdatedAt.Format(time.RFC3339))
 		}
 	}
 
 	// Add rules if provided
 	if rules, ok := d.GetOk("rules"); ok {
-		rulesList := rules.([]interface{})
+		rulesList := rules.([]any)
 		for _, ruleInterface := range rulesList {
-			ruleMap := ruleInterface.(map[string]interface{})
+			ruleMap := ruleInterface.(map[string]any)
 
 			rule := kubernetes.AddKubernetesClusterRolePermissionRule{
 				Resources:       convert.ConvertToStringSlice(ruleMap["resources"]),
@@ -204,7 +204,7 @@ func resourceKubernetesClusterRoleCreate(ctx context.Context, d *schema.Resource
 	return resourceKubernetesClusterRoleRead(ctx, d, m)
 }
 
-func resourceKubernetesClusterRoleRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceKubernetesClusterRoleRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -225,22 +225,22 @@ func resourceKubernetesClusterRoleRead(ctx context.Context, d *schema.ResourceDa
 	}
 
 	d.SetId(role.Identity)
-	d.Set("name", role.Name)
-	d.Set("slug", role.Slug)
-	d.Set("description", role.Description)
-	d.Set("labels", role.Labels)
-	d.Set("annotations", role.Annotations)
-	d.Set("system", role.System)
-	d.Set("created_at", role.CreatedAt.Format(time.RFC3339))
+	_ = d.Set("name", role.Name)
+	_ = d.Set("slug", role.Slug)
+	_ = d.Set("description", role.Description)
+	_ = d.Set("labels", role.Labels)
+	_ = d.Set("annotations", role.Annotations)
+	_ = d.Set("system", role.System)
+	_ = d.Set("created_at", role.CreatedAt.Format(time.RFC3339))
 	if role.UpdatedAt != nil {
-		d.Set("updated_at", role.UpdatedAt.Format(time.RFC3339))
+		_ = d.Set("updated_at", role.UpdatedAt.Format(time.RFC3339))
 	}
 
 	// Set rules
 	if len(role.Rules) > 0 {
-		rules := make([]map[string]interface{}, len(role.Rules))
+		rules := make([]map[string]any, len(role.Rules))
 		for i, rule := range role.Rules {
-			rules[i] = map[string]interface{}{
+			rules[i] = map[string]any{
 				"id":                rule.Identity,
 				"resources":         rule.Resources,
 				"verbs":             convertVerbsToStringSlice(rule.Verbs),
@@ -250,19 +250,19 @@ func resourceKubernetesClusterRoleRead(ctx context.Context, d *schema.ResourceDa
 				"note":              rule.Note,
 			}
 		}
-		d.Set("rules", rules)
+		_ = d.Set("rules", rules)
 	}
 
 	return nil
 }
 
-func resourceKubernetesClusterRoleUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceKubernetesClusterRoleUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	// Note: The API doesn't seem to have an update method for cluster roles
 	// This would need to be implemented if the API supports it
 	return diag.Errorf("updating Kubernetes cluster roles is not currently supported")
 }
 
-func resourceKubernetesClusterRoleDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceKubernetesClusterRoleDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -281,8 +281,8 @@ func resourceKubernetesClusterRoleDelete(ctx context.Context, d *schema.Resource
 }
 
 // Helper functions for converting between string slices and verb types
-func convertToStringSliceToVerbs(verbsInterface interface{}) []kubernetes.KubernetesClusterRolePermissionVerb {
-	verbsList := verbsInterface.([]interface{})
+func convertToStringSliceToVerbs(verbsInterface any) []kubernetes.KubernetesClusterRolePermissionVerb {
+	verbsList := verbsInterface.([]any)
 	verbs := make([]kubernetes.KubernetesClusterRolePermissionVerb, len(verbsList))
 	for i, verb := range verbsList {
 		verbs[i] = kubernetes.KubernetesClusterRolePermissionVerb(verb.(string))

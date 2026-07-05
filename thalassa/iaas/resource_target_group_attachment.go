@@ -48,7 +48,7 @@ func resourceTargetGroupAttachment() *schema.Resource {
 	}
 }
 
-func resourceTargetGroupAttachmentCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceTargetGroupAttachmentCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -86,8 +86,8 @@ func resourceTargetGroupAttachmentCreate(ctx context.Context, d *schema.Resource
 	}
 	if attachResponse != nil {
 		d.SetId(createTargetGroupAttachmentID(vmiID, targetGroupID))
-		d.Set("target_group_id", targetGroupID)
-		d.Set("vmi_id", vmiID)
+		_ = d.Set("target_group_id", targetGroupID)
+		_ = d.Set("vmi_id", vmiID)
 	}
 	return resourceTargetGroupAttachmentRead(ctx, d, m)
 }
@@ -96,7 +96,7 @@ func createTargetGroupAttachmentID(vmiID, targetGroupID string) string {
 	return fmt.Sprintf("%s:%s", vmiID, targetGroupID)
 }
 
-func resourceTargetGroupAttachmentRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceTargetGroupAttachmentRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error getting client: %w", err))
@@ -122,7 +122,7 @@ func resourceTargetGroupAttachmentRead(ctx context.Context, d *schema.ResourceDa
 		for _, att := range tg.LoadbalancerTargetGroupAttachments {
 			if vmiID != "" && att.VirtualMachineInstance != nil && att.VirtualMachineInstance.Identity == vmiID {
 				found = true
-				d.Set("vmi_id", att.VirtualMachineInstance.Identity)
+				_ = d.Set("vmi_id", att.VirtualMachineInstance.Identity)
 				break
 			}
 		}
@@ -134,13 +134,13 @@ func resourceTargetGroupAttachmentRead(ctx context.Context, d *schema.ResourceDa
 	}
 
 	d.SetId(createTargetGroupAttachmentID(vmiID, targetGroupID))
-	d.Set("target_group_id", targetGroupID)
-	d.Set("vmi_id", vmiID)
+	_ = d.Set("target_group_id", targetGroupID)
+	_ = d.Set("vmi_id", vmiID)
 
 	return nil
 }
 
-func resourceTargetGroupAttachmentDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceTargetGroupAttachmentDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error getting client: %w", err))

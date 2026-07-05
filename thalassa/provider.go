@@ -1,6 +1,8 @@
 package thalassa
 
 import (
+	maps0 "maps"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/dbaas"
@@ -101,9 +103,7 @@ func Provider() *schema.Provider {
 func JoinMaps(maps ...map[string]*schema.Resource) map[string]*schema.Resource {
 	result := make(map[string]*schema.Resource)
 	for _, m := range maps {
-		for k, v := range m {
-			result[k] = v
-		}
+		maps0.Copy(result, m)
 	}
 	return result
 }

@@ -23,7 +23,7 @@ func ResourceKmsKey() *schema.Resource {
 		UpdateContext: resourceKmsKeyUpdate,
 		DeleteContext: resourceKmsKeyDelete,
 		Importer: &schema.ResourceImporter{
-			StateContext: schema.ImportStatePassthroughContext,
+			StateContext: resourceKmsKeyImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"id": {
@@ -159,7 +159,17 @@ func ResourceKmsKey() *schema.Resource {
 	}
 }
 
-func resourceKmsKeyCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceKmsKeyImport(ctx context.Context, d *schema.ResourceData, m any) ([]*schema.ResourceData, error) {
+	region, identity := parseKmsKeyImportID(d.Id())
+	if region != "" {
+		_ = d.Set("region", region)
+	}
+	d.SetId(identity)
+
+	return []*schema.ResourceData{d}, nil
+}
+
+func resourceKmsKeyCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -213,10 +223,10 @@ func resourceKmsKeyCreate(ctx context.Context, d *schema.ResourceData, m interfa
 		}
 	}
 
-	return resourceKmsKeyReadWithKey(ctx, d, m, region, key)
+	return resourceKmsKeyReadWithKey(d, region, key)
 }
 
-func resourceKmsKeyRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceKmsKeyRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -234,25 +244,25 @@ func resourceKmsKeyRead(ctx context.Context, d *schema.ResourceData, m interface
 		return diag.FromErr(fmt.Errorf("reading KMS key: %w", err))
 	}
 
-	return resourceKmsKeyReadWithKey(ctx, d, m, region, key)
+	return resourceKmsKeyReadWithKey(d, region, key)
 }
 
-func resourceKmsKeyReadWithKey(ctx context.Context, d *schema.ResourceData, m interface{}, region string, key *tckms.KmsKey) diag.Diagnostics {
-	if err := setKmsKeyState(d, key, region); err != nil {
+func resourceKmsKeyReadWithKey(d *schema.ResourceData, region string, key *tckms.KmsKey) diag.Diagnostics {
+	if err := setKmsKeyResourceState(d, key, region); err != nil {
 		return diag.FromErr(err)
 	}
 
 	desiredStatus := d.Get("status").(string)
 	if desiredStatus == "" || key.Status == tckms.KmsKeyStatusPendingDeletion {
-		if err := d.Set("status", string(key.Status)); err != nil {
-			return diag.FromErr(err)
-		}
+		_ = d.Set("status", string(key.Status))
 	}
+
+	_ = d.Set("cancel_scheduled_deletion", false)
 
 	return nil
 }
 
-func resourceKmsKeyUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceKmsKeyUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -265,9 +275,7 @@ func resourceKmsKeyUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 		if err := client.KMS().CancelDeletion(ctx, region, identity); err != nil {
 			return diag.FromErr(fmt.Errorf("cancelling KMS key deletion: %w", err))
 		}
-		if err := d.Set("cancel_scheduled_deletion", false); err != nil {
-			return diag.FromErr(err)
-		}
+		_ = d.Set("cancel_scheduled_deletion", false)
 	}
 
 	if d.HasChange("key_rotation_enabled") || d.HasChange("rotation_period_in_days") {
@@ -298,14 +306,12 @@ func resourceKmsKeyUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 		}
 	}
 
-	if d.HasChanges("description", "labels", "annotations") {
-		// Metadata updates are not exposed by the KMS API; only rotation and status are mutable.
-	}
+	// Metadata updates are not exposed by the KMS API; only rotation and status are mutable.
 
 	return resourceKmsKeyRead(ctx, d, m)
 }
 
-func resourceKmsKeyDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceKmsKeyDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)

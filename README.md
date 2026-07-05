@@ -365,9 +365,110 @@ terraform {
 
 ### Run tests
 
+#### Unit tests
+
+Unit tests run against mocked or in-memory state:
+
 ```bash
 make test
 ```
+
+#### Acceptance tests
+
+Acceptance tests create and destroy real resources in your Thalassa organisation. They are skipped unless explicitly enabled.
+
+**Enable acceptance tests**
+
+Set `TF_ACC=1` (or use the `make testacc` target, which sets it for you).
+
+**Authentication**
+
+Acceptance test configs use an empty provider block (`provider "thalassa" {}`), so credentials and defaults must come from environment variables—the same ones used in normal Terraform runs.
+
+Required:
+
+| Variable | Description |
+|----------|-------------|
+| `THALASSA_ORGANISATION` | Organisation ID or slug for the test account |
+| One of the auth options below | See examples |
+
+Auth options (pick one):
+
+| Variables | Description |
+|-----------|-------------|
+| `THALASSA_API_TOKEN` | Personal API token |
+| `THALASSA_ACCESS_TOKEN` | Access token |
+| `THALASSA_CLIENT_ID` + `THALASSA_CLIENT_SECRET` | OIDC client credentials |
+
+Optional:
+
+| Variable | Description |
+|----------|-------------|
+| `THALASSA_TEST_REGION` | Region for resources created during tests (default: `nl-01`) |
+| `THALASSA_API_ENDPOINT` | API endpoint (default: `https://api.thalassa.cloud`) |
+| `THALASSA_PROJECT_ID` | Project ID when resources require one |
+| `THALASSA_ALLOW_INSECURE_OIDC` | Set to `true` when using client credentials against a non-production OIDC endpoint |
+
+Example using a personal API token:
+
+```bash
+export TF_ACC=1
+export THALASSA_API_TOKEN="your-token"
+export THALASSA_ORGANISATION="my-org"
+export THALASSA_TEST_REGION="nl-01"   # optional
+
+make testacc
+```
+
+Example using an access token:
+
+```bash
+export TF_ACC=1
+export THALASSA_ACCESS_TOKEN="your-access-token"
+export THALASSA_ORGANISATION="my-org"
+
+make testacc
+```
+
+Example using OIDC client credentials:
+
+```bash
+export TF_ACC=1
+export THALASSA_CLIENT_ID="your-client-id"
+export THALASSA_CLIENT_SECRET="your-client-secret"
+export THALASSA_ORGANISATION="my-org"
+export THALASSA_TEST_REGION="nl-01"   # optional
+
+make testacc
+```
+
+**Run a single acceptance test**
+
+Scope to a package with `PKG` and filter tests with `TESTARGS`:
+
+```bash
+export TF_ACC=1
+export THALASSA_API_TOKEN="your-token"
+export THALASSA_ORGANISATION="my-org"
+
+make testacc PKG='./thalassa/iaas/...' TESTARGS='-run TestAccVpc_basic'
+make testacc PKG='./thalassa/secrets/...' TESTARGS='-run TestAcc'
+```
+
+Or invoke `go test` directly:
+
+```bash
+TF_ACC=1 \
+  THALASSA_API_TOKEN="your-token" \
+  THALASSA_ORGANISATION="my-org" \
+  go test ./thalassa/iaas/... -v -run TestAccVpc_basic -timeout 120m
+```
+
+Acceptance tests can take several minutes per case because they wait for cloud resources to reach a ready state. The `testacc` target uses a 120-minute timeout.
+
+**Notes**
+
+- Use a dedicated organisation and project for acceptance testing; tests create resources with names prefixed `tf-acc-`.
 
 ### Generate documentation
 

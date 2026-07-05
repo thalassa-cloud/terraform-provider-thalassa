@@ -122,7 +122,7 @@ func DataSourceRole() *schema.Resource {
 	}
 }
 
-func dataSourceRoleRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataSourceRoleRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -186,17 +186,21 @@ func dataSourceRoleRead(ctx context.Context, d *schema.ResourceData, m interface
 	}
 
 	// Set fields if found
+	return setRoleDataSourceState(d, role)
+}
+
+func setRoleDataSourceState(d *schema.ResourceData, role *iam.OrganisationRole) diag.Diagnostics {
 	d.SetId(role.Identity)
-	d.Set("id", role.Identity)
-	d.Set("name", role.Name)
-	d.Set("slug", role.Slug)
-	d.Set("description", role.Description)
-	d.Set("labels", role.Labels)
-	d.Set("annotations", role.Annotations)
-	d.Set("created_at", role.CreatedAt.Format(TimeFormatRFC3339))
-	d.Set("updated_at", role.UpdatedAt.Format(TimeFormatRFC3339))
-	d.Set("role_is_read_only", role.IsReadOnly)
-	d.Set("system", role.System)
+	_ = d.Set("id", role.Identity)
+	_ = d.Set("name", role.Name)
+	_ = d.Set("slug", role.Slug)
+	_ = d.Set("description", role.Description)
+	_ = d.Set("labels", role.Labels)
+	_ = d.Set("annotations", role.Annotations)
+	_ = d.Set("created_at", role.CreatedAt.Format(TimeFormatRFC3339))
+	_ = d.Set("updated_at", role.UpdatedAt.Format(TimeFormatRFC3339))
+	_ = d.Set("role_is_read_only", role.IsReadOnly)
+	_ = d.Set("system", role.System)
 
 	// Set rules
 	ruleList := make([]map[string]any, len(role.Rules))
@@ -210,7 +214,7 @@ func dataSourceRoleRead(ctx context.Context, d *schema.ResourceData, m interface
 		}
 		ruleList[i] = ruleMap
 	}
-	d.Set("rules", ruleList)
+	_ = d.Set("rules", ruleList)
 
 	return diag.Diagnostics{}
 }

@@ -108,7 +108,7 @@ func resourceSnapshot() *schema.Resource {
 	}
 }
 
-func resourceSnapshotCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceSnapshotCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -141,8 +141,8 @@ func resourceSnapshotCreate(ctx context.Context, d *schema.ResourceData, m inter
 
 	if snapshot != nil {
 		d.SetId(snapshot.Identity)
-		d.Set("slug", snapshot.Slug)
-		d.Set("status", string(snapshot.Status))
+		_ = d.Set("slug", snapshot.Slug)
+		_ = d.Set("status", string(snapshot.Status))
 	}
 
 	if d.Get("wait_until_available").(bool) {
@@ -158,7 +158,7 @@ func resourceSnapshotCreate(ctx context.Context, d *schema.ResourceData, m inter
 	return resourceSnapshotRead(ctx, d, m)
 }
 
-func resourceSnapshotRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceSnapshotRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to create Thalassa client: %w", err))
@@ -179,34 +179,34 @@ func resourceSnapshotRead(ctx context.Context, d *schema.ResourceData, m interfa
 	}
 
 	d.SetId(snapshot.Identity)
-	d.Set("name", snapshot.Name)
-	d.Set("slug", snapshot.Slug)
-	d.Set("description", snapshot.Description)
-	d.Set("labels", snapshot.Labels)
-	d.Set("annotations", snapshot.Annotations)
-	d.Set("status", string(snapshot.Status))
-	d.Set("delete_protection", snapshot.DeleteProtection)
+	_ = d.Set("name", snapshot.Name)
+	_ = d.Set("slug", snapshot.Slug)
+	_ = d.Set("description", snapshot.Description)
+	_ = d.Set("labels", snapshot.Labels)
+	_ = d.Set("annotations", snapshot.Annotations)
+	_ = d.Set("status", string(snapshot.Status))
+	_ = d.Set("delete_protection", snapshot.DeleteProtection)
 
 	if snapshot.Region != nil {
-		d.Set("region", snapshot.Region.Identity)
+		_ = d.Set("region", snapshot.Region.Identity)
 	}
 
 	if snapshot.SourceVolumeId != nil {
-		d.Set("source_volume_id", *snapshot.SourceVolumeId)
+		_ = d.Set("source_volume_id", *snapshot.SourceVolumeId)
 	}
 
 	if snapshot.SizeGB != nil {
-		d.Set("size_gb", *snapshot.SizeGB)
+		_ = d.Set("size_gb", *snapshot.SizeGB)
 	}
 
 	if snapshot.SnapshotPolicyId != nil {
-		d.Set("snapshot_policy_id", *snapshot.SnapshotPolicyId)
+		_ = d.Set("snapshot_policy_id", *snapshot.SnapshotPolicyId)
 	}
 
 	return nil
 }
 
-func resourceSnapshotUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceSnapshotUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to create Thalassa client: %w", err))
@@ -227,20 +227,20 @@ func resourceSnapshotUpdate(ctx context.Context, d *schema.ResourceData, m inter
 	}
 
 	if snapshot != nil {
-		d.Set("name", snapshot.Name)
-		d.Set("description", snapshot.Description)
-		d.Set("slug", snapshot.Slug)
-		d.Set("status", string(snapshot.Status))
-		d.Set("labels", snapshot.Labels)
-		d.Set("annotations", snapshot.Annotations)
-		d.Set("delete_protection", snapshot.DeleteProtection)
+		_ = d.Set("name", snapshot.Name)
+		_ = d.Set("description", snapshot.Description)
+		_ = d.Set("slug", snapshot.Slug)
+		_ = d.Set("status", string(snapshot.Status))
+		_ = d.Set("labels", snapshot.Labels)
+		_ = d.Set("annotations", snapshot.Annotations)
+		_ = d.Set("delete_protection", snapshot.DeleteProtection)
 		return nil
 	}
 
 	return resourceSnapshotRead(ctx, d, m)
 }
 
-func resourceSnapshotDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceSnapshotDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to create Thalassa client: %w", err))

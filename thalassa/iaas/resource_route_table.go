@@ -76,7 +76,7 @@ func resourceRouteTable() *schema.Resource {
 	}
 }
 
-func resourceRouteTableCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceRouteTableCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -97,19 +97,17 @@ func resourceRouteTableCreate(ctx context.Context, d *schema.ResourceData, m int
 	}
 	if routeTable != nil {
 		d.SetId(routeTable.Identity)
-		d.Set("slug", routeTable.Slug)
-		return nil
 	}
 	return resourceRouteTableRead(ctx, d, m)
 }
 
-func resourceRouteTableRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceRouteTableRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	id := d.Get("id").(string)
+	id := d.Id()
 	routeTable, err := client.IaaS().GetRouteTable(ctx, id)
 	if err != nil {
 		if tcclient.IsNotFound(err) {
@@ -124,19 +122,25 @@ func resourceRouteTableRead(ctx context.Context, d *schema.ResourceData, m inter
 	}
 
 	d.SetId(routeTable.Identity)
-	d.Set("name", routeTable.Name)
-	d.Set("slug", routeTable.Slug)
-	d.Set("description", routeTable.Description)
-	d.Set("labels", routeTable.Labels)
-	d.Set("annotations", routeTable.Annotations)
+	_ = d.Set("name", routeTable.Name)
+	_ = d.Set("slug", routeTable.Slug)
+	description := convert.StringValue(routeTable.Description)
+	if description == "" {
+		if configured := d.Get("description").(string); configured != "" {
+			description = configured
+		}
+	}
+	_ = d.Set("description", description)
+	_ = d.Set("labels", routeTable.Labels)
+	_ = d.Set("annotations", routeTable.Annotations)
 	if routeTable.Vpc != nil {
-		d.Set("vpc_id", routeTable.Vpc.Identity)
+		_ = d.Set("vpc_id", routeTable.Vpc.Identity)
 	}
 
 	return nil
 }
 
-func resourceRouteTableUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceRouteTableUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -159,13 +163,19 @@ func resourceRouteTableUpdate(ctx context.Context, d *schema.ResourceData, m int
 		return diag.FromErr(err)
 	}
 	if routeTable != nil {
-		d.Set("name", routeTable.Name)
-		d.Set("description", routeTable.Description)
-		d.Set("slug", routeTable.Slug)
-		d.Set("labels", routeTable.Labels)
-		d.Set("annotations", routeTable.Annotations)
+		_ = d.Set("name", routeTable.Name)
+		description := convert.StringValue(routeTable.Description)
+		if description == "" {
+			if configured := d.Get("description").(string); configured != "" {
+				description = configured
+			}
+		}
+		_ = d.Set("description", description)
+		_ = d.Set("slug", routeTable.Slug)
+		_ = d.Set("labels", routeTable.Labels)
+		_ = d.Set("annotations", routeTable.Annotations)
 		if routeTable.Vpc != nil {
-			d.Set("vpc_id", routeTable.Vpc.Identity)
+			_ = d.Set("vpc_id", routeTable.Vpc.Identity)
 		}
 		return nil
 	}
@@ -173,7 +183,7 @@ func resourceRouteTableUpdate(ctx context.Context, d *schema.ResourceData, m int
 	return resourceRouteTableRead(ctx, d, m)
 }
 
-func resourceRouteTableDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceRouteTableDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)

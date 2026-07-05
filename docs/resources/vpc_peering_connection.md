@@ -9,6 +9,10 @@ description: |-
 
 Create and manage a VPC peering connection
 
+See [Networking documentation](https://docs.thalassa.cloud/docs/iaas/networking/).
+
+The peer VPC owner must accept the request with `thalassa_vpc_peering_connection_acceptance`.
+
 ## Example Usage
 
 ```terraform

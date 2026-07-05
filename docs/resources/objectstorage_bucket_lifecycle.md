@@ -9,6 +9,8 @@ description: |-
 
 Manage object storage bucket lifecycle rules. Each apply replaces the full rule set.
 
+See [Object Storage documentation](https://docs.thalassa.cloud/docs/iaas/storage/object-storage/).
+
 Each apply **replaces the entire rule set** (`SetBucketLifecycle` PUT semantics). Ongoing lifecycle management should use this resource, not `thalassa_objectstorage_bucket`.
 
 Noncurrent version rules require bucket versioning `Enabled`.
@@ -41,7 +43,7 @@ resource "thalassa_objectstorage_bucket_lifecycle" "logs" {
 ### Required
 
 - `bucket_name` (String) Name of the bucket.
-- `rule` (Block Set, Min: 1) (see [below for nested schema](#nestedblock--rule))
+- `rule` (Block List, Min: 1) (see [below for nested schema](#nestedblock--rule))
 
 ### Optional
 

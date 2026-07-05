@@ -97,8 +97,8 @@ func ResourceTeam() *schema.Resource {
 						},
 					},
 				},
-				Set: func(v interface{}) int {
-					m := v.(map[string]interface{})
+				Set: func(v any) int {
+					m := v.(map[string]any)
 					userIdentity := m["user_identity"].(string)
 					email := m["email"].(string)
 					role := m["role"].(string)
@@ -124,7 +124,7 @@ func ResourceTeam() *schema.Resource {
 	}
 }
 
-func resourceTeamCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceTeamCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -143,7 +143,7 @@ func resourceTeamCreate(ctx context.Context, d *schema.ResourceData, m interface
 	}
 	if team != nil {
 		d.SetId(team.Identity)
-		d.Set("slug", team.Slug)
+		_ = d.Set("slug", team.Slug)
 
 		err = updateTeamMembers(ctx, client, team.Identity, d)
 		if err != nil {
@@ -154,7 +154,7 @@ func resourceTeamCreate(ctx context.Context, d *schema.ResourceData, m interface
 	return resourceTeamRead(ctx, d, m)
 }
 
-func resourceTeamRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceTeamRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -175,19 +175,19 @@ func resourceTeamRead(ctx context.Context, d *schema.ResourceData, m interface{}
 	}
 
 	d.SetId(team.Identity)
-	d.Set("name", team.Name)
-	d.Set("slug", team.Slug)
-	d.Set("description", team.Description)
-	d.Set("labels", team.Labels)
-	d.Set("annotations", team.Annotations)
-	d.Set("created_at", team.CreatedAt.Format(TimeFormatRFC3339))
+	_ = d.Set("name", team.Name)
+	_ = d.Set("slug", team.Slug)
+	_ = d.Set("description", team.Description)
+	_ = d.Set("labels", team.Labels)
+	_ = d.Set("annotations", team.Annotations)
+	_ = d.Set("created_at", team.CreatedAt.Format(TimeFormatRFC3339))
 	if team.UpdatedAt != nil {
-		d.Set("updated_at", team.UpdatedAt.Format(TimeFormatRFC3339))
+		_ = d.Set("updated_at", team.UpdatedAt.Format(TimeFormatRFC3339))
 	}
 
 	// Set members data
-	memberSet := schema.NewSet(func(v interface{}) int {
-		m := v.(map[string]interface{})
+	memberSet := schema.NewSet(func(v any) int {
+		m := v.(map[string]any)
 		userIdentity := m["user_identity"].(string)
 		email := m["email"].(string)
 		role := m["role"].(string)
@@ -204,7 +204,7 @@ func resourceTeamRead(ctx context.Context, d *schema.ResourceData, m interface{}
 		}
 
 		return schema.HashString(fmt.Sprintf("%s-%s", identifier, role))
-	}, []interface{}{})
+	}, []any{})
 
 	for _, member := range team.Members {
 		role := member.Role
@@ -212,19 +212,19 @@ func resourceTeamRead(ctx context.Context, d *schema.ResourceData, m interface{}
 			role = "MEMBER" // Set default role if empty
 		}
 
-		memberMap := map[string]interface{}{
+		memberMap := map[string]any{
 			"user_identity": member.User.Subject, // Using Subject as the user identity
 			"email":         member.User.Email,   // Include email for reference
 			"role":          role,
 		}
 		memberSet.Add(memberMap)
 	}
-	d.Set("members", memberSet)
+	_ = d.Set("members", memberSet)
 
 	return nil
 }
 
-func resourceTeamUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceTeamUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -244,13 +244,13 @@ func resourceTeamUpdate(ctx context.Context, d *schema.ResourceData, m interface
 		return diag.FromErr(fmt.Errorf("error updating team: %s", err))
 	}
 	if team != nil {
-		d.Set("name", team.Name)
-		d.Set("description", team.Description)
-		d.Set("slug", team.Slug)
-		d.Set("labels", team.Labels)
-		d.Set("annotations", team.Annotations)
+		_ = d.Set("name", team.Name)
+		_ = d.Set("description", team.Description)
+		_ = d.Set("slug", team.Slug)
+		_ = d.Set("labels", team.Labels)
+		_ = d.Set("annotations", team.Annotations)
 		if team.UpdatedAt != nil {
-			d.Set("updated_at", team.UpdatedAt.Format(TimeFormatRFC3339))
+			_ = d.Set("updated_at", team.UpdatedAt.Format(TimeFormatRFC3339))
 		}
 	}
 
@@ -296,7 +296,7 @@ func updateTeamMembers(ctx context.Context, client thalassa.Client, teamID strin
 	// Find members to remove
 	toRemove := oldSet.Difference(newSet)
 	for _, member := range toRemove.List() {
-		memberMap := member.(map[string]interface{})
+		memberMap := member.(map[string]any)
 		userIdentity := memberMap["user_identity"].(string)
 		email := memberMap["email"].(string)
 
@@ -335,7 +335,7 @@ func updateTeamMembers(ctx context.Context, client thalassa.Client, teamID strin
 	// Find members to add
 	toAdd := newSet.Difference(oldSet)
 	for _, member := range toAdd.List() {
-		memberMap := member.(map[string]interface{})
+		memberMap := member.(map[string]any)
 		userIdentity := memberMap["user_identity"].(string)
 		email := memberMap["email"].(string)
 		role := memberMap["role"].(string)
@@ -373,7 +373,7 @@ func updateTeamMembers(ctx context.Context, client thalassa.Client, teamID strin
 	return nil
 }
 
-func resourceTeamDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceTeamDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)

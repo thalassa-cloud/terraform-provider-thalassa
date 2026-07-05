@@ -71,7 +71,7 @@ func ResourceRoleRule() *schema.Resource {
 	}
 }
 
-func resourceRoleRuleCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceRoleRuleCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -81,7 +81,7 @@ func resourceRoleRuleCreate(ctx context.Context, d *schema.ResourceData, m inter
 
 	// Convert resources list
 	resources := make([]string, 0)
-	if rList, ok := d.Get("resources").([]interface{}); ok {
+	if rList, ok := d.Get("resources").([]any); ok {
 		for _, r := range rList {
 			resources = append(resources, r.(string))
 		}
@@ -89,7 +89,7 @@ func resourceRoleRuleCreate(ctx context.Context, d *schema.ResourceData, m inter
 
 	// Convert resource identities list
 	resourceIdentities := make([]string, 0)
-	if ri, ok := d.Get("resource_identities").([]interface{}); ok {
+	if ri, ok := d.Get("resource_identities").([]any); ok {
 		for _, r := range ri {
 			resourceIdentities = append(resourceIdentities, r.(string))
 		}
@@ -97,7 +97,7 @@ func resourceRoleRuleCreate(ctx context.Context, d *schema.ResourceData, m inter
 
 	// Convert permissions list
 	permissions := make([]string, 0)
-	if pList, ok := d.Get("permissions").([]interface{}); ok {
+	if pList, ok := d.Get("permissions").([]any); ok {
 		for _, p := range pList {
 			permissions = append(permissions, p.(string))
 		}
@@ -128,7 +128,7 @@ func resourceRoleRuleCreate(ctx context.Context, d *schema.ResourceData, m inter
 	return diag.FromErr(fmt.Errorf("failed to create role rule"))
 }
 
-func resourceRoleRuleRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceRoleRuleRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -167,15 +167,15 @@ func resourceRoleRuleRead(ctx context.Context, d *schema.ResourceData, m interfa
 	}
 
 	d.SetId(rule.Identity)
-	d.Set("resources", toListOfInterfaces(rule.Resources))
-	d.Set("resource_identities", toListOfInterfaces(rule.ResourceIdentities))
-	d.Set("permissions", toListOfInterfaces(convertPermissionsToStrings(rule.Permissions)))
-	d.Set("note", rule.Note)
+	_ = d.Set("resources", toListOfInterfaces(rule.Resources))
+	_ = d.Set("resource_identities", toListOfInterfaces(rule.ResourceIdentities))
+	_ = d.Set("permissions", toListOfInterfaces(convertPermissionsToStrings(rule.Permissions)))
+	_ = d.Set("note", rule.Note)
 
 	return nil
 }
 
-func resourceRoleRuleUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceRoleRuleUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	// Role rules don't support updates via the API, so we need to delete and recreate
 	// This is similar to how role bindings work
 	client, err := provider.GetClient(provider.GetProvider(m), d)
@@ -199,7 +199,7 @@ func resourceRoleRuleUpdate(ctx context.Context, d *schema.ResourceData, m inter
 	return resourceRoleRuleCreate(ctx, d, m)
 }
 
-func resourceRoleRuleDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceRoleRuleDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)

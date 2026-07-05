@@ -9,7 +9,7 @@ description: |-
 
 Manage a secret version in Thalassa Secrets Manager
 
-~> **Early access:** Secrets Manager is in early access. The API and Terraform resource schema may change in future provider releases.
+~> **Early access:** Secrets Manager is in early access. The Secrets Manager feature gate must be enabled for your organisation. The API and Terraform resource schema may change in future provider releases.
 
 See [Secrets Manager documentation](https://docs.thalassa.cloud/docs/secrets-manager/).
 
@@ -49,8 +49,7 @@ resource "thalassa_secret_version" "db_password" {
 
 Optional:
 
-- `character_set` (String)
-- `length` (Number)
+- `byte_length` (Number) Byte length of the generated secret.
 
 ## Import
 

@@ -8,8 +8,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	validate "github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
-	tcsecrets "github.com/thalassa-cloud/client-go/secrets"
 	tcclient "github.com/thalassa-cloud/client-go/pkg/client"
+	tcsecrets "github.com/thalassa-cloud/client-go/secrets"
 
 	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/provider"
 )
@@ -74,11 +74,28 @@ func ResourceSecretAccessPolicy() *schema.Resource {
 	}
 }
 
-func resourceSecretAccessPolicyCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceSecretAccessPolicyCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	return resourceSecretAccessPolicyUpdate(ctx, d, m)
 }
 
-func resourceSecretAccessPolicyRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func setSecretAccessPolicyState(d *schema.ResourceData, region, path string, secret *tcsecrets.Secret) {
+	_ = d.Set("region", region)
+	_ = d.Set("path", path)
+
+	if secret != nil && secret.AccessPolicy != nil && len(secret.AccessPolicy.Statements) > 0 {
+		_ = d.Set("statement", flattenAccessPolicyStatements(secret.AccessPolicy.Statements))
+		return
+	}
+
+	if configured, ok := d.GetOk("statement"); ok && len(configured.([]any)) > 0 {
+		_ = d.Set("statement", configured)
+		return
+	}
+
+	_ = d.Set("statement", []map[string]any{})
+}
+
+func resourceSecretAccessPolicyRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -98,23 +115,14 @@ func resourceSecretAccessPolicyRead(ctx context.Context, d *schema.ResourceData,
 		return diag.FromErr(fmt.Errorf("reading secret access policy: %w", err))
 	}
 
-	if err := d.Set("region", region); err != nil {
-		return diag.FromErr(err)
-	}
-	if err := d.Set("path", path); err != nil {
-		return diag.FromErr(err)
-	}
-
-	if secret.AccessPolicy != nil {
-		if err := d.Set("statement", flattenAccessPolicyStatements(secret.AccessPolicy.Statements)); err != nil {
-			return diag.FromErr(err)
-		}
-	}
+	_ = d.Set("region", region)
+	_ = d.Set("path", path)
+	setSecretAccessPolicyState(d, region, path, secret)
 
 	return nil
 }
 
-func resourceSecretAccessPolicyUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceSecretAccessPolicyUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -123,8 +131,8 @@ func resourceSecretAccessPolicyUpdate(ctx context.Context, d *schema.ResourceDat
 	region := d.Get("region").(string)
 	path := d.Get("path").(string)
 
-	statements := expandAccessPolicyStatements(d.Get("statement").([]interface{}))
-	_, err = client.Secrets().UpdateAccessPolicy(ctx, region, path, tcsecrets.UpdateAccessPolicyRequest{
+	statements := expandAccessPolicyStatements(d.Get("statement").([]any))
+	secret, err := client.Secrets().UpdateAccessPolicy(ctx, region, path, tcsecrets.UpdateAccessPolicyRequest{
 		AccessPolicy: tcsecrets.SecretPolicy{Statements: statements},
 	})
 	if err != nil {
@@ -132,10 +140,12 @@ func resourceSecretAccessPolicyUpdate(ctx context.Context, d *schema.ResourceDat
 	}
 
 	d.SetId(secretID(region, path))
-	return resourceSecretAccessPolicyRead(ctx, d, m)
+	setSecretAccessPolicyState(d, region, path, secret)
+
+	return nil
 }
 
-func resourceSecretAccessPolicyDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceSecretAccessPolicyDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	validate "github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -25,17 +26,13 @@ var (
 	loadbalancingPolicies = []string{"ROUND_ROBIN", "RANDOM", "MAGLEV"}
 )
 
-func validateOptionalStringInSlice(valid []string) schema.SchemaValidateFunc {
-	return func(v interface{}, k string) (ws []string, es []error) {
-		s, ok := v.(string)
-		if !ok {
-			es = append(es, fmt.Errorf("expected string at %s", k))
-			return
+func validateOptionalStringInSlice(valid []string) schema.SchemaValidateDiagFunc {
+	inSlice := validate.ToDiagFunc(validate.StringInSlice(valid, false))
+	return func(v any, path cty.Path) diag.Diagnostics {
+		if s, ok := v.(string); ok && s == "" {
+			return nil
 		}
-		if s == "" {
-			return
-		}
-		return validate.StringInSlice(valid, false)(v, k)
+		return inSlice(v, path)
 	}
 }
 
@@ -108,10 +105,10 @@ func resourceTargetGroup() *schema.Resource {
 				Description: "When true, the load balancer uses PROXY protocol toward backends in this target group. All targets must support PROXY protocol.",
 			},
 			"loadbalancing_policy": {
-				Type:         schema.TypeString,
-				Optional:     true,
-				ValidateFunc: validateOptionalStringInSlice(loadbalancingPolicies),
-				Description:  "Load balancing algorithm: ROUND_ROBIN (default), RANDOM, or MAGLEV.",
+				Type:             schema.TypeString,
+				Optional:         true,
+				ValidateDiagFunc: validateOptionalStringInSlice(loadbalancingPolicies),
+				Description:      "Load balancing algorithm: ROUND_ROBIN (default), RANDOM, or MAGLEV.",
 			},
 			"target_selector": {
 				Type:        schema.TypeMap,
@@ -132,10 +129,10 @@ func resourceTargetGroup() *schema.Resource {
 				Description:  "Port for health checks; if omitted but other health check settings are set, defaults to the target group port.",
 			},
 			"health_check_protocol": {
-				Type:         schema.TypeString,
-				Optional:     true,
-				ValidateFunc: validateOptionalStringInSlice(healthCheckProtocols),
-				Description:  "Health check protocol (tcp, udp, http, https). If omitted when configuring a health check, defaults to tcp.",
+				Type:             schema.TypeString,
+				Optional:         true,
+				ValidateDiagFunc: validateOptionalStringInSlice(healthCheckProtocols),
+				Description:      "Health check protocol (tcp, udp, http, https). If omitted when configuring a health check, defaults to tcp.",
 			},
 			"health_check_interval": {
 				Type:         schema.TypeInt,
@@ -193,7 +190,7 @@ func resourceTargetGroup() *schema.Resource {
 	}
 }
 
-func resourceTargetGroupCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceTargetGroupCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error creating client: %w", err))
@@ -227,13 +224,13 @@ func resourceTargetGroupCreate(ctx context.Context, d *schema.ResourceData, m in
 	}
 	if tg != nil {
 		d.SetId(tg.Identity)
-		d.Set("slug", tg.Slug)
+		_ = d.Set("slug", tg.Slug)
 		// Attach targets if specified
 		if attachments, ok := d.GetOk("attachments"); ok {
-			attachmentList := attachments.([]interface{})
+			attachmentList := attachments.([]any)
 			attach := make([]iaas.AttachTarget, len(attachmentList))
 			for i, a := range attachmentList {
-				row := a.(map[string]interface{})
+				row := a.(map[string]any)
 				attach[i] = iaas.AttachTarget{ServerIdentity: row["id"].(string)}
 			}
 			batch := iaas.TargetGroupAttachmentsBatch{
@@ -249,7 +246,7 @@ func resourceTargetGroupCreate(ctx context.Context, d *schema.ResourceData, m in
 	return resourceTargetGroupRead(ctx, d, m)
 }
 
-func resourceTargetGroupRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceTargetGroupRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error creating client: %w", err))
@@ -270,56 +267,56 @@ func resourceTargetGroupRead(ctx context.Context, d *schema.ResourceData, m inte
 	}
 
 	d.SetId(tg.Identity)
-	d.Set("name", tg.Name)
-	d.Set("slug", tg.Slug)
-	d.Set("description", tg.Description)
-	d.Set("labels", tg.Labels)
-	d.Set("annotations", tg.Annotations)
-	d.Set("vpc_id", tg.Vpc.Identity)
-	d.Set("protocol", string(tg.Protocol))
-	d.Set("port", tg.TargetPort)
+	_ = d.Set("name", tg.Name)
+	_ = d.Set("slug", tg.Slug)
+	_ = d.Set("description", tg.Description)
+	_ = d.Set("labels", tg.Labels)
+	_ = d.Set("annotations", tg.Annotations)
+	_ = d.Set("vpc_id", tg.Vpc.Identity)
+	_ = d.Set("protocol", string(tg.Protocol))
+	_ = d.Set("port", tg.TargetPort)
 
 	if tg.EnableProxyProtocol != nil {
-		d.Set("enable_proxy_protocol", *tg.EnableProxyProtocol)
+		_ = d.Set("enable_proxy_protocol", *tg.EnableProxyProtocol)
 	} else {
-		d.Set("enable_proxy_protocol", false)
+		_ = d.Set("enable_proxy_protocol", false)
 	}
 	if tg.LoadbalancingPolicy != nil {
-		d.Set("loadbalancing_policy", string(*tg.LoadbalancingPolicy))
+		_ = d.Set("loadbalancing_policy", string(*tg.LoadbalancingPolicy))
 	}
 	if tg.TargetSelector != nil {
-		d.Set("target_selector", tg.TargetSelector)
+		_ = d.Set("target_selector", tg.TargetSelector)
 	} else {
-		d.Set("target_selector", map[string]string{})
+		_ = d.Set("target_selector", map[string]string{})
 	}
 
 	if tg.HealthCheck != nil {
-		d.Set("health_check_path", tg.HealthCheck.Path)
-		d.Set("health_check_port", tg.HealthCheck.Port)
-		d.Set("health_check_protocol", string(tg.HealthCheck.Protocol))
-		d.Set("health_check_interval", tg.HealthCheck.PeriodSeconds)
-		d.Set("health_check_timeout", tg.HealthCheck.TimeoutSeconds)
-		d.Set("healthy_threshold", tg.HealthCheck.HealthyThreshold)
-		d.Set("unhealthy_threshold", tg.HealthCheck.UnhealthyThreshold)
+		_ = d.Set("health_check_path", tg.HealthCheck.Path)
+		_ = d.Set("health_check_port", tg.HealthCheck.Port)
+		_ = d.Set("health_check_protocol", string(tg.HealthCheck.Protocol))
+		_ = d.Set("health_check_interval", tg.HealthCheck.PeriodSeconds)
+		_ = d.Set("health_check_timeout", tg.HealthCheck.TimeoutSeconds)
+		_ = d.Set("healthy_threshold", tg.HealthCheck.HealthyThreshold)
+		_ = d.Set("unhealthy_threshold", tg.HealthCheck.UnhealthyThreshold)
 	}
 
 	// Set targets from attachments
 	if tg.LoadbalancerTargetGroupAttachments != nil {
-		targets := make([]map[string]interface{}, len(tg.LoadbalancerTargetGroupAttachments))
+		targets := make([]map[string]any, len(tg.LoadbalancerTargetGroupAttachments))
 		for i, att := range tg.LoadbalancerTargetGroupAttachments {
 			if att.VirtualMachineInstance != nil {
-				targets[i] = map[string]interface{}{
+				targets[i] = map[string]any{
 					"id": att.VirtualMachineInstance.Identity,
 				}
 			}
 		}
-		d.Set("attachments", targets)
+		_ = d.Set("attachments", targets)
 	}
 
 	return nil
 }
 
-func resourceTargetGroupUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceTargetGroupUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -359,10 +356,10 @@ func resourceTargetGroupUpdate(ctx context.Context, d *schema.ResourceData, m in
 	if tg != nil {
 		// Attach targets if specified
 		if attachments, ok := d.GetOk("attachments"); ok {
-			attachmentList := attachments.([]interface{})
+			attachmentList := attachments.([]any)
 			attachments := make([]iaas.AttachTarget, len(attachmentList))
 			for i, a := range attachmentList {
-				attachment := a.(map[string]interface{})
+				attachment := a.(map[string]any)
 				attachments[i] = iaas.AttachTarget{ServerIdentity: attachment["id"].(string)}
 			}
 			batch := iaas.TargetGroupAttachmentsBatch{
@@ -378,7 +375,7 @@ func resourceTargetGroupUpdate(ctx context.Context, d *schema.ResourceData, m in
 	return resourceTargetGroupRead(ctx, d, m)
 }
 
-func resourceTargetGroupDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceTargetGroupDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error creating client: %w", err))

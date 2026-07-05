@@ -102,7 +102,7 @@ func DataSourceServiceAccount() *schema.Resource {
 	}
 }
 
-func dataSourceServiceAccountRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataSourceServiceAccountRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -167,27 +167,27 @@ func dataSourceServiceAccountRead(ctx context.Context, d *schema.ResourceData, m
 
 	// Set fields if found
 	d.SetId(account.Identity)
-	d.Set("id", account.Identity)
-	d.Set("name", account.Name)
-	d.Set("slug", account.Slug)
-	d.Set("description", account.Description)
-	d.Set("labels", account.Labels)
-	d.Set("annotations", account.Annotations)
-	d.Set("created_at", account.CreatedAt.Format(TimeFormatRFC3339))
-	d.Set("object_version", account.ObjectVersion)
+	_ = d.Set("id", account.Identity)
+	_ = d.Set("name", account.Name)
+	_ = d.Set("slug", account.Slug)
+	_ = d.Set("description", account.Description)
+	_ = d.Set("labels", account.Labels)
+	_ = d.Set("annotations", account.Annotations)
+	_ = d.Set("created_at", account.CreatedAt.Format(TimeFormatRFC3339))
+	_ = d.Set("object_version", account.ObjectVersion)
 
 	if account.UpdatedAt != nil {
-		d.Set("updated_at", account.UpdatedAt.Format(TimeFormatRFC3339))
+		_ = d.Set("updated_at", account.UpdatedAt.Format(TimeFormatRFC3339))
 	}
 
 	// Set role bindings
-	roleBindingsList := make([]map[string]interface{}, len(account.RoleBindings))
+	roleBindingsList := make([]map[string]any, len(account.RoleBindings))
 	for i, binding := range account.RoleBindings {
 		roleId := ""
 		if binding.OrganisationRole != nil {
 			roleId = binding.OrganisationRole.Identity
 		}
-		bindingMap := map[string]interface{}{
+		bindingMap := map[string]any{
 			"identity":    binding.Identity,
 			"name":        binding.Name,
 			"description": binding.Description,
@@ -197,7 +197,7 @@ func dataSourceServiceAccountRead(ctx context.Context, d *schema.ResourceData, m
 		}
 		roleBindingsList[i] = bindingMap
 	}
-	d.Set("role_bindings", roleBindingsList)
+	_ = d.Set("role_bindings", roleBindingsList)
 
 	return diag.Diagnostics{}
 }

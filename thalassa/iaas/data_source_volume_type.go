@@ -50,7 +50,7 @@ func DataSourceVolumeType() *schema.Resource {
 	}
 }
 
-func dataSourceVolumeTypeRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataSourceVolumeTypeRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -68,11 +68,11 @@ func dataSourceVolumeTypeRead(ctx context.Context, d *schema.ResourceData, m int
 	for _, machineType := range machineTypes {
 		if strings.EqualFold(machineType.Name, name) {
 			d.SetId(machineType.Identity)
-			d.Set("id", machineType.Identity)
-			d.Set("name", machineType.Name)
-			d.Set("description", machineType.Description)
-			d.Set("storage_type", machineType.StorageType)
-			d.Set("allow_resize", machineType.AllowResize)
+			_ = d.Set("id", machineType.Identity)
+			_ = d.Set("name", machineType.Name)
+			_ = d.Set("description", machineType.Description)
+			_ = d.Set("storage_type", machineType.StorageType)
+			_ = d.Set("allow_resize", machineType.AllowResize)
 			return diag.Diagnostics{}
 		}
 	}

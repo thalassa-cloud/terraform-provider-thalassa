@@ -53,7 +53,7 @@ func dataSourceDbBackupSchedule() *schema.Resource {
 	}
 }
 
-func dataSourceDbBackupScheduleRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataSourceDbBackupScheduleRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -68,12 +68,12 @@ func dataSourceDbBackupScheduleRead(ctx context.Context, d *schema.ResourceData,
 	for _, backupSchedule := range backupSchedules {
 		if strings.EqualFold(backupSchedule.Name, d.Get("name").(string)) {
 			d.SetId(backupSchedule.Identity)
-			d.Set("name", backupSchedule.Name)
-			d.Set("db_cluster_id", dbClusterId)
-			d.Set("schedule", backupSchedule.Schedule)
-			d.Set("suspended", backupSchedule.Suspended)
-			d.Set("backup_target", backupSchedule.Target)
-			d.Set("retention_policy", backupSchedule.RetentionPolicy)
+			_ = d.Set("name", backupSchedule.Name)
+			_ = d.Set("db_cluster_id", dbClusterId)
+			_ = d.Set("schedule", backupSchedule.Schedule)
+			_ = d.Set("suspended", backupSchedule.Suspended)
+			_ = d.Set("backup_target", backupSchedule.Target)
+			_ = d.Set("retention_policy", backupSchedule.RetentionPolicy)
 			return nil
 		}
 	}

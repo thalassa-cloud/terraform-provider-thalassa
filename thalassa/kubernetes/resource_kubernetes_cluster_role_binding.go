@@ -115,7 +115,7 @@ func resourceKubernetesClusterRoleBinding() *schema.Resource {
 	}
 }
 
-func resourceKubernetesClusterRoleBindingCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceKubernetesClusterRoleBindingCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -165,17 +165,17 @@ func resourceKubernetesClusterRoleBindingCreate(ctx context.Context, d *schema.R
 
 	if binding != nil {
 		d.SetId(binding.Identity)
-		d.Set("slug", binding.Slug)
-		d.Set("created_at", binding.CreatedAt.Format(time.RFC3339))
+		_ = d.Set("slug", binding.Slug)
+		_ = d.Set("created_at", binding.CreatedAt.Format(time.RFC3339))
 		if binding.UpdatedAt != nil {
-			d.Set("updated_at", binding.UpdatedAt.Format(time.RFC3339))
+			_ = d.Set("updated_at", binding.UpdatedAt.Format(time.RFC3339))
 		}
 	}
 
 	return resourceKubernetesClusterRoleBindingRead(ctx, d, m)
 }
 
-func resourceKubernetesClusterRoleBindingRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceKubernetesClusterRoleBindingRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -209,39 +209,39 @@ func resourceKubernetesClusterRoleBindingRead(ctx context.Context, d *schema.Res
 	}
 
 	d.SetId(binding.Identity)
-	d.Set("name", binding.Name)
-	d.Set("slug", binding.Slug)
-	d.Set("description", binding.Description)
-	d.Set("labels", binding.Labels)
-	d.Set("annotations", binding.Annotations)
-	d.Set("cluster_role_id", clusterRoleID)
-	d.Set("created_at", binding.CreatedAt.Format(time.RFC3339))
+	_ = d.Set("name", binding.Name)
+	_ = d.Set("slug", binding.Slug)
+	_ = d.Set("description", binding.Description)
+	_ = d.Set("labels", binding.Labels)
+	_ = d.Set("annotations", binding.Annotations)
+	_ = d.Set("cluster_role_id", clusterRoleID)
+	_ = d.Set("created_at", binding.CreatedAt.Format(time.RFC3339))
 	if binding.UpdatedAt != nil {
-		d.Set("updated_at", binding.UpdatedAt.Format(time.RFC3339))
+		_ = d.Set("updated_at", binding.UpdatedAt.Format(time.RFC3339))
 	}
 	if binding.Note != nil {
-		d.Set("note", *binding.Note)
+		_ = d.Set("note", *binding.Note)
 	}
 
 	// Set the appropriate identity field based on what's bound
 	if binding.User != nil {
-		d.Set("user_id", binding.User.Subject)
+		_ = d.Set("user_id", binding.User.Subject)
 	} else if binding.OrganisationTeam != nil {
-		d.Set("team_id", binding.OrganisationTeam.Identity)
+		_ = d.Set("team_id", binding.OrganisationTeam.Identity)
 	} else if binding.ServiceAccount != nil {
-		d.Set("service_account_id", binding.ServiceAccount.Identity)
+		_ = d.Set("service_account_id", binding.ServiceAccount.Identity)
 	}
 
 	return nil
 }
 
-func resourceKubernetesClusterRoleBindingUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceKubernetesClusterRoleBindingUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	// Note: The API doesn't seem to have an update method for cluster role bindings
 	// This would need to be implemented if the API supports it
 	return diag.Errorf("updating Kubernetes cluster role bindings is not currently supported")
 }
 
-func resourceKubernetesClusterRoleBindingDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceKubernetesClusterRoleBindingDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)

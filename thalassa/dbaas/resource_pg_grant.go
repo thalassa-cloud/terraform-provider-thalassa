@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -71,7 +70,7 @@ func resourcePgGrant() *schema.Resource {
 	}
 }
 
-func resourcePgGrantCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourcePgGrantCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -128,17 +127,17 @@ func resourcePgGrantCreate(ctx context.Context, d *schema.ResourceData, m interf
 
 	// Use the grant name as the ID
 	d.SetId(createdGrant.Name)
-	d.Set("name", createdGrant.Name)
-	d.Set("db_cluster_id", dbClusterId)
-	d.Set("role_name", roleName)
-	d.Set("database_name", databaseName)
-	d.Set("read", createdGrant.Read)
-	d.Set("write", createdGrant.Write)
+	_ = d.Set("name", createdGrant.Name)
+	_ = d.Set("db_cluster_id", dbClusterId)
+	_ = d.Set("role_name", roleName)
+	_ = d.Set("database_name", databaseName)
+	_ = d.Set("read", createdGrant.Read)
+	_ = d.Set("write", createdGrant.Write)
 
 	return resourcePgGrantRead(ctx, d, m)
 }
 
-func resourcePgGrantRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourcePgGrantRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -192,7 +191,7 @@ func resourcePgGrantRead(ctx context.Context, d *schema.ResourceData, m interfac
 	return nil
 }
 
-func resourcePgGrantUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourcePgGrantUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -226,37 +225,21 @@ func resourcePgGrantUpdate(ctx context.Context, d *schema.ResourceData, m interf
 	return resourcePgGrantRead(ctx, d, m)
 }
 
-func resourcePgGrantDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourcePgGrantDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	dbClusterId := d.Get("db_cluster_id").(string)
-	var dbCluster *dbaas.DbCluster
 
-	for {
-		select {
-		case <-ctx.Done():
-			return diag.FromErr(ctx.Err())
-		default:
-			time.Sleep(1 * time.Second)
+	dbCluster, err := waitForReadyDbCluster(ctx, client, dbClusterId)
+	if err != nil {
+		if tcclient.IsNotFound(err) {
+			d.SetId("")
+			return nil // a deleted db cluster means the pg grant is also deleted
 		}
-		dbCluster, err = client.DBaaS().GetDbCluster(ctx, dbClusterId)
-		if err != nil {
-			if tcclient.IsNotFound(err) {
-				d.SetId("")
-				return nil // a deleted db cluster means the pg grant is also deleted
-			}
-			return diag.FromErr(err)
-		}
-
-		if dbCluster == nil {
-			return diag.FromErr(fmt.Errorf("db cluster not found"))
-		}
-		if dbCluster.Status == dbaas.DbClusterStatusReady {
-			break
-		}
+		return diag.FromErr(err)
 	}
 
 	grantName := d.Get("name").(string)

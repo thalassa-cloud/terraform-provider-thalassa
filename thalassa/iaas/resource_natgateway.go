@@ -114,7 +114,7 @@ func resourceNatGateway() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
 		},
-		CustomizeDiff: func(ctx context.Context, diff *schema.ResourceDiff, meta interface{}) error {
+		CustomizeDiff: func(ctx context.Context, diff *schema.ResourceDiff, meta any) error {
 			_, new := diff.GetChange("description")
 			if new == nil {
 				return diff.SetNew("description", "")
@@ -124,7 +124,7 @@ func resourceNatGateway() *schema.Resource {
 	}
 }
 
-func resourceNatGatewayCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceNatGatewayCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -152,7 +152,7 @@ func resourceNatGatewayCreate(ctx context.Context, d *schema.ResourceData, m int
 	}
 	if natGateway != nil {
 		d.SetId(natGateway.Identity)
-		d.Set("slug", natGateway.Slug)
+		_ = d.Set("slug", natGateway.Slug)
 		createdIdentity := natGateway.Identity
 
 		// wait until the natGateway is ready and has an endpoint IP
@@ -175,10 +175,10 @@ func resourceNatGatewayCreate(ctx context.Context, d *schema.ResourceData, m int
 					return diag.FromErr(fmt.Errorf("natGateway %s was not found after creation", createdIdentity))
 				}
 				if strings.TrimSpace(natGateway.EndpointIP) != "" {
-					d.Set("status", natGateway.Status)
-					d.Set("endpoint_ip", natGateway.EndpointIP)
-					d.Set("v4_ip", natGateway.V4IP)
-					d.Set("v6_ip", natGateway.V6IP)
+					_ = d.Set("status", natGateway.Status)
+					_ = d.Set("endpoint_ip", natGateway.EndpointIP)
+					_ = d.Set("v4_ip", natGateway.V4IP)
+					_ = d.Set("v6_ip", natGateway.V6IP)
 					return resourceNatGatewayRead(ctx, d, m)
 				}
 			}
@@ -187,7 +187,7 @@ func resourceNatGatewayCreate(ctx context.Context, d *schema.ResourceData, m int
 	return resourceNatGatewayRead(ctx, d, m)
 }
 
-func resourceNatGatewayRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceNatGatewayRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -207,29 +207,29 @@ func resourceNatGatewayRead(ctx context.Context, d *schema.ResourceData, m inter
 	}
 
 	d.SetId(natGateway.Identity)
-	d.Set("name", natGateway.Name)
-	d.Set("slug", natGateway.Slug)
-	d.Set("description", natGateway.Description)
-	d.Set("labels", natGateway.Labels)
-	d.Set("annotations", natGateway.Annotations)
-	d.Set("subnet_id", natGateway.Subnet.Identity)
-	d.Set("vpc_id", natGateway.Vpc.Identity)
-	d.Set("endpoint_ip", natGateway.EndpointIP)
-	d.Set("status", natGateway.Status)
-	d.Set("v4_ip", natGateway.V4IP)
-	d.Set("v6_ip", natGateway.V6IP)
-	d.Set("reserved_ip_id", natGateway.ReservedIpID)
+	_ = d.Set("name", natGateway.Name)
+	_ = d.Set("slug", natGateway.Slug)
+	_ = d.Set("description", natGateway.Description)
+	_ = d.Set("labels", natGateway.Labels)
+	_ = d.Set("annotations", natGateway.Annotations)
+	_ = d.Set("subnet_id", natGateway.Subnet.Identity)
+	_ = d.Set("vpc_id", natGateway.Vpc.Identity)
+	_ = d.Set("endpoint_ip", natGateway.EndpointIP)
+	_ = d.Set("status", natGateway.Status)
+	_ = d.Set("v4_ip", natGateway.V4IP)
+	_ = d.Set("v6_ip", natGateway.V6IP)
+	_ = d.Set("reserved_ip_id", natGateway.ReservedIpID)
 
 	securityGroupAttachments := make([]string, len(natGateway.SecurityGroups))
 	for i, securityGroup := range natGateway.SecurityGroups {
 		securityGroupAttachments[i] = securityGroup.Identity
 	}
-	d.Set("security_group_attachments", securityGroupAttachments)
+	_ = d.Set("security_group_attachments", securityGroupAttachments)
 
 	return nil
 }
 
-func resourceNatGatewayUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceNatGatewayUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -252,19 +252,19 @@ func resourceNatGatewayUpdate(ctx context.Context, d *schema.ResourceData, m int
 		return diag.FromErr(fmt.Errorf("failed to update natGateway: %w", err))
 	}
 	if natGateway != nil {
-		d.Set("name", natGateway.Name)
-		d.Set("description", natGateway.Description)
-		d.Set("slug", natGateway.Slug)
-		d.Set("labels", natGateway.Labels)
-		d.Set("annotations", natGateway.Annotations)
-		d.Set("reserved_ip_id", natGateway.ReservedIpID)
+		_ = d.Set("name", natGateway.Name)
+		_ = d.Set("description", natGateway.Description)
+		_ = d.Set("slug", natGateway.Slug)
+		_ = d.Set("labels", natGateway.Labels)
+		_ = d.Set("annotations", natGateway.Annotations)
+		_ = d.Set("reserved_ip_id", natGateway.ReservedIpID)
 		return nil
 	}
 
 	return resourceNatGatewayRead(ctx, d, m)
 }
 
-func resourceNatGatewayDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceNatGatewayDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)

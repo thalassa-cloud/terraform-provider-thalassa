@@ -103,7 +103,7 @@ func resourceBlockVolume() *schema.Resource {
 	}
 }
 
-func resourceBlockVolumeCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceBlockVolumeCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -178,8 +178,8 @@ func resourceBlockVolumeCreate(ctx context.Context, d *schema.ResourceData, m in
 
 	if blockVolume != nil {
 		d.SetId(blockVolume.Identity)
-		d.Set("slug", blockVolume.Slug)
-		d.Set("status", blockVolume.Status)
+		_ = d.Set("slug", blockVolume.Slug)
+		_ = d.Set("status", blockVolume.Status)
 	}
 
 	if d.Get("wait_until_ready").(bool) {
@@ -199,7 +199,7 @@ func resourceBlockVolumeCreate(ctx context.Context, d *schema.ResourceData, m in
 	return resourceBlockVolumeRead(ctx, d, m)
 }
 
-func resourceBlockVolumeRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceBlockVolumeRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to create Thalassa client: %w", err))
@@ -220,20 +220,16 @@ func resourceBlockVolumeRead(ctx context.Context, d *schema.ResourceData, m inte
 	}
 
 	d.SetId(blockVolume.Identity)
-	d.Set("name", blockVolume.Name)
-	d.Set("slug", blockVolume.Slug)
-	d.Set("description", blockVolume.Description)
-	d.Set("labels", blockVolume.Labels)
-	d.Set("annotations", blockVolume.Annotations)
-	d.Set("status", blockVolume.Status)
-	d.Set("size_gb", blockVolume.Size)
+	_ = d.Set("name", blockVolume.Name)
+	_ = d.Set("slug", blockVolume.Slug)
+	_ = d.Set("description", blockVolume.Description)
+	_ = d.Set("labels", blockVolume.Labels)
+	_ = d.Set("annotations", blockVolume.Annotations)
+	_ = d.Set("status", blockVolume.Status)
+	_ = d.Set("size_gb", blockVolume.Size)
 
 	if blockVolume.VolumeType != nil {
-		if d.Get("volume_type").(string) != "" {
-			d.Set("volume_type", d.Get("volume_type").(string))
-		} else {
-			d.Set("volume_type", blockVolume.VolumeType.Identity)
-		}
+		convert.SetReferenceField(d, "volume_type", blockVolume.VolumeType.Identity, "", blockVolume.VolumeType.Name)
 	}
 
 	if blockVolume.Region != nil {
@@ -241,20 +237,20 @@ func resourceBlockVolumeRead(ctx context.Context, d *schema.ResourceData, m inte
 
 		switch currentRegion {
 		case "":
-			d.Set("region", blockVolume.Region.Slug)
+			_ = d.Set("region", blockVolume.Region.Slug)
 		case blockVolume.Region.Slug:
-			d.Set("region", blockVolume.Region.Slug)
+			_ = d.Set("region", blockVolume.Region.Slug)
 		case blockVolume.Region.Identity:
-			d.Set("region", blockVolume.Region.Identity)
+			_ = d.Set("region", blockVolume.Region.Identity)
 		default:
-			d.Set("region", blockVolume.Region.Slug)
+			_ = d.Set("region", blockVolume.Region.Slug)
 		}
 	}
 
 	return nil
 }
 
-func resourceBlockVolumeUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceBlockVolumeUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to create Thalassa client: %w", err))
@@ -273,27 +269,23 @@ func resourceBlockVolumeUpdate(ctx context.Context, d *schema.ResourceData, m in
 		return diag.FromErr(fmt.Errorf("failed to update block volume: %w", err))
 	}
 	if blockVolume != nil {
-		d.Set("name", blockVolume.Name)
-		d.Set("description", blockVolume.Description)
-		d.Set("slug", blockVolume.Slug)
-		d.Set("status", blockVolume.Status)
-		d.Set("labels", blockVolume.Labels)
-		d.Set("annotations", blockVolume.Annotations)
+		_ = d.Set("name", blockVolume.Name)
+		_ = d.Set("description", blockVolume.Description)
+		_ = d.Set("slug", blockVolume.Slug)
+		_ = d.Set("status", blockVolume.Status)
+		_ = d.Set("labels", blockVolume.Labels)
+		_ = d.Set("annotations", blockVolume.Annotations)
 		if blockVolume.VolumeType != nil {
-			if d.Get("volume_type").(string) != "" {
-				d.Set("volume_type", d.Get("volume_type").(string))
-			} else {
-				d.Set("volume_type", blockVolume.VolumeType.Identity)
-			}
+			convert.SetReferenceField(d, "volume_type", blockVolume.VolumeType.Identity, "", blockVolume.VolumeType.Name)
 		}
-		d.Set("size_gb", blockVolume.Size)
+		_ = d.Set("size_gb", blockVolume.Size)
 		return nil
 	}
 
 	return resourceBlockVolumeRead(ctx, d, m)
 }
 
-func resourceBlockVolumeDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceBlockVolumeDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to create Thalassa client: %w", err))

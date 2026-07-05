@@ -7,6 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	validate "github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	iaas "github.com/thalassa-cloud/client-go/iaas"
 	"github.com/thalassa-cloud/client-go/objectstorage"
 	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/provider"
 )
@@ -67,7 +68,7 @@ func DataSourceBucket() *schema.Resource {
 	}
 }
 
-func dataSourceBucketRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataSourceBucketRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -85,25 +86,42 @@ func dataSourceBucketRead(ctx context.Context, d *schema.ResourceData, m interfa
 		return diag.FromErr(fmt.Errorf("bucket %s not found", name))
 	}
 
-	// Check if region filter is specified and matches
-	if region != "" && bucket.Region != nil && bucket.Region.Identity != region {
+	if !bucketMatchesRegion(bucket.Region, region) {
 		return diag.FromErr(fmt.Errorf("bucket %s not found in region %s", name, region))
 	}
 
 	d.SetId(bucket.Identity)
-	d.Set("id", bucket.Identity)
-	d.Set("name", bucket.Name)
-	d.Set("status", bucket.Status)
-	d.Set("endpoint", bucket.Endpoint)
-	d.Set("versioning", bucket.Versioning == objectstorage.ObjectStorageBucketVersioningEnabled)
-	d.Set("object_lock_enabled", bucket.ObjectLockEnabled)
+	_ = d.Set("id", bucket.Identity)
+	_ = d.Set("name", bucket.Name)
+	_ = d.Set("status", bucket.Status)
+	_ = d.Set("endpoint", bucket.Endpoint)
+	_ = d.Set("versioning", bucket.Versioning == objectstorage.ObjectStorageBucketVersioningEnabled)
+	_ = d.Set("object_lock_enabled", bucket.ObjectLockEnabled)
 
 	if bucket.Region != nil {
-		d.Set("region", bucket.Region.Identity)
+		_ = d.Set("region", bucketRegionStateValue(bucket.Region))
 	}
 
-	// Set policy as JSON string if available
-	d.Set("policy", bucket.Policy)
+	_ = d.Set("policy", policyDocumentToString(bucket.Policy))
 
 	return diag.Diagnostics{}
+}
+
+func bucketMatchesRegion(region *iaas.Region, filter string) bool {
+	if filter == "" || region == nil {
+		return true
+	}
+
+	return region.Identity == filter || region.Slug == filter
+}
+
+func bucketRegionStateValue(region *iaas.Region) string {
+	if region == nil {
+		return ""
+	}
+	if region.Slug != "" {
+		return region.Slug
+	}
+
+	return region.Identity
 }

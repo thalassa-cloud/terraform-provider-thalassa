@@ -2,12 +2,14 @@
 page_title: "thalassa_kubernetes_node_pool Resource - terraform-provider-thalassa"
 subcategory: "Kubernetes"
 description: |-
-  Create an Kubernetes Node Pool for a Kubernetes Cluster. This resource is only available for managed Kubernetes Clusters. A Node Pool is a group of nodes that are identically configured and are automatically joined to the Kubernetes Cluster. Node Pools can be scaled up and down as needed.
+  Create a Kubernetes node pool for a managed cluster. A node pool is a group of identically configured nodes joined to the cluster and can be scaled up or down as needed.
 ---
 
 # thalassa_kubernetes_node_pool (Resource)
 
-Create an Kubernetes Node Pool for a Kubernetes Cluster. This resource is only available for managed Kubernetes Clusters. A Node Pool is a group of nodes that are identically configured and are automatically joined to the Kubernetes Cluster. Node Pools can be scaled up and down as needed.
+Create a Kubernetes node pool for a managed cluster. A node pool is a group of identically configured nodes joined to the cluster and can be scaled up or down as needed.
+
+See [Kubernetes documentation](https://docs.thalassa.cloud/docs/kubernetes/).
 
 ## Autoscaling Configuration
 
@@ -102,16 +104,16 @@ output "node_pool_name" {
 
 ### Optional
 
-- `annotations` (Map of String) Annotations for the Kubernetes Node Pool. Optional. These annotations are used for additional metadata and configuration. Annotations are not applied to the Kubernetes nodes created for this Node Pool, please use node_annotations instead.
+- `annotations` (Map of String) Annotations for the node pool metadata. These are not applied to Kubernetes nodes; use node_annotations instead.
 - `description` (String) A human readable description about the Kubernetes Node Pool
 - `enable_autohealing` (Boolean) Enable autohealing for the Kubernetes Node Pool
 - `enable_autoscaling` (Boolean) Enable autoscaling for the Kubernetes Node Pool
 - `kubernetes_version` (String) Kubernetes version for the node pool nodes. Optional - if not specified, the cluster's version will be used. Can be specified as version name, slug, or identity. Must be an enabled version.
-- `labels` (Map of String) Labels for the Kubernetes Node Pool. Optional. These labels are used for filtering and grouping resources in the Thalassa Console. Labels are not applied to the Kubernetes nodes created for this Node Pool, please use node_labels instead.
+- `labels` (Map of String) Labels for the node pool in the Thalassa Console. These are not applied to Kubernetes nodes; use node_labels instead.
 - `manage_node_allocatable` (Boolean) Configure node allocatable resources for the Kubernetes Node Pool. If set to false, nodes of this node pool will not have system reserved resources configured. Recommended true for stability.
 - `max_replicas` (Number) Maximum number of replicas for the Kubernetes Node Pool. May only be set when enable_autoscaling is true.
 - `min_replicas` (Number) Minimum number of replicas for the Kubernetes Node Pool. May only be set when enable_autoscaling is true.
-- `node_annotations` (Map of String) Annotations for the Kubernetes Nodes within this Node Pool. Optional. These annotations are applied to the Kubernetes nodes created for this Node Pool. Annotations must match the same constraints as Kubernetes annotations.
+- `node_annotations` (Map of String) Annotations applied to Kubernetes nodes in this pool. Must match Kubernetes annotation constraints.
 - `node_labels` (Map of String) Labels for the Kubernetes Nodes within this Node Pool. Optional. These labels are applied to the Kubernetes nodes created for this Node Pool. Labels must match the same constraints as Kubernetes labels.
 - `node_taints` (Block List) Taints for the Kubernetes Node Pool (see [below for nested schema](#nestedblock--node_taints))
 - `organisation_id` (String) Reference to the Organisation of the Kubernetes Node Pool. If not provided, the organisation of the (Terraform) provider will be used.

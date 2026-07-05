@@ -34,7 +34,7 @@ test:
 	echo $(TEST) | xargs -t -n4 go test $(TESTARGS) -timeout=30s -parallel=4                    
 
 testacc: 
-	TF_ACC=1 go test $(TEST) -v $(TESTARGS) -timeout 120m
+	TF_ACC=1 go test $(or $(PKG),$(TEST)) -v $(TESTARGS) -timeout 120m
 
 docs:
 	go run github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs@latest 

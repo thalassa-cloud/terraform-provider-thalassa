@@ -2,12 +2,14 @@
 page_title: "thalassa_kubernetes_cluster Resource - terraform-provider-thalassa"
 subcategory: "Kubernetes"
 description: |-
-  Manages a Kubernetes cluster in the Thalassa cloud platform. This resource supports both managed clusters and hosted control plane clusters, allowing you to deploy production-ready Kubernetes environments with configurable networking, security policies, and auto-upgrade capabilities. The cluster can be customized with specific CNI plugins (Cilium or custom), network CIDRs, pod security standards, audit logging, and API server access controls.
+  Manages a Kubernetes cluster on the Thalassa cloud platform. Supports managed clusters and hosted control plane clusters with configurable networking, security policies, auto-upgrade, CNI plugins, network CIDRs, pod security standards, audit logging, and API server access controls.
 ---
 
 # thalassa_kubernetes_cluster (Resource)
 
-Manages a Kubernetes cluster in the Thalassa cloud platform. This resource supports both managed clusters and hosted control plane clusters, allowing you to deploy production-ready Kubernetes environments with configurable networking, security policies, and auto-upgrade capabilities. The cluster can be customized with specific CNI plugins (Cilium or custom), network CIDRs, pod security standards, audit logging, and API server access controls.
+Manages a Kubernetes cluster on the Thalassa cloud platform. Supports managed clusters and hosted control plane clusters with configurable networking, security policies, auto-upgrade, CNI plugins, network CIDRs, pod security standards, audit logging, and API server access controls.
+
+See [Kubernetes documentation](https://docs.thalassa.cloud/docs/kubernetes/).
 
 ## Cluster Types
 
@@ -127,11 +129,11 @@ output "node_pool_name" {
 - `default_network_policy` (String) Default network policy of the Kubernetes Cluster. Must be one of: allow-all, deny-all. Default: deny-all.
 - `delete_protection` (Boolean) Delete protection of the Kubernetes Cluster
 - `description` (String) A human readable description about the Kubernetes Cluster
-- `disable_public_endpoint` (Boolean) Disable public endpoint of the Kubernetes Cluster. When set to true, the Kubernetes Cluster will only be accessible via the private VPC endpoint and the user will need to provide a solution to access the Kubernetes API server.
+- `disable_public_endpoint` (Boolean) Disable the public Kubernetes API endpoint. When true, access the API only via the private VPC endpoint and provide your own connectivity.
 - `labels` (Map of String) Labels for the Kubernetes Cluster
 - `maintenance_day` (Number) Day of the week when the cluster will be upgraded (0-6, where 0 is Sunday)
 - `maintenance_start_at` (Number) Time of day when the cluster will be upgraded in minutes from midnight (0-1439)
-- `networking_cni` (String) CNI plugin installed in the Kubernetes Cluster. Must be one of: cilium, custom. Default: cilium. If custom, you must install your own CNI provider and configuration, otherwise Kubernetes Nodes will not function correctly.
+- `networking_cni` (String) CNI plugin for the cluster. Must be cilium or custom. Default: cilium. If custom, install your own CNI provider or nodes will not function correctly.
 - `networking_kube_proxy_deployment` (String) Deployment mode of the kube proxy. Must be one of: custom, managed, disabled. Default: managed.
 - `networking_kube_proxy_mode` (String) Mode of the kube proxy. Must be one of: ipvs, iptables. Default: ipvs.
 - `networking_pod_cidr` (String) Pod CIDR of the Kubernetes Cluster. Must be a valid CIDR block. Ensure the CIDR matches with the CNI configuration when using custom CNI.

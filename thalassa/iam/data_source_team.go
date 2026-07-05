@@ -113,7 +113,7 @@ func DataSourceTeam() *schema.Resource {
 	}
 }
 
-func dataSourceTeamRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataSourceTeamRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -178,21 +178,21 @@ func dataSourceTeamRead(ctx context.Context, d *schema.ResourceData, m interface
 
 	// Set fields if found
 	d.SetId(team.Identity)
-	d.Set("id", team.Identity)
-	d.Set("name", team.Name)
-	d.Set("slug", team.Slug)
-	d.Set("description", team.Description)
-	d.Set("labels", team.Labels)
-	d.Set("annotations", team.Annotations)
-	d.Set("created_at", team.CreatedAt.Format(TimeFormatRFC3339))
+	_ = d.Set("id", team.Identity)
+	_ = d.Set("name", team.Name)
+	_ = d.Set("slug", team.Slug)
+	_ = d.Set("description", team.Description)
+	_ = d.Set("labels", team.Labels)
+	_ = d.Set("annotations", team.Annotations)
+	_ = d.Set("created_at", team.CreatedAt.Format(TimeFormatRFC3339))
 	if team.UpdatedAt != nil {
-		d.Set("updated_at", team.UpdatedAt.Format(TimeFormatRFC3339))
+		_ = d.Set("updated_at", team.UpdatedAt.Format(TimeFormatRFC3339))
 	}
 
 	// Set members data
-	memberList := make([]map[string]interface{}, len(team.Members))
+	memberList := make([]map[string]any, len(team.Members))
 	for i, member := range team.Members {
-		memberMap := map[string]interface{}{
+		memberMap := map[string]any{
 			"identity":   member.Identity,
 			"role":       member.Role,
 			"created_at": member.CreatedAt.Format(TimeFormatRFC3339),
@@ -203,7 +203,7 @@ func dataSourceTeamRead(ctx context.Context, d *schema.ResourceData, m interface
 		}
 		memberList[i] = memberMap
 	}
-	d.Set("members", memberList)
+	_ = d.Set("members", memberList)
 
 	return diag.Diagnostics{}
 }

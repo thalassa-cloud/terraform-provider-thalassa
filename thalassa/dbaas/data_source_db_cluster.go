@@ -141,7 +141,7 @@ func dataSourceDbCluster() *schema.Resource {
 	}
 }
 
-func dataSourceDbClusterRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func dataSourceDbClusterRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
 		return diag.FromErr(err)
@@ -197,42 +197,42 @@ func dataSourceDbClusterRead(ctx context.Context, d *schema.ResourceData, m inte
 	}
 
 	d.SetId(DbCluster.Identity)
-	d.Set("name", DbCluster.Name)
-	d.Set("slug", DbCluster.Slug)
-	d.Set("description", DbCluster.Description)
-	d.Set("labels", DbCluster.Labels)
-	d.Set("annotations", DbCluster.Annotations)
-	d.Set("delete_protection", DbCluster.DeleteProtection)
-	d.Set("replicas", DbCluster.Replicas)
-	d.Set("engine", DbCluster.Engine)
-	d.Set("engine_version", DbCluster.EngineVersion)
-	d.Set("parameters", DbCluster.Parameters)
-	d.Set("allocated_storage", DbCluster.AllocatedStorage)
-	d.Set("auto_minor_version_upgrade", DbCluster.AutoMinorVersionUpgrade)
-	d.Set("status", DbCluster.Status)
-	d.Set("endpoint_ipv4", DbCluster.EndpointIpv4)
-	d.Set("endpoint_ipv6", DbCluster.EndpointIpv6)
-	d.Set("port", DbCluster.Port)
+	_ = d.Set("name", DbCluster.Name)
+	_ = d.Set("slug", DbCluster.Slug)
+	_ = d.Set("description", DbCluster.Description)
+	_ = d.Set("labels", DbCluster.Labels)
+	_ = d.Set("annotations", DbCluster.Annotations)
+	_ = d.Set("delete_protection", DbCluster.DeleteProtection)
+	_ = d.Set("replicas", DbCluster.Replicas)
+	_ = d.Set("engine", DbCluster.Engine)
+	_ = d.Set("engine_version", DbCluster.EngineVersion)
+	_ = d.Set("parameters", DbCluster.Parameters)
+	_ = d.Set("allocated_storage", DbCluster.AllocatedStorage)
+	_ = d.Set("auto_minor_version_upgrade", DbCluster.AutoMinorVersionUpgrade)
+	_ = d.Set("status", DbCluster.Status)
+	_ = d.Set("endpoint_ipv4", DbCluster.EndpointIpv4)
+	_ = d.Set("endpoint_ipv6", DbCluster.EndpointIpv6)
+	_ = d.Set("port", DbCluster.Port)
 
 	// Handle optional fields
 	if DbCluster.DatabaseName != nil {
-		d.Set("database_name", *DbCluster.DatabaseName)
+		_ = d.Set("database_name", *DbCluster.DatabaseName)
 	}
 	if DbCluster.Subnet != nil {
-		d.Set("subnet_id", DbCluster.Subnet.Identity)
+		_ = d.Set("subnet_id", DbCluster.Subnet.Identity)
 	}
 	if DbCluster.DatabaseInstanceType != nil {
-		d.Set("database_instance_type", DbCluster.DatabaseInstanceType.Identity)
+		_ = d.Set("database_instance_type", DbCluster.DatabaseInstanceType.Identity)
 	}
 	if DbCluster.VolumeTypeClass != nil {
-		d.Set("volume_type_class", DbCluster.VolumeTypeClass.Identity)
+		_ = d.Set("volume_type_class", DbCluster.VolumeTypeClass.Identity)
 	}
 	if DbCluster.SecurityGroups != nil {
 		securityGroupIds := make([]string, len(DbCluster.SecurityGroups))
 		for i, sg := range DbCluster.SecurityGroups {
 			securityGroupIds[i] = sg.Identity
 		}
-		d.Set("security_groups", securityGroupIds)
+		_ = d.Set("security_groups", securityGroupIds)
 	}
 
 	return nil

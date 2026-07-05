@@ -9,6 +9,8 @@ description: |-
 
 Create an routeTable
 
+See [Networking documentation](https://docs.thalassa.cloud/docs/iaas/networking/).
+
 ## Example Usage
 
 ```terraform
