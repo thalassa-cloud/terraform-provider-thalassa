@@ -229,11 +229,7 @@ func resourceBlockVolumeRead(ctx context.Context, d *schema.ResourceData, m any)
 	d.Set("size_gb", blockVolume.Size)
 
 	if blockVolume.VolumeType != nil {
-		if d.Get("volume_type").(string) != "" {
-			d.Set("volume_type", d.Get("volume_type").(string))
-		} else {
-			d.Set("volume_type", blockVolume.VolumeType.Identity)
-		}
+		convert.SetReferenceField(d, "volume_type", blockVolume.VolumeType.Identity, "", blockVolume.VolumeType.Name)
 	}
 
 	if blockVolume.Region != nil {
@@ -280,11 +276,7 @@ func resourceBlockVolumeUpdate(ctx context.Context, d *schema.ResourceData, m an
 		d.Set("labels", blockVolume.Labels)
 		d.Set("annotations", blockVolume.Annotations)
 		if blockVolume.VolumeType != nil {
-			if d.Get("volume_type").(string) != "" {
-				d.Set("volume_type", d.Get("volume_type").(string))
-			} else {
-				d.Set("volume_type", blockVolume.VolumeType.Identity)
-			}
+			convert.SetReferenceField(d, "volume_type", blockVolume.VolumeType.Identity, "", blockVolume.VolumeType.Name)
 		}
 		d.Set("size_gb", blockVolume.Size)
 		return nil

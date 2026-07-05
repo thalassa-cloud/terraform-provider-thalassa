@@ -382,11 +382,7 @@ func resourceVirtualMachineInstanceRead(ctx context.Context, d *schema.ResourceD
 		d.Set("root_volume_id", virtualMachineInstance.PersistentVolume.Identity)
 
 		if virtualMachineInstance.PersistentVolume.VolumeType != nil {
-			if d.Get("root_volume_type").(string) != "" {
-				d.Set("root_volume_type", d.Get("root_volume_type").(string))
-			} else {
-				d.Set("root_volume_type", virtualMachineInstance.PersistentVolume.VolumeType.Identity)
-			}
+			setRootVolumeTypeField(d, virtualMachineInstance.PersistentVolume.VolumeType)
 		}
 	}
 
@@ -484,11 +480,7 @@ func resourceVirtualMachineInstanceUpdate(ctx context.Context, d *schema.Resourc
 			d.Set("root_volume_size_gb", virtualMachineInstance.PersistentVolume.Size)
 			d.Set("root_volume_id", virtualMachineInstance.PersistentVolume.Identity)
 			if virtualMachineInstance.PersistentVolume.VolumeType != nil {
-				if d.Get("root_volume_type").(string) != "" {
-					d.Set("root_volume_type", d.Get("root_volume_type").(string))
-				} else {
-					d.Set("root_volume_type", virtualMachineInstance.PersistentVolume.VolumeType.Identity)
-				}
+				setRootVolumeTypeField(d, virtualMachineInstance.PersistentVolume.VolumeType)
 			}
 		}
 
@@ -541,19 +533,14 @@ func setMachineTypeField(d *schema.ResourceData, mt *iaas.MachineType) {
 	if mt == nil {
 		return
 	}
-	current := d.Get("machine_type").(string)
-	switch {
-	case current == "":
-		d.Set("machine_type", mt.Identity)
-	case current == mt.Identity:
-		d.Set("machine_type", current)
-	case current == mt.Slug:
-		d.Set("machine_type", current)
-	case strings.EqualFold(current, mt.Name):
-		d.Set("machine_type", current)
-	default:
-		d.Set("machine_type", mt.Identity)
+	convert.SetReferenceField(d, "machine_type", mt.Identity, mt.Slug, mt.Name)
+}
+
+func setRootVolumeTypeField(d *schema.ResourceData, vt *iaas.VolumeType) {
+	if vt == nil {
+		return
 	}
+	convert.SetReferenceField(d, "root_volume_type", vt.Identity, "", vt.Name)
 }
 
 // setMachineImageField mirrors region handling on block_volume: the API returns identity, but Terraform

@@ -576,22 +576,12 @@ func resourceDbClusterCreate(ctx context.Context, d *schema.ResourceData, m any)
 	d.SetId(createdDbCluster.Identity)
 
 	var dbCluster *dbaas.DbCluster
-	// Wait for the cluster to be ready
-	for {
-		dbCluster, err = client.DBaaS().GetDbCluster(ctx, createdDbCluster.Identity)
-		if err != nil {
-			if tcclient.IsNotFound(err) {
-				return diag.FromErr(fmt.Errorf("db cluster not found: %w", err))
-			}
-			return diag.FromErr(err)
-		}
-		if dbCluster == nil {
+	dbCluster, err = waitForReadyDbCluster(ctx, client, createdDbCluster.Identity)
+	if err != nil {
+		if tcclient.IsNotFound(err) {
 			return diag.FromErr(fmt.Errorf("db cluster not found: %w", err))
 		}
-		if dbCluster.Status == dbaas.DbClusterStatusReady {
-			break
-		}
-		time.Sleep(1 * time.Second)
+		return diag.FromErr(err)
 	}
 
 	d.SetId(dbCluster.Identity)
@@ -664,20 +654,22 @@ func resourceDbClusterRead(ctx context.Context, d *schema.ResourceData, m any) d
 		d.Set("subnet_id", DbCluster.Subnet.Identity)
 	}
 	if DbCluster.DatabaseInstanceType != nil {
-		str := d.Get("database_instance_type").(string)
-		if str != "" {
-			d.Set("database_instance_type", str)
-		} else {
-			d.Set("database_instance_type", DbCluster.DatabaseInstanceType.Identity)
-		}
+		convert.SetReferenceField(
+			d,
+			"database_instance_type",
+			DbCluster.DatabaseInstanceType.Identity,
+			DbCluster.DatabaseInstanceType.Slug,
+			DbCluster.DatabaseInstanceType.Name,
+		)
 	}
 	if DbCluster.VolumeTypeClass != nil {
-		str := d.Get("volume_type_class").(string)
-		if str != "" {
-			d.Set("volume_type_class", str)
-		} else {
-			d.Set("volume_type_class", DbCluster.VolumeTypeClass.Identity)
-		}
+		convert.SetReferenceField(
+			d,
+			"volume_type_class",
+			DbCluster.VolumeTypeClass.Identity,
+			"",
+			DbCluster.VolumeTypeClass.Name,
+		)
 	}
 	if DbCluster.SecurityGroups != nil {
 		securityGroupIds := make([]string, len(DbCluster.SecurityGroups))
@@ -768,23 +760,9 @@ func resourceDbClusterUpdate(ctx context.Context, d *schema.ResourceData, m any)
 		return diag.FromErr(fmt.Errorf("failed to update db cluster: %w", err))
 	}
 
-	for {
-		select {
-		case <-ctx.Done():
-			return diag.FromErr(ctx.Err())
-		default:
-			time.Sleep(1 * time.Second)
-		}
-		updatedDbCluster, err := client.DBaaS().GetDbCluster(ctx, id)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		if updatedDbCluster == nil {
-			return diag.FromErr(fmt.Errorf("db cluster not found"))
-		}
-		if updatedDbCluster.Status == dbaas.DbClusterStatusReady {
-			break
-		}
+	_, err = waitForReadyDbCluster(ctx, client, id)
+	if err != nil {
+		return diag.FromErr(err)
 	}
 	return resourceDbClusterRead(ctx, d, m)
 }
@@ -867,28 +845,8 @@ func resourceDbClusterDelete(ctx context.Context, d *schema.ResourceData, m any)
 		return diag.FromErr(fmt.Errorf("failed to delete db cluster: %w", err))
 	}
 
-	for {
-		select {
-		case <-ctx.Done():
-			return diag.FromErr(ctx.Err())
-		default:
-			time.Sleep(1 * time.Second)
-		}
-		dbCluster, err = client.DBaaS().GetDbCluster(ctx, id)
-		if err != nil {
-			if tcclient.IsNotFound(err) {
-				d.SetId("")
-				return nil
-			}
-			return diag.FromErr(fmt.Errorf("failed to retrieve db cluster: %w", err))
-		}
-		if dbCluster == nil {
-			d.SetId("")
-			return nil
-		}
-		if dbCluster.Status == dbaas.DbClusterStatusDeleted {
-			break
-		}
+	if err := waitForDeletedDbCluster(ctx, client, id); err != nil {
+		return diag.FromErr(err)
 	}
 	d.SetId("")
 	return nil
