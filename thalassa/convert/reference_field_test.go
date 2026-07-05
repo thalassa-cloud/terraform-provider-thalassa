@@ -21,11 +21,27 @@ func TestSetReferenceField(t *testing.T) {
 		expected string
 	}{
 		{
-			name:     "empty state uses identity",
+			name:     "empty state uses slug when available",
 			current:  "",
 			identity: "id-1",
 			slug:     "slug-1",
 			refName:  "Name One",
+			expected: "slug-1",
+		},
+		{
+			name:     "empty state uses name when slug is unavailable",
+			current:  "",
+			identity: "id-1",
+			slug:     "",
+			refName:  "Name One",
+			expected: "Name One",
+		},
+		{
+			name:     "empty state uses identity when no slug or name",
+			current:  "",
+			identity: "id-1",
+			slug:     "",
+			refName:  "",
 			expected: "id-1",
 		},
 		{
