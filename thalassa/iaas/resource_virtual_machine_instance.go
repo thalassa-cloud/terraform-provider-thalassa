@@ -350,12 +350,9 @@ func resourceVirtualMachineInstanceRead(ctx context.Context, d *schema.ResourceD
 	cloudInitTemplateId := d.Get("cloud_init_template_id").(string)
 	d.Set("cloud_init_template_id", cloudInitTemplateId)
 
-	if d.Get("machine_type").(string) != "" {
-		d.Set("machine_type", d.Get("machine_type").(string))
-	} else {
-		d.Set("machine_type", virtualMachineInstance.MachineType.Identity)
+	if virtualMachineInstance.MachineType != nil {
+		setMachineTypeField(d, virtualMachineInstance.MachineType)
 	}
-	// Preserve the user's reference (identity, slug, or name) when it still matches; otherwise use API identity.
 	if virtualMachineInstance.MachineImage != nil {
 		setMachineImageField(d, virtualMachineInstance.MachineImage)
 	}
@@ -457,23 +454,9 @@ func resourceVirtualMachineInstanceUpdate(ctx context.Context, d *schema.Resourc
 		d.Set("ip_addresses", getIPAddresses(virtualMachineInstance))
 		d.Set("attached_volume_ids", getAttachedVolumeIds(virtualMachineInstance))
 
-		if d.Get("machine_type").(string) != "" {
-			if virtualMachineInstance.MachineType != nil {
-				// check if the machine type is the same as the one in the diff
-				stateReference := d.Get("machine_type").(string)
-				switch stateReference {
-				case virtualMachineInstance.MachineType.Identity:
-					d.Set("machine_type", stateReference)
-				case virtualMachineInstance.MachineType.Slug:
-					d.Set("machine_type", stateReference)
-				default:
-					d.Set("machine_type", virtualMachineInstance.MachineType.Identity)
-				}
-			}
-		} else {
-			d.Set("machine_type", virtualMachineInstance.MachineType.Identity)
+		if virtualMachineInstance.MachineType != nil {
+			setMachineTypeField(d, virtualMachineInstance.MachineType)
 		}
-
 		if virtualMachineInstance.MachineImage != nil {
 			setMachineImageField(d, virtualMachineInstance.MachineImage)
 		}
@@ -550,6 +533,26 @@ func resourceVirtualMachineInstanceDelete(ctx context.Context, d *schema.Resourc
 				return nil
 			}
 		}
+	}
+}
+
+// setMachineTypeField keeps the user's reference (identity, slug, or name) when it still matches the API value.
+func setMachineTypeField(d *schema.ResourceData, mt *iaas.MachineType) {
+	if mt == nil {
+		return
+	}
+	current := d.Get("machine_type").(string)
+	switch {
+	case current == "":
+		d.Set("machine_type", mt.Identity)
+	case current == mt.Identity:
+		d.Set("machine_type", current)
+	case current == mt.Slug:
+		d.Set("machine_type", current)
+	case strings.EqualFold(current, mt.Name):
+		d.Set("machine_type", current)
+	default:
+		d.Set("machine_type", mt.Identity)
 	}
 }
 
