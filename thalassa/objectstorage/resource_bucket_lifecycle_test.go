@@ -32,6 +32,25 @@ func TestExpandFlattenLifecycleRules(t *testing.T) {
 
 	flat := flattenLifecycleRules(rules)
 	assert.Len(t, flat, 1)
+
+	filterOnly := flattenLifecycleRules([]objectstorage.BucketLifecycleRule{
+		{
+			ID:     "expire-logs",
+			Status: objectstorage.BucketLifecycleRuleStatusEnabled,
+			Filter: &objectstorage.BucketLifecycleRuleFilter{Prefix: "logs/"},
+			Expiration: &objectstorage.BucketLifecycleRuleExpiration{
+				Days: ptrInt64(30),
+			},
+		},
+	})
+	assert.Len(t, filterOnly, 1)
+	block := filterOnly[0].(map[string]any)
+	assert.Equal(t, "logs/", block["prefix"])
+	assert.Nil(t, block["filter"])
+}
+
+func ptrInt64(v int64) *int64 {
+	return &v
 }
 
 func TestLifecycleHasNoncurrentRules(t *testing.T) {

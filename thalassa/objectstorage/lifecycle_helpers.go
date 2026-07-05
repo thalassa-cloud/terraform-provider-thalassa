@@ -358,6 +358,7 @@ func expandAbortIncompleteMultipartUpload(block map[string]any) *objectstorage.B
 func flattenLifecycleRules(rules []objectstorage.BucketLifecycleRule) []any {
 	result := make([]any, 0, len(rules))
 	for _, rule := range rules {
+		rule = normalizeLifecycleRuleForFlatten(rule)
 		block := map[string]any{
 			"id":     rule.ID,
 			"prefix": rule.Prefix,
@@ -384,6 +385,46 @@ func flattenLifecycleRules(rules []objectstorage.BucketLifecycleRule) []any {
 		result = append(result, block)
 	}
 	return result
+}
+
+func normalizeLifecycleRuleForFlatten(rule objectstorage.BucketLifecycleRule) objectstorage.BucketLifecycleRule {
+	if rule.Prefix == "" && rule.Filter != nil && rule.Filter.Prefix != "" {
+		rule.Prefix = rule.Filter.Prefix
+		if lifecycleFilterIsPrefixOnly(rule.Filter) {
+			rule.Filter = nil
+		} else {
+			filter := *rule.Filter
+			filter.Prefix = ""
+			if lifecycleFilterIsEmpty(&filter) {
+				rule.Filter = nil
+			} else {
+				rule.Filter = &filter
+			}
+		}
+	}
+	return rule
+}
+
+func lifecycleFilterIsPrefixOnly(filter *objectstorage.BucketLifecycleRuleFilter) bool {
+	if filter == nil {
+		return false
+	}
+	return filter.Prefix != "" &&
+		filter.Tag == nil &&
+		filter.And == nil &&
+		filter.ObjectSizeGreaterThan == nil &&
+		filter.ObjectSizeLessThan == nil
+}
+
+func lifecycleFilterIsEmpty(filter *objectstorage.BucketLifecycleRuleFilter) bool {
+	if filter == nil {
+		return true
+	}
+	return filter.Prefix == "" &&
+		filter.Tag == nil &&
+		filter.And == nil &&
+		filter.ObjectSizeGreaterThan == nil &&
+		filter.ObjectSizeLessThan == nil
 }
 
 func flattenLifecycleFilter(filter *objectstorage.BucketLifecycleRuleFilter) map[string]any {

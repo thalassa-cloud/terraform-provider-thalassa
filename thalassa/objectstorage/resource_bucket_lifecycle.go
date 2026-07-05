@@ -3,12 +3,14 @@ package objectstorage
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/thalassa-cloud/client-go/objectstorage"
 	tcclient "github.com/thalassa-cloud/client-go/pkg/client"
+	"github.com/thalassa-cloud/client-go/thalassa"
 
 	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/provider"
 )
@@ -71,15 +73,59 @@ func resourceBucketLifecycleApply(ctx context.Context, d *schema.ResourceData, m
 		}
 	}
 
-	_, err = client.ObjectStorage().SetBucketLifecycle(ctx, bucketName, objectstorage.SetBucketLifecycleRequest{
+	lifecycle, err := client.ObjectStorage().SetBucketLifecycle(ctx, bucketName, objectstorage.SetBucketLifecycleRequest{
 		Rules: rules,
 	})
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("setting bucket lifecycle: %w", err))
 	}
 
+	setBucketLifecycleState(d, bucketName, lifecycle)
+	return nil
+}
+
+func setBucketLifecycleState(d *schema.ResourceData, bucketName string, lifecycle *objectstorage.BucketLifecycle) {
 	d.SetId(bucketName)
-	return resourceBucketLifecycleRead(ctx, d, m)
+	_ = d.Set("bucket_name", bucketName)
+
+	flatRules := []any{}
+	if lifecycle != nil && len(lifecycle.Rules) > 0 {
+		flatRules = flattenLifecycleRules(lifecycle.Rules)
+	}
+	if len(flatRules) == 0 {
+		if configured, ok := d.GetOk("rule"); ok && len(configured.([]any)) > 0 {
+			_ = d.Set("rule", configured)
+			return
+		}
+	}
+
+	_ = d.Set("rule", flatRules)
+}
+
+func getBucketLifecycleWithRetry(ctx context.Context, client thalassa.Client, bucketName string) (*objectstorage.BucketLifecycle, error) {
+	const attempts = 10
+	const delay = 2 * time.Second
+
+	var last *objectstorage.BucketLifecycle
+	var err error
+	for i := 0; i < attempts; i++ {
+		last, err = client.ObjectStorage().GetBucketLifecycle(ctx, bucketName)
+		if err != nil {
+			return nil, err
+		}
+		if len(last.Rules) > 0 {
+			return last, nil
+		}
+		if i < attempts-1 {
+			select {
+			case <-ctx.Done():
+				return last, ctx.Err()
+			case <-time.After(delay):
+			}
+		}
+	}
+
+	return last, nil
 }
 
 func resourceBucketLifecycleRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
@@ -93,7 +139,7 @@ func resourceBucketLifecycleRead(ctx context.Context, d *schema.ResourceData, m 
 		bucketName = d.Get("bucket_name").(string)
 	}
 
-	lifecycle, err := client.ObjectStorage().GetBucketLifecycle(ctx, bucketName)
+	lifecycle, err := getBucketLifecycleWithRetry(ctx, client, bucketName)
 	if err != nil {
 		if tcclient.IsNotFound(err) {
 			d.SetId("")
@@ -102,10 +148,7 @@ func resourceBucketLifecycleRead(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(fmt.Errorf("reading bucket lifecycle: %w", err))
 	}
 
-	d.SetId(bucketName)
-	_ = d.Set("bucket_name", bucketName)
-	_ = d.Set("rule", flattenLifecycleRules(lifecycle.Rules))
-
+	setBucketLifecycleState(d, bucketName, lifecycle)
 	return nil
 }
 
