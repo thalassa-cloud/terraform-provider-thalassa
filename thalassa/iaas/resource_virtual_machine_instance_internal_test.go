@@ -25,10 +25,10 @@ func TestSetMachineTypeField(t *testing.T) {
 		description string
 	}{
 		{
-			name:        "empty state uses identity",
+			name:        "empty state uses slug when available",
 			current:     "",
-			expected:    "mt-identity",
-			description: "uses API identity when state is empty",
+			expected:    "mt-slug",
+			description: "uses API slug when state is empty",
 		},
 		{
 			name:        "matching identity preserved",
