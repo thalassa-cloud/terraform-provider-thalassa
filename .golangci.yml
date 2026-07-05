@@ -1,0 +1,64 @@
+version: "2"
+run:
+  allow-parallel-runners: true
+linters:
+  default: none
+  enable:
+    - copyloopvar
+    - errcheck
+    - ginkgolinter
+    - gocyclo
+    - govet
+    - ineffassign
+    - lll
+    - misspell
+    - nakedret
+    - prealloc
+    - revive
+    - staticcheck
+    - unconvert
+    - unparam
+    - unused
+  settings:
+    lll:
+      # Max line length, lines longer will be reported.
+      # '\t' is counted as 1 character by default, and can be changed with the tab-width option.
+      # Default: 120.
+      line-length: 240
+      # Tab width in spaces.
+      # Default: 1
+      tab-width: 1
+    revive:
+      rules:
+        - name: comment-spacings
+  exclusions:
+    generated: lax
+    rules:
+      - linters:
+          - lll
+        path: api/*
+      - linters:
+          - dupl
+          - lll
+        path: internal/*
+      # Reconcile helpers often return (ctrl.Result, error) for a uniform call site while
+      # encoding retries in Result and leaving error nil (controller-runtime does the same).
+      - linters:
+          - unparam
+        text: is always nil
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+      - .*_test\.go$
+      - api/v1/zz_generated.deepcopy.go
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
