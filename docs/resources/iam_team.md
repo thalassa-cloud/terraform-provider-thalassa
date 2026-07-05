@@ -9,6 +9,8 @@ description: |-
 
 Create a team in the Thalassa Cloud platform
 
+See [IAM documentation](https://docs.thalassa.cloud/docs/iam/).
+
 ## Example Usage
 
 ```terraform

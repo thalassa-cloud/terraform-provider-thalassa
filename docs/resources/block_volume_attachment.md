@@ -9,6 +9,8 @@ description: |-
 
 Attach a block volume to a virtual machine. Volume must not be attached to another virtual machine.
 
+See [Storage documentation](https://docs.thalassa.cloud/docs/iaas/storage/).
+
 ## Example Usage
 
 ```terraform

@@ -9,6 +9,8 @@ description: |-
 
 Create an virtual machine instance within a subnet on the Thalassa Cloud platform
 
+See [Compute documentation](https://docs.thalassa.cloud/docs/iaas/compute/).
+
 ## Example Usage
 
 ```terraform

@@ -2,12 +2,14 @@
 page_title: "thalassa_security_group_ingress_rule Resource - terraform-provider-thalassa"
 subcategory: "Networking"
 description: |-
-  Manages ingress rules for a security group using the batch API. This resource replaces all ingress rules for the security group. This is an optional alternative to managing rules through the thalassa_security_group resource. Warning: Do not use both this resource and ingress_rule in thalassa_security_group for the same security group, as this will cause conflicts.
+  Manages ingress rules for a security group using the batch API. This resource replaces all ingress rules for the security group and is an optional alternative to managing rules through thalassa_security_group. Do not use both resources for the same security group.
 ---
 
 # thalassa_security_group_ingress_rule (Resource)
 
-Manages ingress rules for a security group using the batch API. This resource replaces all ingress rules for the security group. This is an optional alternative to managing rules through the thalassa_security_group resource. Warning: Do not use both this resource and ingress_rule in thalassa_security_group for the same security group, as this will cause conflicts.
+Manages ingress rules for a security group using the batch API. This resource replaces all ingress rules for the security group and is an optional alternative to managing rules through thalassa_security_group. Do not use both resources for the same security group.
+
+See [Networking documentation](https://docs.thalassa.cloud/docs/iaas/networking/).
 
 ## Example Usage
 

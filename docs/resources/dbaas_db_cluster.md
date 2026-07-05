@@ -9,6 +9,8 @@ description: |-
 
 Create an DB Cluster
 
+See [DBaaS documentation](https://docs.thalassa.cloud/docs/dbaas/).
+
 ## Example Usage
 
 ```terraform

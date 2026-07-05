@@ -9,6 +9,10 @@ description: |-
 
 
 
+See [Compute documentation](https://docs.thalassa.cloud/docs/iaas/compute/).
+
+Reference templates from `thalassa_virtual_machine_instance` using `cloud_init_template_id`.
+
 ## Example Usage
 
 ```terraform

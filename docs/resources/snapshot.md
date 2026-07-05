@@ -9,6 +9,8 @@ description: |-
 
 Provides a Thalassa Cloud Snapshot resource. This can be used to create, manage, and delete snapshots of block volumes.
 
+See [Storage documentation](https://docs.thalassa.cloud/docs/iaas/storage/).
+
 ## Example Usage
 
 ```terraform
