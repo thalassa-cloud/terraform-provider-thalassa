@@ -295,7 +295,7 @@ func resourceVpcPeeringConnectionUpdate(ctx context.Context, d *schema.ResourceD
 	}
 
 	// check if an update is needed
-	if peeringConnection.Name == d.Get("name").(string) && peeringConnection.Description == d.Get("description").(string) && reflect.DeepEqual(peeringConnection.Labels, convert.ConvertToMap(d.Get("labels"))) && reflect.DeepEqual(peeringConnection.Annotations, convert.ConvertToMap(d.Get("annotations"))) {
+	if vpcPeeringConnectionMetadataMatchesState(peeringConnection, d) {
 		return setVpcPeeringConnectionData(d, peeringConnection)
 	}
 
@@ -351,33 +351,40 @@ func resourceVpcPeeringConnectionDelete(ctx context.Context, d *schema.ResourceD
 	return nil
 }
 
+func vpcPeeringConnectionMetadataMatchesState(connection *iaas.VpcPeeringConnection, d *schema.ResourceData) bool {
+	return connection.Name == d.Get("name").(string) &&
+		connection.Description == d.Get("description").(string) &&
+		reflect.DeepEqual(connection.Labels, convert.ConvertToMap(d.Get("labels"))) &&
+		reflect.DeepEqual(connection.Annotations, convert.ConvertToMap(d.Get("annotations")))
+}
+
 func setVpcPeeringConnectionData(d *schema.ResourceData, connection *iaas.VpcPeeringConnection) diag.Diagnostics {
 	d.SetId(connection.Identity)
-	d.Set("name", connection.Name)
-	d.Set("description", connection.Description)
-	d.Set("status", connection.Status)
-	d.Set("created_at", connection.CreatedAt.Format(time.RFC3339))
-	d.Set("updated_at", connection.UpdatedAt.Format(time.RFC3339))
+	_ = d.Set("name", connection.Name)
+	_ = d.Set("description", connection.Description)
+	_ = d.Set("status", connection.Status)
+	_ = d.Set("created_at", connection.CreatedAt.Format(time.RFC3339))
+	_ = d.Set("updated_at", connection.UpdatedAt.Format(time.RFC3339))
 
 	if connection.StatusMessage != nil {
-		d.Set("status_message", *connection.StatusMessage)
+		_ = d.Set("status_message", *connection.StatusMessage)
 	}
 	if connection.ExpiresAt != nil {
-		d.Set("expires_at", connection.ExpiresAt.Format(time.RFC3339))
+		_ = d.Set("expires_at", connection.ExpiresAt.Format(time.RFC3339))
 	}
 	if connection.RequesterNextHopIP != nil {
-		d.Set("requester_next_hop_ip", *connection.RequesterNextHopIP)
+		_ = d.Set("requester_next_hop_ip", *connection.RequesterNextHopIP)
 	}
 	if connection.AccepterNextHopIP != nil {
-		d.Set("accepter_next_hop_ip", *connection.AccepterNextHopIP)
+		_ = d.Set("accepter_next_hop_ip", *connection.AccepterNextHopIP)
 	}
 
 	// Set labels and annotations
 	if connection.Labels != nil {
-		d.Set("labels", connection.Labels)
+		_ = d.Set("labels", connection.Labels)
 	}
 	if connection.Annotations != nil {
-		d.Set("annotations", connection.Annotations)
+		_ = d.Set("annotations", connection.Annotations)
 	}
 
 	// Set requester VPC information
@@ -388,7 +395,7 @@ func setVpcPeeringConnectionData(d *schema.ResourceData, connection *iaas.VpcPee
 				"name":     connection.RequesterVpc.Name,
 			},
 		}
-		d.Set("requester_vpc", requesterVpc)
+		_ = d.Set("requester_vpc", requesterVpc)
 	}
 
 	// Set accepter VPC information
@@ -399,7 +406,7 @@ func setVpcPeeringConnectionData(d *schema.ResourceData, connection *iaas.VpcPee
 				"name":     connection.AccepterVpc.Name,
 			},
 		}
-		d.Set("accepter_vpc", accepterVpc)
+		_ = d.Set("accepter_vpc", accepterVpc)
 	}
 
 	// Set requester organisation information
@@ -410,7 +417,7 @@ func setVpcPeeringConnectionData(d *schema.ResourceData, connection *iaas.VpcPee
 				"name":     connection.RequesterOrganisation.Name,
 			},
 		}
-		d.Set("requester_organisation", requesterOrg)
+		_ = d.Set("requester_organisation", requesterOrg)
 	}
 
 	// Set accepter organisation information
@@ -421,7 +428,7 @@ func setVpcPeeringConnectionData(d *schema.ResourceData, connection *iaas.VpcPee
 				"name":     connection.AccepterOrganisation.Name,
 			},
 		}
-		d.Set("accepter_organisation", accepterOrg)
+		_ = d.Set("accepter_organisation", accepterOrg)
 	}
 
 	return nil

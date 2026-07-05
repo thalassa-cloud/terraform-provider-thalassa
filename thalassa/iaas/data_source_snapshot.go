@@ -132,29 +132,29 @@ func dataSourceSnapshotRead(ctx context.Context, d *schema.ResourceData, m any) 
 
 	// Set the ID and other attributes
 	d.SetId(snapshot.Identity)
-	d.Set("id", snapshot.Identity)
-	d.Set("name", snapshot.Name)
-	d.Set("slug", snapshot.Slug)
-	d.Set("description", snapshot.Description)
-	d.Set("status", string(snapshot.Status))
-	d.Set("delete_protection", snapshot.DeleteProtection)
-	d.Set("labels", snapshot.Labels)
-	d.Set("annotations", snapshot.Annotations)
+	_ = d.Set("id", snapshot.Identity)
+	_ = d.Set("name", snapshot.Name)
+	_ = d.Set("slug", snapshot.Slug)
+	_ = d.Set("description", snapshot.Description)
+	_ = d.Set("status", string(snapshot.Status))
+	_ = d.Set("delete_protection", snapshot.DeleteProtection)
+	_ = d.Set("labels", snapshot.Labels)
+	_ = d.Set("annotations", snapshot.Annotations)
 
 	if snapshot.Region != nil {
-		d.Set("region", snapshot.Region.Identity)
+		_ = d.Set("region", snapshot.Region.Identity)
 	}
 
 	if snapshot.SourceVolumeId != nil {
-		d.Set("source_volume_id", *snapshot.SourceVolumeId)
+		_ = d.Set("source_volume_id", *snapshot.SourceVolumeId)
 	}
 
 	if snapshot.SizeGB != nil {
-		d.Set("size_gb", *snapshot.SizeGB)
+		_ = d.Set("size_gb", *snapshot.SizeGB)
 	}
 
 	if snapshot.SnapshotPolicyId != nil {
-		d.Set("snapshot_policy_id", *snapshot.SnapshotPolicyId)
+		_ = d.Set("snapshot_policy_id", *snapshot.SnapshotPolicyId)
 	}
 
 	return nil

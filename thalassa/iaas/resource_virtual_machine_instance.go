@@ -217,7 +217,7 @@ func resourceVirtualMachineInstanceCreate(ctx context.Context, d *schema.Resourc
 	}
 
 	if rootVolumeId, ok := d.GetOk("root_volume_id"); ok {
-		d.Set("root_volume_id", rootVolumeId.(string))
+		_ = d.Set("root_volume_id", rootVolumeId.(string))
 	}
 
 	machineImageRef := d.Get("machine_image").(string)
@@ -248,7 +248,7 @@ func resourceVirtualMachineInstanceCreate(ctx context.Context, d *schema.Resourc
 			}
 			return diag.FromErr(fmt.Errorf("failed to get cloud init template: %w", err))
 		}
-		d.Set("cloud_init_template_id", cloudInitTemplate.Identity)
+		_ = d.Set("cloud_init_template_id", cloudInitTemplate.Identity)
 		createVirtualMachineInstance.CloudInit = cloudInitTemplate.Content
 	}
 
@@ -267,7 +267,7 @@ func resourceVirtualMachineInstanceCreate(ctx context.Context, d *schema.Resourc
 	if virtualMachineInstance != nil {
 		identity := virtualMachineInstance.Identity
 		d.SetId(identity)
-		d.Set("slug", virtualMachineInstance.Slug)
+		_ = d.Set("slug", virtualMachineInstance.Slug)
 
 		// wait until the virtual machine instance is ready
 		ctxWithTimeout, cancel := context.WithTimeout(ctx, 20*time.Minute)
@@ -290,21 +290,21 @@ func resourceVirtualMachineInstanceCreate(ctx context.Context, d *schema.Resourc
 				}
 
 				if strings.EqualFold(virtualMachineInstance.Status.Status, "ready") || strings.EqualFold(virtualMachineInstance.Status.Status, "running") {
-					d.Set("ip_addresses", getIPAddresses(virtualMachineInstance))
-					d.Set("attached_volume_ids", getAttachedVolumeIds(virtualMachineInstance))
-					d.Set("status", virtualMachineInstance.Status.Status)
-					d.Set("state", virtualMachineInstance.State)
+					_ = d.Set("ip_addresses", getIPAddresses(virtualMachineInstance))
+					_ = d.Set("attached_volume_ids", getAttachedVolumeIds(virtualMachineInstance))
+					_ = d.Set("status", virtualMachineInstance.Status.Status)
+					_ = d.Set("state", virtualMachineInstance.State)
 
 					securityGroupAttachments := make([]string, len(virtualMachineInstance.SecurityGroups))
 					for i, securityGroup := range virtualMachineInstance.SecurityGroups {
 						securityGroupAttachments[i] = securityGroup.Identity
 					}
-					d.Set("security_group_attachments", securityGroupAttachments)
+					_ = d.Set("security_group_attachments", securityGroupAttachments)
 
 					if virtualMachineInstance.AvailabilityZone != nil {
-						d.Set("availability_zone", *virtualMachineInstance.AvailabilityZone)
+						_ = d.Set("availability_zone", *virtualMachineInstance.AvailabilityZone)
 					} else {
-						d.Set("availability_zone", "")
+						_ = d.Set("availability_zone", "")
 					}
 					return nil
 				} else if strings.EqualFold(virtualMachineInstance.Status.Status, "error") || strings.EqualFold(virtualMachineInstance.Status.Status, "failed") {
@@ -337,18 +337,18 @@ func resourceVirtualMachineInstanceRead(ctx context.Context, d *schema.ResourceD
 	}
 
 	d.SetId(virtualMachineInstance.Identity)
-	d.Set("name", virtualMachineInstance.Name)
-	d.Set("slug", virtualMachineInstance.Slug)
-	d.Set("description", virtualMachineInstance.Description)
-	d.Set("labels", virtualMachineInstance.Labels)
-	d.Set("annotations", virtualMachineInstance.Annotations)
-	d.Set("status", virtualMachineInstance.Status.Status)
-	d.Set("state", virtualMachineInstance.State)
-	d.Set("ip_addresses", getIPAddresses(virtualMachineInstance))
-	d.Set("attached_volume_ids", getAttachedVolumeIds(virtualMachineInstance))
+	_ = d.Set("name", virtualMachineInstance.Name)
+	_ = d.Set("slug", virtualMachineInstance.Slug)
+	_ = d.Set("description", virtualMachineInstance.Description)
+	_ = d.Set("labels", virtualMachineInstance.Labels)
+	_ = d.Set("annotations", virtualMachineInstance.Annotations)
+	_ = d.Set("status", virtualMachineInstance.Status.Status)
+	_ = d.Set("state", virtualMachineInstance.State)
+	_ = d.Set("ip_addresses", getIPAddresses(virtualMachineInstance))
+	_ = d.Set("attached_volume_ids", getAttachedVolumeIds(virtualMachineInstance))
 
 	cloudInitTemplateId := d.Get("cloud_init_template_id").(string)
-	d.Set("cloud_init_template_id", cloudInitTemplateId)
+	_ = d.Set("cloud_init_template_id", cloudInitTemplateId)
 
 	if virtualMachineInstance.MachineType != nil {
 		setMachineTypeField(d, virtualMachineInstance.MachineType)
@@ -357,29 +357,29 @@ func resourceVirtualMachineInstanceRead(ctx context.Context, d *schema.ResourceD
 		setMachineImageField(d, virtualMachineInstance.MachineImage)
 	}
 
-	d.Set("subnet_id", virtualMachineInstance.Subnet.Identity)
-	d.Set("delete_protection", virtualMachineInstance.DeleteProtection)
+	_ = d.Set("subnet_id", virtualMachineInstance.Subnet.Identity)
+	_ = d.Set("delete_protection", virtualMachineInstance.DeleteProtection)
 	if virtualMachineInstance.CloudInit != nil && cloudInitTemplateId == "" {
-		d.Set("cloud_init", *virtualMachineInstance.CloudInit)
+		_ = d.Set("cloud_init", *virtualMachineInstance.CloudInit)
 	} else {
-		d.Set("cloud_init", "")
+		_ = d.Set("cloud_init", "")
 	}
 
 	securityGroupAttachments := make([]string, len(virtualMachineInstance.SecurityGroups))
 	for i, securityGroup := range virtualMachineInstance.SecurityGroups {
 		securityGroupAttachments[i] = securityGroup.Identity
 	}
-	d.Set("security_group_attachments", securityGroupAttachments)
+	_ = d.Set("security_group_attachments", securityGroupAttachments)
 
 	if virtualMachineInstance.AvailabilityZone != nil {
-		d.Set("availability_zone", *virtualMachineInstance.AvailabilityZone)
+		_ = d.Set("availability_zone", *virtualMachineInstance.AvailabilityZone)
 	} else {
-		d.Set("availability_zone", "")
+		_ = d.Set("availability_zone", "")
 	}
 
 	if virtualMachineInstance.PersistentVolume != nil {
-		d.Set("root_volume_size_gb", virtualMachineInstance.PersistentVolume.Size)
-		d.Set("root_volume_id", virtualMachineInstance.PersistentVolume.Identity)
+		_ = d.Set("root_volume_size_gb", virtualMachineInstance.PersistentVolume.Size)
+		_ = d.Set("root_volume_id", virtualMachineInstance.PersistentVolume.Identity)
 
 		if virtualMachineInstance.PersistentVolume.VolumeType != nil {
 			setRootVolumeTypeField(d, virtualMachineInstance.PersistentVolume.VolumeType)
@@ -439,16 +439,16 @@ func resourceVirtualMachineInstanceUpdate(ctx context.Context, d *schema.Resourc
 		return diag.FromErr(fmt.Errorf("failed to update virtual machine instance: %w", err))
 	}
 	if virtualMachineInstance != nil {
-		d.Set("name", virtualMachineInstance.Name)
-		d.Set("description", virtualMachineInstance.Description)
-		d.Set("slug", virtualMachineInstance.Slug)
-		d.Set("labels", virtualMachineInstance.Labels)
-		d.Set("annotations", virtualMachineInstance.Annotations)
-		d.Set("status", virtualMachineInstance.Status.Status)
-		d.Set("state", virtualMachineInstance.State)
+		_ = d.Set("name", virtualMachineInstance.Name)
+		_ = d.Set("description", virtualMachineInstance.Description)
+		_ = d.Set("slug", virtualMachineInstance.Slug)
+		_ = d.Set("labels", virtualMachineInstance.Labels)
+		_ = d.Set("annotations", virtualMachineInstance.Annotations)
+		_ = d.Set("status", virtualMachineInstance.Status.Status)
+		_ = d.Set("state", virtualMachineInstance.State)
 
-		d.Set("ip_addresses", getIPAddresses(virtualMachineInstance))
-		d.Set("attached_volume_ids", getAttachedVolumeIds(virtualMachineInstance))
+		_ = d.Set("ip_addresses", getIPAddresses(virtualMachineInstance))
+		_ = d.Set("attached_volume_ids", getAttachedVolumeIds(virtualMachineInstance))
 
 		if virtualMachineInstance.MachineType != nil {
 			setMachineTypeField(d, virtualMachineInstance.MachineType)
@@ -457,28 +457,28 @@ func resourceVirtualMachineInstanceUpdate(ctx context.Context, d *schema.Resourc
 			setMachineImageField(d, virtualMachineInstance.MachineImage)
 		}
 
-		d.Set("subnet_id", virtualMachineInstance.Subnet.Identity)
-		d.Set("delete_protection", virtualMachineInstance.DeleteProtection)
-		d.Set("cloud_init", virtualMachineInstance.CloudInit)
-		d.Set("cloud_init_template_id", cloudInitTemplateId)
+		_ = d.Set("subnet_id", virtualMachineInstance.Subnet.Identity)
+		_ = d.Set("delete_protection", virtualMachineInstance.DeleteProtection)
+		_ = d.Set("cloud_init", virtualMachineInstance.CloudInit)
+		_ = d.Set("cloud_init_template_id", cloudInitTemplateId)
 
 		securityGroupAttachments := make([]string, len(virtualMachineInstance.SecurityGroups))
 		for i, securityGroup := range virtualMachineInstance.SecurityGroups {
 			securityGroupAttachments[i] = securityGroup.Identity
 		}
-		d.Set("security_group_attachments", securityGroupAttachments)
+		_ = d.Set("security_group_attachments", securityGroupAttachments)
 
 		if virtualMachineInstance.AvailabilityZone != nil {
-			d.Set("availability_zone", *virtualMachineInstance.AvailabilityZone)
+			_ = d.Set("availability_zone", *virtualMachineInstance.AvailabilityZone)
 		} else if currentMachine.AvailabilityZone != nil {
-			d.Set("availability_zone", *currentMachine.AvailabilityZone)
+			_ = d.Set("availability_zone", *currentMachine.AvailabilityZone)
 		} else {
-			d.Set("availability_zone", "")
+			_ = d.Set("availability_zone", "")
 		}
 
 		if virtualMachineInstance.PersistentVolume != nil {
-			d.Set("root_volume_size_gb", virtualMachineInstance.PersistentVolume.Size)
-			d.Set("root_volume_id", virtualMachineInstance.PersistentVolume.Identity)
+			_ = d.Set("root_volume_size_gb", virtualMachineInstance.PersistentVolume.Size)
+			_ = d.Set("root_volume_id", virtualMachineInstance.PersistentVolume.Identity)
 			if virtualMachineInstance.PersistentVolume.VolumeType != nil {
 				setRootVolumeTypeField(d, virtualMachineInstance.PersistentVolume.VolumeType)
 			}
@@ -552,15 +552,15 @@ func setMachineImageField(d *schema.ResourceData, mi *iaas.MachineImage) {
 	current := d.Get("machine_image").(string)
 	switch {
 	case current == "":
-		d.Set("machine_image", mi.Identity)
+		_ = d.Set("machine_image", mi.Identity)
 	case current == mi.Identity:
-		d.Set("machine_image", current)
+		_ = d.Set("machine_image", current)
 	case current == mi.Slug:
-		d.Set("machine_image", current)
+		_ = d.Set("machine_image", current)
 	case strings.EqualFold(current, mi.Name):
-		d.Set("machine_image", current)
+		_ = d.Set("machine_image", current)
 	default:
-		d.Set("machine_image", mi.Identity)
+		_ = d.Set("machine_image", mi.Identity)
 	}
 }
 
@@ -573,37 +573,9 @@ func getIPAddresses(virtualMachineInstance *iaas.Machine) []string {
 }
 
 func getAttachedVolumeIds(virtualMachineInstance *iaas.Machine) []string {
-	attachedVolumeIds := []string{}
+	attachedVolumeIds := make([]string, 0, len(virtualMachineInstance.VolumeAttachments))
 	for _, volumeAttachment := range virtualMachineInstance.VolumeAttachments {
 		attachedVolumeIds = append(attachedVolumeIds, volumeAttachment.PersistentVolume.Identity)
 	}
 	return attachedVolumeIds
-}
-
-func getInterfaces(virtualMachineInstance *iaas.Machine) []map[string]any {
-	interfaces := []map[string]any{}
-	for _, interf := range virtualMachineInstance.Interfaces {
-		interfaces = append(interfaces, map[string]any{
-			"name":         interf.Name,
-			"mac_address":  interf.MacAddress,
-			"ip_addresses": interf.IPAddresses,
-		})
-	}
-	return interfaces
-}
-
-func getVolumeAttachments(virtualMachineInstance *iaas.Machine) []map[string]any {
-	volumeAttachments := []map[string]any{}
-	for _, volumeAttachment := range virtualMachineInstance.VolumeAttachments {
-		v := map[string]any{
-			"serial": volumeAttachment.Serial,
-		}
-		if volumeAttachment.PersistentVolume != nil {
-			v["size_gb"] = volumeAttachment.PersistentVolume.Size
-			v["volume_type"] = volumeAttachment.PersistentVolume.VolumeType.Identity
-			v["volume_id"] = volumeAttachment.PersistentVolume.Identity
-		}
-		volumeAttachments = append(volumeAttachments, v)
-	}
-	return volumeAttachments
 }

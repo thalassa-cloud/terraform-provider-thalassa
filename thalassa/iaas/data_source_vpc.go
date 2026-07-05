@@ -136,17 +136,17 @@ func dataSourceVpcRead(ctx context.Context, d *schema.ResourceData, m any) diag.
 	if vpc != nil {
 
 		d.SetId(vpc.Identity)
-		d.Set("id", vpc.Identity)
-		d.Set("name", vpc.Name)
-		d.Set("slug", vpc.Slug)
-		d.Set("description", vpc.Description)
-		d.Set("status", vpc.Status)
-		d.Set("labels", vpc.Labels)
-		d.Set("annotations", vpc.Annotations)
+		_ = d.Set("id", vpc.Identity)
+		_ = d.Set("name", vpc.Name)
+		_ = d.Set("slug", vpc.Slug)
+		_ = d.Set("description", vpc.Description)
+		_ = d.Set("status", vpc.Status)
+		_ = d.Set("labels", vpc.Labels)
+		_ = d.Set("annotations", vpc.Annotations)
 		if vpc.CloudRegion != nil {
-			d.Set("region", vpc.CloudRegion.Identity)
+			_ = d.Set("region", vpc.CloudRegion.Identity)
 		}
-		d.Set("cidrs", vpc.CIDRs)
+		_ = d.Set("cidrs", vpc.CIDRs)
 		return diag.Diagnostics{}
 	}
 

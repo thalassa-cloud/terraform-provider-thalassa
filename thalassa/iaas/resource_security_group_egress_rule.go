@@ -16,7 +16,10 @@ import (
 
 func resourceSecurityGroupEgressRule() *schema.Resource {
 	return &schema.Resource{
-		Description:   "Manages egress rules for a security group using the batch API. This resource replaces all egress rules for the security group. This is an optional alternative to managing rules through the thalassa_security_group resource. Warning: Do not use both this resource and egress_rule in thalassa_security_group for the same security group, as this will cause conflicts.",
+		Description: "Manages egress rules for a security group using the batch API. " +
+			"This resource replaces all egress rules for the security group and is an optional alternative " +
+			"to managing rules through thalassa_security_group. " +
+			"Do not use both resources for the same security group.",
 		CreateContext: resourceSecurityGroupEgressRuleCreate,
 		ReadContext:   resourceSecurityGroupEgressRuleRead,
 		UpdateContext: resourceSecurityGroupEgressRuleUpdate,
@@ -123,10 +126,13 @@ func resourceSecurityGroupEgressRuleCreate(ctx context.Context, d *schema.Resour
 	// Warn if the security group already has egress rules, as this might indicate
 	// that rules are being managed by the security group resource
 	if len(securityGroup.EgressRules) > 0 {
-		tflog.Warn(ctx, "Security group already has egress rules. Ensure you're not managing rules through both thalassa_security_group and thalassa_security_group_egress_rule resources for the same security group, as this will cause conflicts.", map[string]any{
-			"security_group_id": securityGroupID,
-			"existing_rules":    len(securityGroup.EgressRules),
-		})
+		tflog.Warn(ctx,
+			"Security group already has egress rules. Avoid managing rules through both "+
+				"thalassa_security_group and thalassa_security_group_egress_rule for the same security group.",
+			map[string]any{
+				"security_group_id": securityGroupID,
+				"existing_rules":    len(securityGroup.EgressRules),
+			})
 	}
 
 	var rules []iaas.SecurityGroupRule
@@ -166,13 +172,9 @@ func resourceSecurityGroupEgressRuleRead(ctx context.Context, d *schema.Resource
 		return diag.FromErr(fmt.Errorf("error getting security group: %w", err))
 	}
 
-	if err := d.Set("security_group_id", securityGroupID); err != nil {
-		return diag.FromErr(err)
-	}
+	_ = d.Set("security_group_id", securityGroupID)
 
-	if err := d.Set("rule", flattenSecurityGroupRules(securityGroup.EgressRules)); err != nil {
-		return diag.FromErr(err)
-	}
+	_ = d.Set("rule", flattenSecurityGroupRules(securityGroup.EgressRules))
 
 	return nil
 }

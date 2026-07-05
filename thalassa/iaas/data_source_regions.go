@@ -91,7 +91,7 @@ func dataSourceRegionsRead(ctx context.Context, d *schema.ResourceData, m any) d
 		})
 	}
 
-	d.Set("regions", regionsList)
+	_ = d.Set("regions", regionsList)
 
 	return nil
 }

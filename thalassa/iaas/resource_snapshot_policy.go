@@ -234,27 +234,11 @@ func resourceSnapshotPolicyCreate(ctx context.Context, d *schema.ResourceData, m
 		return diag.FromErr(fmt.Errorf("target must have exactly one element"))
 	}
 	targetMap := targetList[0].(map[string]any)
-	targetType := targetMap["type"].(string)
 
 	var target iaas.SnapshotPolicyTarget
-	if targetType == "selector" {
-		selector := convert.ConvertToMap(targetMap["selector"])
-		if len(selector) == 0 {
-			return diag.FromErr(fmt.Errorf("selector is required when target type is 'selector'"))
-		}
-		target = iaas.SnapshotPolicyTarget{
-			Type:     iaas.SnapshotPolicyTargetTypeSelector,
-			Selector: selector,
-		}
-	} else if targetType == "explicit" {
-		volumeIdentities := convert.ConvertToStringSlice(targetMap["volume_identities"])
-		if len(volumeIdentities) == 0 {
-			return diag.FromErr(fmt.Errorf("volume_identities is required when target type is 'explicit'"))
-		}
-		target = iaas.SnapshotPolicyTarget{
-			Type:             iaas.SnapshotPolicyTargetTypeExplicit,
-			VolumeIdentities: volumeIdentities,
-		}
+	target, err = parseSnapshotPolicyTarget(targetMap)
+	if err != nil {
+		return diag.FromErr(err)
 	}
 
 	keepCount := (*int)(nil)
@@ -284,7 +268,7 @@ func resourceSnapshotPolicyCreate(ctx context.Context, d *schema.ResourceData, m
 
 	if policy != nil {
 		d.SetId(policy.Identity)
-		d.Set("slug", policy.Slug)
+		_ = d.Set("slug", policy.Slug)
 	}
 
 	return resourceSnapshotPolicyRead(ctx, d, m)
@@ -311,48 +295,36 @@ func resourceSnapshotPolicyRead(ctx context.Context, d *schema.ResourceData, m a
 	}
 
 	d.SetId(policy.Identity)
-	d.Set("name", policy.Name)
-	d.Set("slug", policy.Slug)
-	d.Set("description", policy.Description)
-	d.Set("labels", policy.Labels)
-	d.Set("annotations", policy.Annotations)
-	d.Set("enabled", policy.Enabled)
-	d.Set("schedule", policy.Schedule)
-	d.Set("timezone", policy.Timezone)
+	_ = d.Set("name", policy.Name)
+	_ = d.Set("slug", policy.Slug)
+	_ = d.Set("description", policy.Description)
+	_ = d.Set("labels", policy.Labels)
+	_ = d.Set("annotations", policy.Annotations)
+	_ = d.Set("enabled", policy.Enabled)
+	_ = d.Set("schedule", policy.Schedule)
+	_ = d.Set("timezone", policy.Timezone)
 
 	// Convert TTL duration to string
-	d.Set("ttl", policy.Ttl.String())
+	_ = d.Set("ttl", policy.Ttl.String())
 
 	if policy.KeepCount != nil {
-		d.Set("keep_count", *policy.KeepCount)
+		_ = d.Set("keep_count", *policy.KeepCount)
 	}
 
 	if policy.Region != nil {
-		d.Set("region", policy.Region.Identity)
+		_ = d.Set("region", policy.Region.Identity)
 	}
 
 	if policy.NextSnapshotAt != nil {
-		d.Set("next_snapshot_at", policy.NextSnapshotAt.Format("2006-01-02T15:04:05Z07:00"))
+		_ = d.Set("next_snapshot_at", policy.NextSnapshotAt.Format("2006-01-02T15:04:05Z07:00"))
 	}
 
 	if policy.LastSnapshotAt != nil {
-		d.Set("last_snapshot_at", policy.LastSnapshotAt.Format("2006-01-02T15:04:05Z07:00"))
+		_ = d.Set("last_snapshot_at", policy.LastSnapshotAt.Format("2006-01-02T15:04:05Z07:00"))
 	}
 
 	// Set target
-	target := map[string]any{
-		"type": string(policy.Target.Type),
-	}
-
-	if policy.Target.Type == iaas.SnapshotPolicyTargetTypeSelector {
-		target["selector"] = policy.Target.Selector
-		target["volume_identities"] = []string{}
-	} else if policy.Target.Type == iaas.SnapshotPolicyTargetTypeExplicit {
-		target["selector"] = map[string]string{}
-		target["volume_identities"] = policy.Target.VolumeIdentities
-	}
-
-	d.Set("target", []any{target})
+	_ = d.Set("target", []any{snapshotPolicyTargetState(policy.Target)})
 
 	return nil
 }
@@ -376,27 +348,11 @@ func resourceSnapshotPolicyUpdate(ctx context.Context, d *schema.ResourceData, m
 		return diag.FromErr(fmt.Errorf("target must have exactly one element"))
 	}
 	targetMap := targetList[0].(map[string]any)
-	targetType := targetMap["type"].(string)
 
 	var target iaas.SnapshotPolicyTarget
-	if targetType == "selector" {
-		selector := convert.ConvertToMap(targetMap["selector"])
-		if len(selector) == 0 {
-			return diag.FromErr(fmt.Errorf("selector is required when target type is 'selector'"))
-		}
-		target = iaas.SnapshotPolicyTarget{
-			Type:     iaas.SnapshotPolicyTargetTypeSelector,
-			Selector: selector,
-		}
-	} else if targetType == "explicit" {
-		volumeIdentities := convert.ConvertToStringSlice(targetMap["volume_identities"])
-		if len(volumeIdentities) == 0 {
-			return diag.FromErr(fmt.Errorf("volume_identities is required when target type is 'explicit'"))
-		}
-		target = iaas.SnapshotPolicyTarget{
-			Type:             iaas.SnapshotPolicyTargetTypeExplicit,
-			VolumeIdentities: volumeIdentities,
-		}
+	target, err = parseSnapshotPolicyTarget(targetMap)
+	if err != nil {
+		return diag.FromErr(err)
 	}
 
 	keepCount := (*int)(nil)
@@ -425,17 +381,17 @@ func resourceSnapshotPolicyUpdate(ctx context.Context, d *schema.ResourceData, m
 	}
 
 	if policy != nil {
-		d.Set("name", policy.Name)
-		d.Set("description", policy.Description)
-		d.Set("slug", policy.Slug)
-		d.Set("enabled", policy.Enabled)
-		d.Set("schedule", policy.Schedule)
-		d.Set("timezone", policy.Timezone)
-		d.Set("labels", policy.Labels)
-		d.Set("annotations", policy.Annotations)
-		d.Set("ttl", policy.Ttl.String())
+		_ = d.Set("name", policy.Name)
+		_ = d.Set("description", policy.Description)
+		_ = d.Set("slug", policy.Slug)
+		_ = d.Set("enabled", policy.Enabled)
+		_ = d.Set("schedule", policy.Schedule)
+		_ = d.Set("timezone", policy.Timezone)
+		_ = d.Set("labels", policy.Labels)
+		_ = d.Set("annotations", policy.Annotations)
+		_ = d.Set("ttl", policy.Ttl.String())
 		if policy.KeepCount != nil {
-			d.Set("keep_count", *policy.KeepCount)
+			_ = d.Set("keep_count", *policy.KeepCount)
 		}
 		return nil
 	}
@@ -460,4 +416,44 @@ func resourceSnapshotPolicyDelete(ctx context.Context, d *schema.ResourceData, m
 
 	d.SetId("")
 	return nil
+}
+
+func parseSnapshotPolicyTarget(targetMap map[string]any) (iaas.SnapshotPolicyTarget, error) {
+	switch targetMap["type"].(string) {
+	case "selector":
+		selector := convert.ConvertToMap(targetMap["selector"])
+		if len(selector) == 0 {
+			return iaas.SnapshotPolicyTarget{}, fmt.Errorf("selector is required when target type is 'selector'")
+		}
+		return iaas.SnapshotPolicyTarget{
+			Type:     iaas.SnapshotPolicyTargetTypeSelector,
+			Selector: selector,
+		}, nil
+	case "explicit":
+		volumeIdentities := convert.ConvertToStringSlice(targetMap["volume_identities"])
+		if len(volumeIdentities) == 0 {
+			return iaas.SnapshotPolicyTarget{}, fmt.Errorf("volume_identities is required when target type is 'explicit'")
+		}
+		return iaas.SnapshotPolicyTarget{
+			Type:             iaas.SnapshotPolicyTargetTypeExplicit,
+			VolumeIdentities: volumeIdentities,
+		}, nil
+	default:
+		return iaas.SnapshotPolicyTarget{}, fmt.Errorf("unsupported target type %q", targetMap["type"])
+	}
+}
+
+func snapshotPolicyTargetState(target iaas.SnapshotPolicyTarget) map[string]any {
+	state := map[string]any{
+		"type": string(target.Type),
+	}
+	switch target.Type {
+	case iaas.SnapshotPolicyTargetTypeSelector:
+		state["selector"] = target.Selector
+		state["volume_identities"] = []string{}
+	case iaas.SnapshotPolicyTargetTypeExplicit:
+		state["selector"] = map[string]string{}
+		state["volume_identities"] = target.VolumeIdentities
+	}
+	return state
 }

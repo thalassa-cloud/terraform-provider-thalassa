@@ -81,10 +81,10 @@ func dataSourceSubnetRead(ctx context.Context, d *schema.ResourceData, m any) di
 		for _, subnet := range matchingSubnets {
 			if subnet.Slug == slug {
 				d.SetId(subnet.Identity)
-				d.Set("name", subnet.Name)
-				d.Set("vpc_id", subnet.Vpc.Identity)
-				d.Set("cidr", subnet.Cidr)
-				d.Set("slug", subnet.Slug)
+				_ = d.Set("name", subnet.Name)
+				_ = d.Set("vpc_id", subnet.Vpc.Identity)
+				_ = d.Set("cidr", subnet.Cidr)
+				_ = d.Set("slug", subnet.Slug)
 				return nil
 			}
 		}
@@ -93,10 +93,10 @@ func dataSourceSubnetRead(ctx context.Context, d *schema.ResourceData, m any) di
 		// Single match found
 		subnet := matchingSubnets[0]
 		d.SetId(subnet.Identity)
-		d.Set("name", subnet.Name)
-		d.Set("vpc_id", subnet.Vpc.Identity)
-		d.Set("cidr", subnet.Cidr)
-		d.Set("slug", subnet.Slug)
+		_ = d.Set("name", subnet.Name)
+		_ = d.Set("vpc_id", subnet.Vpc.Identity)
+		_ = d.Set("cidr", subnet.Cidr)
+		_ = d.Set("slug", subnet.Slug)
 		return nil
 	}
 

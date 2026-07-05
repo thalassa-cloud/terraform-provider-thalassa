@@ -70,12 +70,12 @@ func dataSourceMachineTypeRead(ctx context.Context, d *schema.ResourceData, m an
 	for _, machineType := range machineTypes {
 		if slug != "" && machineType.Slug == slug {
 			d.SetId(machineType.Identity)
-			d.Set("id", machineType.Identity)
-			d.Set("name", machineType.Name)
-			d.Set("slug", machineType.Slug)
-			d.Set("description", machineType.Description)
-			d.Set("cpu_cores", machineType.Vcpus)
-			d.Set("ram_mb", machineType.RamMb)
+			_ = d.Set("id", machineType.Identity)
+			_ = d.Set("name", machineType.Name)
+			_ = d.Set("slug", machineType.Slug)
+			_ = d.Set("description", machineType.Description)
+			_ = d.Set("cpu_cores", machineType.Vcpus)
+			_ = d.Set("ram_mb", machineType.RamMb)
 			return diag.Diagnostics{}
 		}
 	}

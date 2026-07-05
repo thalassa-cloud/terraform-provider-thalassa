@@ -17,7 +17,9 @@ import (
 
 func resourceSubnet() *schema.Resource {
 	return &schema.Resource{
-		Description:   "Create an subnet in a VPC. Subnets are used to create a network for your resources. A VPC can have multiple subnets, and each subnet must have a different CIDR block. IPv4, IPv6 and Dual-stack subnets are supported. After creationg the CIDR cannot be changed.",
+		Description: "Create a subnet in a VPC. Subnets provide network segments for resources. " +
+			"A VPC can have multiple subnets with unique CIDR blocks. IPv4, IPv6, and dual-stack are supported. " +
+			"The CIDR cannot be changed after creation.",
 		CreateContext: resourceSubnetCreate,
 		ReadContext:   resourceSubnetRead,
 		UpdateContext: resourceSubnetUpdate,
@@ -145,9 +147,9 @@ func resourceSubnetCreate(ctx context.Context, d *schema.ResourceData, m any) di
 	}
 	if subnet != nil {
 		d.SetId(subnet.Identity)
-		d.Set("slug", subnet.Slug)
-		d.Set("type", subnet.Type)
-		d.Set("status", subnet.Status)
+		_ = d.Set("slug", subnet.Slug)
+		_ = d.Set("type", subnet.Type)
+		_ = d.Set("status", subnet.Status)
 
 		// wait until the subnet is ready
 		ctxWithTimeout, cancel := context.WithTimeout(ctx, 20*time.Minute)
@@ -156,11 +158,12 @@ func resourceSubnetCreate(ctx context.Context, d *schema.ResourceData, m any) di
 		if subnet, err = client.IaaS().WaitUntilSubnetReady(ctxWithTimeout, subnet.Identity); err != nil {
 			return diag.FromErr(fmt.Errorf("error waiting for subnet to be ready: %w", err))
 		}
-		d.Set("status", subnet.Status)
-		d.Set("ipv4_addresses_used", subnet.V4usingIPs)
-		d.Set("ipv4_addresses_available", subnet.V4availableIPs)
-		d.Set("ipv6_addresses_used", subnet.V6usingIPs)
-		d.Set("ipv6_addresses_available", subnet.V6availableIPs)
+
+		_ = d.Set("status", subnet.Status)
+		_ = d.Set("ipv4_addresses_used", subnet.V4usingIPs)
+		_ = d.Set("ipv4_addresses_available", subnet.V4availableIPs)
+		_ = d.Set("ipv6_addresses_used", subnet.V6usingIPs)
+		_ = d.Set("ipv6_addresses_available", subnet.V6availableIPs)
 	}
 	return resourceSubnetRead(ctx, d, m)
 }
@@ -186,21 +189,21 @@ func resourceSubnetRead(ctx context.Context, d *schema.ResourceData, m any) diag
 	}
 
 	d.SetId(subnet.Identity)
-	d.Set("name", subnet.Name)
-	d.Set("slug", subnet.Slug)
-	d.Set("description", subnet.Description)
-	d.Set("labels", subnet.Labels)
-	d.Set("annotations", subnet.Annotations)
+	_ = d.Set("name", subnet.Name)
+	_ = d.Set("slug", subnet.Slug)
+	_ = d.Set("description", subnet.Description)
+	_ = d.Set("labels", subnet.Labels)
+	_ = d.Set("annotations", subnet.Annotations)
 	if subnet.RouteTable != nil {
-		d.Set("route_table_id", subnet.RouteTable.Identity)
+		_ = d.Set("route_table_id", subnet.RouteTable.Identity)
 	}
-	d.Set("status", subnet.Status)
-	d.Set("type", subnet.Type)
+	_ = d.Set("status", subnet.Status)
+	_ = d.Set("type", subnet.Type)
 
-	d.Set("ipv4_addresses_used", subnet.V4usingIPs)
-	d.Set("ipv4_addresses_available", subnet.V4availableIPs)
-	d.Set("ipv6_addresses_used", subnet.V6usingIPs)
-	d.Set("ipv6_addresses_available", subnet.V6availableIPs)
+	_ = d.Set("ipv4_addresses_used", subnet.V4usingIPs)
+	_ = d.Set("ipv4_addresses_available", subnet.V4availableIPs)
+	_ = d.Set("ipv6_addresses_used", subnet.V6usingIPs)
+	_ = d.Set("ipv6_addresses_available", subnet.V6availableIPs)
 
 	return nil
 }
@@ -229,18 +232,18 @@ func resourceSubnetUpdate(ctx context.Context, d *schema.ResourceData, m any) di
 		return diag.FromErr(fmt.Errorf("error updating subnet: %w", err))
 	}
 	if subnet != nil {
-		d.Set("name", subnet.Name)
-		d.Set("description", subnet.Description)
-		d.Set("slug", subnet.Slug)
-		d.Set("labels", subnet.Labels)
-		d.Set("annotations", subnet.Annotations)
-		d.Set("ipv4_addresses_used", subnet.V4usingIPs)
-		d.Set("ipv4_addresses_available", subnet.V4availableIPs)
-		d.Set("ipv6_addresses_used", subnet.V6usingIPs)
-		d.Set("ipv6_addresses_available", subnet.V6availableIPs)
+		_ = d.Set("name", subnet.Name)
+		_ = d.Set("description", subnet.Description)
+		_ = d.Set("slug", subnet.Slug)
+		_ = d.Set("labels", subnet.Labels)
+		_ = d.Set("annotations", subnet.Annotations)
+		_ = d.Set("ipv4_addresses_used", subnet.V4usingIPs)
+		_ = d.Set("ipv4_addresses_available", subnet.V4availableIPs)
+		_ = d.Set("ipv6_addresses_used", subnet.V6usingIPs)
+		_ = d.Set("ipv6_addresses_available", subnet.V6availableIPs)
 
 		if subnet.RouteTable != nil {
-			d.Set("route_table_id", subnet.RouteTable.Identity)
+			_ = d.Set("route_table_id", subnet.RouteTable.Identity)
 		}
 
 		ctxWithTimeout, cancel := context.WithTimeout(ctx, 20*time.Minute)
@@ -250,11 +253,11 @@ func resourceSubnetUpdate(ctx context.Context, d *schema.ResourceData, m any) di
 			return diag.FromErr(fmt.Errorf("error waiting for subnet to be ready: %w", err))
 		}
 
-		d.Set("status", subnet.Status)
-		d.Set("ipv4_addresses_used", subnet.V4usingIPs)
-		d.Set("ipv4_addresses_available", subnet.V4availableIPs)
-		d.Set("ipv6_addresses_used", subnet.V6usingIPs)
-		d.Set("ipv6_addresses_available", subnet.V6availableIPs)
+		_ = d.Set("status", subnet.Status)
+		_ = d.Set("ipv4_addresses_used", subnet.V4usingIPs)
+		_ = d.Set("ipv4_addresses_available", subnet.V4availableIPs)
+		_ = d.Set("ipv6_addresses_used", subnet.V6usingIPs)
+		_ = d.Set("ipv6_addresses_available", subnet.V6availableIPs)
 	}
 
 	return resourceSubnetRead(ctx, d, m)

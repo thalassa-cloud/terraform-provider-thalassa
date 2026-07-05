@@ -92,14 +92,14 @@ func resourceCloudInitTemplateCreate(ctx context.Context, d *schema.ResourceData
 	}
 
 	d.SetId(cloudInitTemplate.Identity)
-	d.Set("name", cloudInitTemplate.Name)
-	d.Set("content", cloudInitTemplate.Content)
-	d.Set("slug", cloudInitTemplate.Slug)
+	_ = d.Set("name", cloudInitTemplate.Name)
+	_ = d.Set("content", cloudInitTemplate.Content)
+	_ = d.Set("slug", cloudInitTemplate.Slug)
 	if cloudInitTemplate.Labels != nil {
-		d.Set("labels", cloudInitTemplate.Labels)
+		_ = d.Set("labels", cloudInitTemplate.Labels)
 	}
 	if cloudInitTemplate.Annotations != nil {
-		d.Set("annotations", cloudInitTemplate.Annotations)
+		_ = d.Set("annotations", cloudInitTemplate.Annotations)
 	}
 
 	return resourceCloudInitTemplateRead(ctx, d, m)
@@ -121,14 +121,14 @@ func resourceCloudInitTemplateRead(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	d.SetId(cloudInitTemplate.Identity)
-	d.Set("name", cloudInitTemplate.Name)
-	d.Set("content", cloudInitTemplate.Content)
-	d.Set("slug", cloudInitTemplate.Slug)
+	_ = d.Set("name", cloudInitTemplate.Name)
+	_ = d.Set("content", cloudInitTemplate.Content)
+	_ = d.Set("slug", cloudInitTemplate.Slug)
 	if cloudInitTemplate.Labels != nil {
-		d.Set("labels", cloudInitTemplate.Labels)
+		_ = d.Set("labels", cloudInitTemplate.Labels)
 	}
 	if cloudInitTemplate.Annotations != nil {
-		d.Set("annotations", cloudInitTemplate.Annotations)
+		_ = d.Set("annotations", cloudInitTemplate.Annotations)
 	}
 	return nil
 }

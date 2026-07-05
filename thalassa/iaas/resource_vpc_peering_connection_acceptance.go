@@ -194,11 +194,11 @@ func resourceVpcPeeringConnectionAcceptanceDelete(ctx context.Context, d *schema
 }
 
 func setVpcPeeringConnectionAcceptanceData(d *schema.ResourceData, connection *iaas.VpcPeeringConnection) diag.Diagnostics {
-	d.Set("peering_connection_id", connection.Identity)
-	d.Set("status", connection.Status)
+	_ = d.Set("peering_connection_id", connection.Identity)
+	_ = d.Set("status", connection.Status)
 
 	if connection.StatusMessage != nil {
-		d.Set("status_message", *connection.StatusMessage)
+		_ = d.Set("status_message", *connection.StatusMessage)
 	}
 	return nil
 }

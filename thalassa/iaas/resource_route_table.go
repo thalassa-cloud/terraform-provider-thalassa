@@ -97,7 +97,7 @@ func resourceRouteTableCreate(ctx context.Context, d *schema.ResourceData, m any
 	}
 	if routeTable != nil {
 		d.SetId(routeTable.Identity)
-		d.Set("slug", routeTable.Slug)
+		_ = d.Set("slug", routeTable.Slug)
 		return nil
 	}
 	return resourceRouteTableRead(ctx, d, m)
@@ -124,15 +124,13 @@ func resourceRouteTableRead(ctx context.Context, d *schema.ResourceData, m any) 
 	}
 
 	d.SetId(routeTable.Identity)
-	d.Set("name", routeTable.Name)
-	d.Set("slug", routeTable.Slug)
-	if err := d.Set("description", convert.StringValue(routeTable.Description)); err != nil {
-		return diag.FromErr(err)
-	}
-	d.Set("labels", routeTable.Labels)
-	d.Set("annotations", routeTable.Annotations)
+	_ = d.Set("name", routeTable.Name)
+	_ = d.Set("slug", routeTable.Slug)
+	_ = d.Set("description", convert.StringValue(routeTable.Description))
+	_ = d.Set("labels", routeTable.Labels)
+	_ = d.Set("annotations", routeTable.Annotations)
 	if routeTable.Vpc != nil {
-		d.Set("vpc_id", routeTable.Vpc.Identity)
+		_ = d.Set("vpc_id", routeTable.Vpc.Identity)
 	}
 
 	return nil
@@ -161,15 +159,13 @@ func resourceRouteTableUpdate(ctx context.Context, d *schema.ResourceData, m any
 		return diag.FromErr(err)
 	}
 	if routeTable != nil {
-		d.Set("name", routeTable.Name)
-		if err := d.Set("description", convert.StringValue(routeTable.Description)); err != nil {
-			return diag.FromErr(err)
-		}
-		d.Set("slug", routeTable.Slug)
-		d.Set("labels", routeTable.Labels)
-		d.Set("annotations", routeTable.Annotations)
+		_ = d.Set("name", routeTable.Name)
+		_ = d.Set("description", convert.StringValue(routeTable.Description))
+		_ = d.Set("slug", routeTable.Slug)
+		_ = d.Set("labels", routeTable.Labels)
+		_ = d.Set("annotations", routeTable.Annotations)
 		if routeTable.Vpc != nil {
-			d.Set("vpc_id", routeTable.Vpc.Identity)
+			_ = d.Set("vpc_id", routeTable.Vpc.Identity)
 		}
 		return nil
 	}

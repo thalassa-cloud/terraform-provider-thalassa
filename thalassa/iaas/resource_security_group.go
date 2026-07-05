@@ -273,50 +273,26 @@ func resourceSecurityGroupRead(ctx context.Context, d *schema.ResourceData, meta
 		return diag.FromErr(fmt.Errorf("error getting security group: %w", err))
 	}
 
-	if err := d.Set("name", securityGroup.Name); err != nil {
-		return diag.FromErr(err)
-	}
-	if err := d.Set("description", securityGroup.Description); err != nil {
-		return diag.FromErr(err)
-	}
-	if err := d.Set("labels", securityGroup.Labels); err != nil {
-		return diag.FromErr(err)
-	}
-	if err := d.Set("annotations", securityGroup.Annotations); err != nil {
-		return diag.FromErr(err)
-	}
+	_ = d.Set("name", securityGroup.Name)
+	_ = d.Set("description", securityGroup.Description)
+	_ = d.Set("labels", securityGroup.Labels)
+	_ = d.Set("annotations", securityGroup.Annotations)
 	if securityGroup.Vpc != nil {
-		if err := d.Set("vpc_id", securityGroup.Vpc.Identity); err != nil {
-			return diag.FromErr(err)
-		}
+		_ = d.Set("vpc_id", securityGroup.Vpc.Identity)
 	}
-	if err := d.Set("allow_same_group_traffic", securityGroup.AllowSameGroupTraffic); err != nil {
-		return diag.FromErr(err)
-	}
+	_ = d.Set("allow_same_group_traffic", securityGroup.AllowSameGroupTraffic)
 	if _, ok := d.GetOk("ingress_rule"); ok {
-		if err := d.Set("ingress_rule", flattenSecurityGroupRules(securityGroup.IngressRules)); err != nil {
-			return diag.FromErr(err)
-		}
+		_ = d.Set("ingress_rule", flattenSecurityGroupRules(securityGroup.IngressRules))
 	}
 
 	if _, ok := d.GetOk("egress_rule"); ok {
-		if err := d.Set("egress_rule", flattenSecurityGroupRules(securityGroup.EgressRules)); err != nil {
-			return diag.FromErr(err)
-		}
+		_ = d.Set("egress_rule", flattenSecurityGroupRules(securityGroup.EgressRules))
 	}
 
-	if err := d.Set("identity", securityGroup.Identity); err != nil {
-		return diag.FromErr(err)
-	}
-	if err := d.Set("created_at", securityGroup.CreatedAt.Format(time.RFC3339)); err != nil {
-		return diag.FromErr(err)
-	}
-	if err := d.Set("updated_at", securityGroup.UpdatedAt.Format(time.RFC3339)); err != nil {
-		return diag.FromErr(err)
-	}
-	if err := d.Set("status", securityGroup.Status); err != nil {
-		return diag.FromErr(err)
-	}
+	_ = d.Set("identity", securityGroup.Identity)
+	_ = d.Set("created_at", securityGroup.CreatedAt.Format(time.RFC3339))
+	_ = d.Set("updated_at", securityGroup.UpdatedAt.Format(time.RFC3339))
+	_ = d.Set("status", securityGroup.Status)
 
 	return nil
 }

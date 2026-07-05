@@ -172,33 +172,33 @@ func dataSourceSnapshotPolicyRead(ctx context.Context, d *schema.ResourceData, m
 
 	// Set the ID and other attributes
 	d.SetId(policy.Identity)
-	d.Set("id", policy.Identity)
-	d.Set("name", policy.Name)
-	d.Set("slug", policy.Slug)
-	d.Set("description", policy.Description)
-	d.Set("enabled", policy.Enabled)
-	d.Set("schedule", policy.Schedule)
-	d.Set("timezone", policy.Timezone)
-	d.Set("labels", policy.Labels)
-	d.Set("annotations", policy.Annotations)
+	_ = d.Set("id", policy.Identity)
+	_ = d.Set("name", policy.Name)
+	_ = d.Set("slug", policy.Slug)
+	_ = d.Set("description", policy.Description)
+	_ = d.Set("enabled", policy.Enabled)
+	_ = d.Set("schedule", policy.Schedule)
+	_ = d.Set("timezone", policy.Timezone)
+	_ = d.Set("labels", policy.Labels)
+	_ = d.Set("annotations", policy.Annotations)
 
 	// Convert TTL duration to string
-	d.Set("ttl", policy.Ttl.String())
+	_ = d.Set("ttl", policy.Ttl.String())
 
 	if policy.KeepCount != nil {
-		d.Set("keep_count", *policy.KeepCount)
+		_ = d.Set("keep_count", *policy.KeepCount)
 	}
 
 	if policy.Region != nil {
-		d.Set("region", policy.Region.Identity)
+		_ = d.Set("region", policy.Region.Identity)
 	}
 
 	if policy.NextSnapshotAt != nil {
-		d.Set("next_snapshot_at", policy.NextSnapshotAt.Format("2006-01-02T15:04:05Z07:00"))
+		_ = d.Set("next_snapshot_at", policy.NextSnapshotAt.Format("2006-01-02T15:04:05Z07:00"))
 	}
 
 	if policy.LastSnapshotAt != nil {
-		d.Set("last_snapshot_at", policy.LastSnapshotAt.Format("2006-01-02T15:04:05Z07:00"))
+		_ = d.Set("last_snapshot_at", policy.LastSnapshotAt.Format("2006-01-02T15:04:05Z07:00"))
 	}
 
 	// Set target
@@ -215,7 +215,7 @@ func dataSourceSnapshotPolicyRead(ctx context.Context, d *schema.ResourceData, m
 		target["volume_identities"] = policy.Target.VolumeIdentities
 	}
 
-	d.Set("target", []any{target})
+	_ = d.Set("target", []any{target})
 
 	return nil
 }

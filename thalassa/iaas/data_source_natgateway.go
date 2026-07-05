@@ -209,29 +209,29 @@ func dataSourceNatGatewayRead(ctx context.Context, d *schema.ResourceData, m any
 
 	// Set the resource data
 	d.SetId(natGateway.Identity)
-	d.Set("id", natGateway.Identity)
-	d.Set("name", natGateway.Name)
-	d.Set("slug", natGateway.Slug)
-	d.Set("description", natGateway.Description)
-	d.Set("endpoint_ip", natGateway.EndpointIP)
-	d.Set("status", natGateway.Status)
-	d.Set("v4_ip", natGateway.V4IP)
-	d.Set("v6_ip", natGateway.V6IP)
-	d.Set("labels", natGateway.Labels)
-	d.Set("annotations", natGateway.Annotations)
-	d.Set("created_at", natGateway.CreatedAt.Format(time.RFC3339))
+	_ = d.Set("id", natGateway.Identity)
+	_ = d.Set("name", natGateway.Name)
+	_ = d.Set("slug", natGateway.Slug)
+	_ = d.Set("description", natGateway.Description)
+	_ = d.Set("endpoint_ip", natGateway.EndpointIP)
+	_ = d.Set("status", natGateway.Status)
+	_ = d.Set("v4_ip", natGateway.V4IP)
+	_ = d.Set("v6_ip", natGateway.V6IP)
+	_ = d.Set("labels", natGateway.Labels)
+	_ = d.Set("annotations", natGateway.Annotations)
+	_ = d.Set("created_at", natGateway.CreatedAt.Format(time.RFC3339))
 	if !natGateway.UpdatedAt.IsZero() {
-		d.Set("updated_at", natGateway.UpdatedAt.Format(time.RFC3339))
+		_ = d.Set("updated_at", natGateway.UpdatedAt.Format(time.RFC3339))
 	}
 
 	// Set VPC information
 	if natGateway.Vpc != nil {
-		d.Set("vpc_id", natGateway.Vpc.Identity)
+		_ = d.Set("vpc_id", natGateway.Vpc.Identity)
 	}
 
 	// Set subnet information
 	if natGateway.Subnet != nil {
-		d.Set("subnet_id", natGateway.Subnet.Identity)
+		_ = d.Set("subnet_id", natGateway.Subnet.Identity)
 	}
 	// Set security group attachments
 	if len(natGateway.SecurityGroups) > 0 {
@@ -239,7 +239,7 @@ func dataSourceNatGatewayRead(ctx context.Context, d *schema.ResourceData, m any
 		for i, sg := range natGateway.SecurityGroups {
 			securityGroupIDs[i] = sg.Identity
 		}
-		d.Set("security_group_attachments", securityGroupIDs)
+		_ = d.Set("security_group_attachments", securityGroupIDs)
 	}
 
 	return nil

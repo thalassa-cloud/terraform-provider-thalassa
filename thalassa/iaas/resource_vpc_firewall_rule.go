@@ -330,27 +330,27 @@ func resourceVpcFirewallRuleDelete(ctx context.Context, d *schema.ResourceData, 
 
 func setVpcFirewallRuleData(d *schema.ResourceData, rule *iaas.VpcFirewallRule) diag.Diagnostics {
 	d.SetId(rule.Identity)
-	d.Set("name", rule.Name)
-	d.Set("action", rule.Action)
-	d.Set("priority", rule.Priority)
-	d.Set("direction", rule.Direction)
-	d.Set("state", rule.State)
-	d.Set("created_at", rule.CreatedAt.Format("2006-01-02T15:04:05Z07:00"))
+	_ = d.Set("name", rule.Name)
+	_ = d.Set("action", rule.Action)
+	_ = d.Set("priority", rule.Priority)
+	_ = d.Set("direction", rule.Direction)
+	_ = d.Set("state", rule.State)
+	_ = d.Set("created_at", rule.CreatedAt.Format("2006-01-02T15:04:05Z07:00"))
 
 	if rule.Source != nil {
-		d.Set("source", *rule.Source)
+		_ = d.Set("source", *rule.Source)
 	}
 	if rule.Destination != nil {
-		d.Set("destination", *rule.Destination)
+		_ = d.Set("destination", *rule.Destination)
 	}
 	if rule.SourceSubnet != nil {
-		d.Set("source_subnet_id", rule.SourceSubnet.Identity)
+		_ = d.Set("source_subnet_id", rule.SourceSubnet.Identity)
 	}
 	if rule.DestinationSubnet != nil {
-		d.Set("destination_subnet_id", rule.DestinationSubnet.Identity)
+		_ = d.Set("destination_subnet_id", rule.DestinationSubnet.Identity)
 	}
 	if rule.Interface != nil {
-		d.Set("interface_id", rule.Interface.Identity)
+		_ = d.Set("interface_id", rule.Interface.Identity)
 	}
 
 	// Set protocols
@@ -362,7 +362,7 @@ func setVpcFirewallRuleData(d *schema.ResourceData, rule *iaas.VpcFirewallRule) 
 			"any":  rule.Protocols.Any,
 		},
 	}
-	d.Set("protocols", protocols)
+	_ = d.Set("protocols", protocols)
 
 	// Set source ports
 	if rule.SourcePorts != nil {
@@ -370,7 +370,7 @@ func setVpcFirewallRuleData(d *schema.ResourceData, rule *iaas.VpcFirewallRule) 
 		for i, port := range rule.SourcePorts {
 			sourcePorts[i] = int(port)
 		}
-		d.Set("source_ports", sourcePorts)
+		_ = d.Set("source_ports", sourcePorts)
 	}
 
 	// Set destination ports
@@ -379,7 +379,7 @@ func setVpcFirewallRuleData(d *schema.ResourceData, rule *iaas.VpcFirewallRule) 
 		for i, port := range rule.DestinationPorts {
 			destinationPorts[i] = int(port)
 		}
-		d.Set("destination_ports", destinationPorts)
+		_ = d.Set("destination_ports", destinationPorts)
 	}
 
 	return nil

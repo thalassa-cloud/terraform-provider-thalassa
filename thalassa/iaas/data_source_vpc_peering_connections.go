@@ -254,7 +254,7 @@ func dataSourceVpcPeeringConnectionsRead(ctx context.Context, d *schema.Resource
 	}
 
 	d.SetId(fmt.Sprintf("vpc-peering-connections-%d", len(connections)))
-	d.Set("peering_connections", connections)
+	_ = d.Set("peering_connections", connections)
 
 	return nil
 }

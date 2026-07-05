@@ -86,8 +86,8 @@ func resourceTargetGroupAttachmentCreate(ctx context.Context, d *schema.Resource
 	}
 	if attachResponse != nil {
 		d.SetId(createTargetGroupAttachmentID(vmiID, targetGroupID))
-		d.Set("target_group_id", targetGroupID)
-		d.Set("vmi_id", vmiID)
+		_ = d.Set("target_group_id", targetGroupID)
+		_ = d.Set("vmi_id", vmiID)
 	}
 	return resourceTargetGroupAttachmentRead(ctx, d, m)
 }
@@ -122,7 +122,7 @@ func resourceTargetGroupAttachmentRead(ctx context.Context, d *schema.ResourceDa
 		for _, att := range tg.LoadbalancerTargetGroupAttachments {
 			if vmiID != "" && att.VirtualMachineInstance != nil && att.VirtualMachineInstance.Identity == vmiID {
 				found = true
-				d.Set("vmi_id", att.VirtualMachineInstance.Identity)
+				_ = d.Set("vmi_id", att.VirtualMachineInstance.Identity)
 				break
 			}
 		}
@@ -134,8 +134,8 @@ func resourceTargetGroupAttachmentRead(ctx context.Context, d *schema.ResourceDa
 	}
 
 	d.SetId(createTargetGroupAttachmentID(vmiID, targetGroupID))
-	d.Set("target_group_id", targetGroupID)
-	d.Set("vmi_id", vmiID)
+	_ = d.Set("target_group_id", targetGroupID)
+	_ = d.Set("vmi_id", vmiID)
 
 	return nil
 }

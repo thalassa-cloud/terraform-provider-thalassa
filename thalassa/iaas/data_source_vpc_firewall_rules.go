@@ -210,7 +210,7 @@ func dataSourceVpcFirewallRulesRead(ctx context.Context, d *schema.ResourceData,
 	}
 
 	d.SetId(fmt.Sprintf("vpc-%s-firewall-rules", vpcIdentity))
-	d.Set("firewall_rules", rules)
+	_ = d.Set("firewall_rules", rules)
 
 	return nil
 }

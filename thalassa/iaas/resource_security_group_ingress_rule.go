@@ -16,7 +16,10 @@ import (
 
 func resourceSecurityGroupIngressRule() *schema.Resource {
 	return &schema.Resource{
-		Description:   "Manages ingress rules for a security group using the batch API. This resource replaces all ingress rules for the security group. This is an optional alternative to managing rules through the thalassa_security_group resource. Warning: Do not use both this resource and ingress_rule in thalassa_security_group for the same security group, as this will cause conflicts.",
+		Description: "Manages ingress rules for a security group using the batch API. " +
+			"This resource replaces all ingress rules for the security group and is an optional alternative " +
+			"to managing rules through thalassa_security_group. " +
+			"Do not use both resources for the same security group.",
 		CreateContext: resourceSecurityGroupIngressRuleCreate,
 		ReadContext:   resourceSecurityGroupIngressRuleRead,
 		UpdateContext: resourceSecurityGroupIngressRuleUpdate,
@@ -123,10 +126,13 @@ func resourceSecurityGroupIngressRuleCreate(ctx context.Context, d *schema.Resou
 	// Warn if the security group already has ingress rules, as this might indicate
 	// that rules are being managed by the security group resource
 	if len(securityGroup.IngressRules) > 0 {
-		tflog.Warn(ctx, "Security group already has ingress rules. Ensure you're not managing rules through both thalassa_security_group and thalassa_security_group_ingress_rule resources for the same security group, as this will cause conflicts.", map[string]any{
-			"security_group_id": securityGroupID,
-			"existing_rules":    len(securityGroup.IngressRules),
-		})
+		tflog.Warn(ctx,
+			"Security group already has ingress rules. Avoid managing rules through both "+
+				"thalassa_security_group and thalassa_security_group_ingress_rule for the same security group.",
+			map[string]any{
+				"security_group_id": securityGroupID,
+				"existing_rules":    len(securityGroup.IngressRules),
+			})
 	}
 
 	var rules []iaas.SecurityGroupRule
@@ -165,13 +171,9 @@ func resourceSecurityGroupIngressRuleRead(ctx context.Context, d *schema.Resourc
 		return diag.FromErr(fmt.Errorf("error getting security group: %w", err))
 	}
 
-	if err := d.Set("security_group_id", securityGroupID); err != nil {
-		return diag.FromErr(err)
-	}
+	_ = d.Set("security_group_id", securityGroupID)
 
-	if err := d.Set("rule", flattenSecurityGroupRules(securityGroup.IngressRules)); err != nil {
-		return diag.FromErr(err)
-	}
+	_ = d.Set("rule", flattenSecurityGroupRules(securityGroup.IngressRules))
 
 	return nil
 }

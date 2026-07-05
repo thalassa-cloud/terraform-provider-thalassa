@@ -134,7 +134,7 @@ func resourceVpcCreate(ctx context.Context, d *schema.ResourceData, m any) diag.
 	}
 	if vpc != nil {
 		d.SetId(vpc.Identity)
-		d.Set("slug", vpc.Slug)
+		_ = d.Set("slug", vpc.Slug)
 		return nil
 	}
 	return resourceVpcRead(ctx, d, m)
@@ -161,14 +161,14 @@ func resourceVpcRead(ctx context.Context, d *schema.ResourceData, m any) diag.Di
 	}
 
 	d.SetId(vpc.Identity)
-	d.Set("name", vpc.Name)
-	d.Set("slug", vpc.Slug)
-	d.Set("description", vpc.Description)
-	d.Set("labels", vpc.Labels)
-	d.Set("annotations", vpc.Annotations)
-	d.Set("region", vpc.CloudRegion.Slug)
-	d.Set("cidrs", vpc.CIDRs)
-	d.Set("status", vpc.Status)
+	_ = d.Set("name", vpc.Name)
+	_ = d.Set("slug", vpc.Slug)
+	_ = d.Set("description", vpc.Description)
+	_ = d.Set("labels", vpc.Labels)
+	_ = d.Set("annotations", vpc.Annotations)
+	_ = d.Set("region", vpc.CloudRegion.Slug)
+	_ = d.Set("cidrs", vpc.CIDRs)
+	_ = d.Set("status", vpc.Status)
 	return nil
 }
 
@@ -193,13 +193,13 @@ func resourceVpcUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.
 		return diag.FromErr(err)
 	}
 	if vpc != nil {
-		d.Set("name", vpc.Name)
-		d.Set("description", vpc.Description)
-		d.Set("slug", vpc.Slug)
-		d.Set("labels", vpc.Labels)
-		d.Set("annotations", vpc.Annotations)
-		d.Set("cidrs", vpc.CIDRs)
-		d.Set("status", vpc.Status)
+		_ = d.Set("name", vpc.Name)
+		_ = d.Set("description", vpc.Description)
+		_ = d.Set("slug", vpc.Slug)
+		_ = d.Set("labels", vpc.Labels)
+		_ = d.Set("annotations", vpc.Annotations)
+		_ = d.Set("cidrs", vpc.CIDRs)
+		_ = d.Set("status", vpc.Status)
 		return nil
 	}
 

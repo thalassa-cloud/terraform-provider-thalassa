@@ -208,8 +208,8 @@ func resourceBlockVolumeAttachmentRead(ctx context.Context, d *schema.ResourceDa
 		for _, att := range volume.Attachments {
 			if att.AttachedToResourceType == ResourceVolumeAttachmentVirtualMachine && att.AttachedToIdentity == vmiID {
 				found = true
-				d.Set("serial", att.Serial)
-				d.Set("description", att.Description)
+				_ = d.Set("serial", att.Serial)
+				_ = d.Set("description", att.Description)
 				break
 			}
 		}
@@ -220,8 +220,8 @@ func resourceBlockVolumeAttachmentRead(ctx context.Context, d *schema.ResourceDa
 		return nil
 	}
 
-	d.Set("volume_id", volumeID)
-	d.Set("vmi_id", vmiID)
+	_ = d.Set("volume_id", volumeID)
+	_ = d.Set("vmi_id", vmiID)
 
 	return nil
 }

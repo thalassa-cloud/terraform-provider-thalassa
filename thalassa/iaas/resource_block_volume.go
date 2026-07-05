@@ -178,8 +178,8 @@ func resourceBlockVolumeCreate(ctx context.Context, d *schema.ResourceData, m an
 
 	if blockVolume != nil {
 		d.SetId(blockVolume.Identity)
-		d.Set("slug", blockVolume.Slug)
-		d.Set("status", blockVolume.Status)
+		_ = d.Set("slug", blockVolume.Slug)
+		_ = d.Set("status", blockVolume.Status)
 	}
 
 	if d.Get("wait_until_ready").(bool) {
@@ -220,13 +220,13 @@ func resourceBlockVolumeRead(ctx context.Context, d *schema.ResourceData, m any)
 	}
 
 	d.SetId(blockVolume.Identity)
-	d.Set("name", blockVolume.Name)
-	d.Set("slug", blockVolume.Slug)
-	d.Set("description", blockVolume.Description)
-	d.Set("labels", blockVolume.Labels)
-	d.Set("annotations", blockVolume.Annotations)
-	d.Set("status", blockVolume.Status)
-	d.Set("size_gb", blockVolume.Size)
+	_ = d.Set("name", blockVolume.Name)
+	_ = d.Set("slug", blockVolume.Slug)
+	_ = d.Set("description", blockVolume.Description)
+	_ = d.Set("labels", blockVolume.Labels)
+	_ = d.Set("annotations", blockVolume.Annotations)
+	_ = d.Set("status", blockVolume.Status)
+	_ = d.Set("size_gb", blockVolume.Size)
 
 	if blockVolume.VolumeType != nil {
 		convert.SetReferenceField(d, "volume_type", blockVolume.VolumeType.Identity, "", blockVolume.VolumeType.Name)
@@ -237,13 +237,13 @@ func resourceBlockVolumeRead(ctx context.Context, d *schema.ResourceData, m any)
 
 		switch currentRegion {
 		case "":
-			d.Set("region", blockVolume.Region.Slug)
+			_ = d.Set("region", blockVolume.Region.Slug)
 		case blockVolume.Region.Slug:
-			d.Set("region", blockVolume.Region.Slug)
+			_ = d.Set("region", blockVolume.Region.Slug)
 		case blockVolume.Region.Identity:
-			d.Set("region", blockVolume.Region.Identity)
+			_ = d.Set("region", blockVolume.Region.Identity)
 		default:
-			d.Set("region", blockVolume.Region.Slug)
+			_ = d.Set("region", blockVolume.Region.Slug)
 		}
 	}
 
@@ -269,16 +269,16 @@ func resourceBlockVolumeUpdate(ctx context.Context, d *schema.ResourceData, m an
 		return diag.FromErr(fmt.Errorf("failed to update block volume: %w", err))
 	}
 	if blockVolume != nil {
-		d.Set("name", blockVolume.Name)
-		d.Set("description", blockVolume.Description)
-		d.Set("slug", blockVolume.Slug)
-		d.Set("status", blockVolume.Status)
-		d.Set("labels", blockVolume.Labels)
-		d.Set("annotations", blockVolume.Annotations)
+		_ = d.Set("name", blockVolume.Name)
+		_ = d.Set("description", blockVolume.Description)
+		_ = d.Set("slug", blockVolume.Slug)
+		_ = d.Set("status", blockVolume.Status)
+		_ = d.Set("labels", blockVolume.Labels)
+		_ = d.Set("annotations", blockVolume.Annotations)
 		if blockVolume.VolumeType != nil {
 			convert.SetReferenceField(d, "volume_type", blockVolume.VolumeType.Identity, "", blockVolume.VolumeType.Name)
 		}
-		d.Set("size_gb", blockVolume.Size)
+		_ = d.Set("size_gb", blockVolume.Size)
 		return nil
 	}
 
