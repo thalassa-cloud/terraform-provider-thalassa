@@ -50,9 +50,10 @@ func resourceBucket() *schema.Resource {
 				ForceNew:    true,
 			},
 			"policy": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "The bucket policy as a JSON string",
+				Type:             schema.TypeString,
+				Optional:         true,
+				Description:      "The bucket policy as a JSON string",
+				DiffSuppressFunc: suppressEquivalentPolicy,
 			},
 			"status": {
 				Type:        schema.TypeString,
@@ -124,11 +125,11 @@ func resourceBucketCreate(ctx context.Context, d *schema.ResourceData, m any) di
 
 	var policyDoc *objectstorage.PolicyDocument
 	if v, ok := d.GetOk("policy"); ok && v.(string) != "" {
-		var doc objectstorage.PolicyDocument
-		if err := json.Unmarshal([]byte(v.(string)), &doc); err != nil {
-			return diag.FromErr(fmt.Errorf("invalid policy JSON: %w", err))
+		doc, err := parseBucketPolicyJSON(v.(string))
+		if err != nil {
+			return diag.FromErr(err)
 		}
-		policyDoc = &doc
+		policyDoc = doc
 	}
 
 	var bucketVersioning objectstorage.ObjectStorageBucketVersioning
@@ -148,7 +149,7 @@ func resourceBucketCreate(ctx context.Context, d *schema.ResourceData, m any) di
 
 	bucket, err := client.ObjectStorage().CreateBucket(ctx, createReq)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("error creating bucket: %w", err))
+		return diag.FromErr(enrichBucketError(err, "create"))
 	}
 	d.SetId(bucket.Identity)
 
@@ -209,7 +210,11 @@ func resourceBucketRead(ctx context.Context, d *schema.ResourceData, m any) diag
 			_ = d.Set("region", bucket.Region.Slug)
 		}
 	}
-	_ = d.Set("policy", bucket.Policy)
+	policyStr := policyDocumentToString(bucket.Policy)
+	if configured, ok := d.GetOk("policy"); ok {
+		policyStr = bucketPolicyStateValue(configured.(string), policyStr)
+	}
+	_ = d.Set("policy", policyStr)
 	_ = d.Set("versioning", bucket.Versioning == objectstorage.ObjectStorageBucketVersioningEnabled)
 	_ = d.Set("object_lock_enabled", bucket.ObjectLockEnabled)
 
@@ -235,11 +240,11 @@ func resourceBucketUpdate(ctx context.Context, d *schema.ResourceData, m any) di
 	updateReq := objectstorage.UpdateBucketRequest{}
 	if d.HasChange("policy") {
 		if v, ok := d.GetOk("policy"); ok && v.(string) != "" {
-			var doc objectstorage.PolicyDocument
-			if err := json.Unmarshal([]byte(v.(string)), &doc); err != nil {
-				return diag.FromErr(fmt.Errorf("invalid policy JSON: %w", err))
+			doc, err := parseBucketPolicyJSON(v.(string))
+			if err != nil {
+				return diag.FromErr(err)
 			}
-			updateReq.PolicyDocument = &doc
+			updateReq.PolicyDocument = doc
 		}
 	}
 
@@ -262,7 +267,7 @@ func resourceBucketUpdate(ctx context.Context, d *schema.ResourceData, m any) di
 
 	_, err = client.ObjectStorage().UpdateBucket(ctx, name, updateReq)
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.FromErr(enrichBucketError(err, "update"))
 	}
 	return resourceBucketRead(ctx, d, m)
 }
@@ -304,4 +309,17 @@ func resourceBucketDelete(ctx context.Context, d *schema.ResourceData, m any) di
 
 	d.SetId("")
 	return nil
+}
+
+func policyDocumentToString(doc objectstorage.PolicyDocument) string {
+	if doc.Version == "" && len(doc.Statement) == 0 {
+		return ""
+	}
+
+	policyJSON, err := json.Marshal(doc)
+	if err != nil {
+		return ""
+	}
+
+	return string(policyJSON)
 }

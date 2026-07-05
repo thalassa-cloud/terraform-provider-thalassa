@@ -57,3 +57,7 @@ func testAccRegion() string {
 func testAccBucketName(prefix string) string {
 	return strings.ToLower(strings.ReplaceAll(prefix, "_", "-"))
 }
+
+func testAccOrganisationID() string {
+	return os.Getenv("THALASSA_ORGANISATION")
+}

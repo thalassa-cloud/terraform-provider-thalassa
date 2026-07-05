@@ -2,6 +2,7 @@ package objectstorage_test
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
@@ -25,6 +26,32 @@ func TestAccBucket_basic(t *testing.T) {
 					resource.TestCheckResourceAttrSet("thalassa_objectstorage_bucket.test", "id"),
 					resource.TestCheckResourceAttrSet("thalassa_objectstorage_bucket.test", "status"),
 					resource.TestCheckResourceAttrSet("thalassa_objectstorage_bucket.test", "endpoint"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccBucket_withPolicy(t *testing.T) {
+	bucketName := testAccBucketName(acctest.RandomWithPrefix("tf-acc-bucket"))
+	region := testAccRegion()
+	orgID := testAccOrganisationID()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccBucketConfigWithPolicy(bucketName, region, orgID, "tf-acc-policy-v1"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr("thalassa_objectstorage_bucket.test", "policy", regexp.MustCompile(`tf-acc-policy-v1`)),
+					resource.TestMatchResourceAttr("thalassa_objectstorage_bucket.test", "policy", regexp.MustCompile(`2012-10-17`)),
+				),
+			},
+			{
+				Config: testAccBucketConfigWithPolicy(bucketName, region, orgID, "tf-acc-policy-v2"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr("thalassa_objectstorage_bucket.test", "policy", regexp.MustCompile(`tf-acc-policy-v2`)),
 				),
 			},
 		},
@@ -106,6 +133,41 @@ resource "thalassa_objectstorage_bucket" "test" {
   wait_for_deleted = true
 }
 `, testAccProviderBlock(), name, region, versioning)
+}
+
+func testAccBucketConfigWithPolicy(name, region, orgID, sid string) string {
+	return fmt.Sprintf(`
+%s
+
+resource "thalassa_iam_service_account" "policy" {
+  name = "tf-acc-bucket-pol"
+}
+
+resource "thalassa_objectstorage_bucket" "test" {
+  name             = %q
+  region           = %q
+  wait_for_ready   = true
+  wait_for_deleted = true
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Sid    = %q
+      Effect = "Allow"
+      Action = ["s3:ListBucket"]
+      Resource = [
+        "arn:thalassa:s3:::%s",
+        "arn:thalassa:s3:::%s/*",
+      ]
+      Principal = {
+        Thalassa = [
+          "arn:thalassa:iam:::serviceaccount/%s:${thalassa_iam_service_account.policy.id}",
+        ]
+      }
+    }]
+  })
+}
+`, testAccProviderBlock(), name, region, sid, name, name, orgID)
 }
 
 func testAccBucketDataSourceConfig(name, region string) string {

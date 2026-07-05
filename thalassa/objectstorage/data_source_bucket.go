@@ -102,8 +102,7 @@ func dataSourceBucketRead(ctx context.Context, d *schema.ResourceData, m any) di
 		_ = d.Set("region", bucketRegionStateValue(bucket.Region))
 	}
 
-	// Set policy as JSON string if available
-	_ = d.Set("policy", bucket.Policy)
+	_ = d.Set("policy", policyDocumentToString(bucket.Policy))
 
 	return diag.Diagnostics{}
 }
