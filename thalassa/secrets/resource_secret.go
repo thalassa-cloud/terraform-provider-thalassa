@@ -195,6 +195,11 @@ func resourceSecretRead(ctx context.Context, d *schema.ResourceData, m any) diag
 	}
 
 	_ = setSecretState(d, secret, region)
+	if secret.KmsKey == nil || secret.KmsKey.Identity == "" {
+		if configured := d.Get("kms_key_id").(string); configured != "" {
+			_ = d.Set("kms_key_id", configured)
+		}
+	}
 
 	return nil
 }

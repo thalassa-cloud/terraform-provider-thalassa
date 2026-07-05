@@ -1,11 +1,13 @@
 package secrets
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"strings"
 	"time"
 
+	tcclient "github.com/thalassa-cloud/client-go/pkg/client"
 	tcsecrets "github.com/thalassa-cloud/client-go/secrets"
 )
 
@@ -63,6 +65,9 @@ func setSecretState(d interface {
 	_ = d.Set("labels", secret.Labels)
 	_ = d.Set("annotations", secret.Annotations)
 	_ = d.Set("current_version", secret.CurrentVersion)
+	if secret.KmsKey != nil && secret.KmsKey.Identity != "" {
+		_ = d.Set("kms_key_id", secret.KmsKey.Identity)
+	}
 	if !secret.CreatedAt.IsZero() {
 		_ = d.Set("created_at", secret.CreatedAt.Format(timeFormatRFC3339))
 	}
@@ -82,6 +87,8 @@ func expandGenerateSecret(raw []any) *tcsecrets.GenerateSecret {
 	block := raw[0].(map[string]any)
 	gen := &tcsecrets.GenerateSecret{}
 	if v, ok := block["byte_length"].(int); ok && v > 0 {
+		gen.ByteLength = v
+	} else if v, ok := block["length"].(int); ok && v > 0 {
 		gen.ByteLength = v
 	}
 	return gen
@@ -135,4 +142,24 @@ func flattenAccessPolicyStatements(statements []tcsecrets.SecretPolicyStatement)
 		})
 	}
 	return result
+}
+
+func secretVersionExists(ctx context.Context, client interface {
+	GetSecretValue(context.Context, string, string, *int) (*tcsecrets.GetSecretValueResponse, error)
+}, region, path string, version int, secret *tcsecrets.Secret) (bool, error) {
+	for _, v := range secret.Versions {
+		if v.Version == version {
+			return true, nil
+		}
+	}
+
+	_, err := client.GetSecretValue(ctx, region, path, &version)
+	if err == nil {
+		return true, nil
+	}
+	if tcclient.IsNotFound(err) {
+		return false, nil
+	}
+
+	return false, err
 }

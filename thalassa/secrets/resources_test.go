@@ -3,7 +3,11 @@ package secrets
 import (
 	"testing"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/stretchr/testify/assert"
+
+	tckms "github.com/thalassa-cloud/client-go/kms"
+	tcsecrets "github.com/thalassa-cloud/client-go/secrets"
 )
 
 func TestResourceSecret(t *testing.T) {
@@ -20,6 +24,7 @@ func TestResourceSecret(t *testing.T) {
 func TestResourceSecretVersion(t *testing.T) {
 	resource := ResourceSecretVersion()
 	assert.True(t, resource.Schema["secret_string"].Sensitive)
+	assert.NotNil(t, resource.Schema["generate_secret"].Elem.(*schema.Resource).Schema["byte_length"])
 	assert.NotNil(t, resource.DeleteContext)
 }
 
@@ -67,4 +72,16 @@ func TestValidateSecretPath(t *testing.T) {
 
 	_, errs = validateSecretPath("app/prod", "path")
 	assert.NotEmpty(t, errs)
+}
+
+func TestSetSecretStateKmsKey(t *testing.T) {
+	d := schema.TestResourceDataRaw(t, ResourceSecret().Schema, map[string]any{})
+	secret := &tcsecrets.Secret{
+		Path: "/app/prod/db/password",
+		KmsKey: &tckms.KmsKey{Identity: "kms-abc123"},
+	}
+
+	err := setSecretState(d, secret, "nl-01")
+	assert.NoError(t, err)
+	assert.Equal(t, "kms-abc123", d.Get("kms_key_id"))
 }

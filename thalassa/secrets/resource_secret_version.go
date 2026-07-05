@@ -74,13 +74,10 @@ func ResourceSecretVersion() *schema.Resource {
 				ConflictsWith: []string{"secret_string", "secret_key_values"},
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"length": {
-							Type:     schema.TypeInt,
-							Optional: true,
-						},
-						"character_set": {
-							Type:     schema.TypeString,
-							Optional: true,
+						"byte_length": {
+							Type:        schema.TypeInt,
+							Optional:    true,
+							Description: "Byte length of the generated secret.",
 						},
 					},
 				},
@@ -155,12 +152,9 @@ func resourceSecretVersionRead(ctx context.Context, d *schema.ResourceData, m an
 		return diag.FromErr(fmt.Errorf("reading secret metadata: %w", err))
 	}
 
-	found := false
-	for _, v := range secret.Versions {
-		if v.Version == version {
-			found = true
-			break
-		}
+	found, err := secretVersionExists(ctx, client.Secrets(), region, path, version, secret)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("verifying secret version: %w", err))
 	}
 	if !found {
 		d.SetId("")

@@ -78,6 +78,23 @@ func resourceSecretAccessPolicyCreate(ctx context.Context, d *schema.ResourceDat
 	return resourceSecretAccessPolicyUpdate(ctx, d, m)
 }
 
+func setSecretAccessPolicyState(d *schema.ResourceData, region, path string, secret *tcsecrets.Secret) {
+	_ = d.Set("region", region)
+	_ = d.Set("path", path)
+
+	if secret != nil && secret.AccessPolicy != nil && len(secret.AccessPolicy.Statements) > 0 {
+		_ = d.Set("statement", flattenAccessPolicyStatements(secret.AccessPolicy.Statements))
+		return
+	}
+
+	if configured, ok := d.GetOk("statement"); ok && len(configured.([]any)) > 0 {
+		_ = d.Set("statement", configured)
+		return
+	}
+
+	_ = d.Set("statement", []map[string]any{})
+}
+
 func resourceSecretAccessPolicyRead(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
@@ -100,10 +117,7 @@ func resourceSecretAccessPolicyRead(ctx context.Context, d *schema.ResourceData,
 
 	_ = d.Set("region", region)
 	_ = d.Set("path", path)
-
-	if secret.AccessPolicy != nil {
-		_ = d.Set("statement", flattenAccessPolicyStatements(secret.AccessPolicy.Statements))
-	}
+	setSecretAccessPolicyState(d, region, path, secret)
 
 	return nil
 }
@@ -118,7 +132,7 @@ func resourceSecretAccessPolicyUpdate(ctx context.Context, d *schema.ResourceDat
 	path := d.Get("path").(string)
 
 	statements := expandAccessPolicyStatements(d.Get("statement").([]any))
-	_, err = client.Secrets().UpdateAccessPolicy(ctx, region, path, tcsecrets.UpdateAccessPolicyRequest{
+	secret, err := client.Secrets().UpdateAccessPolicy(ctx, region, path, tcsecrets.UpdateAccessPolicyRequest{
 		AccessPolicy: tcsecrets.SecretPolicy{Statements: statements},
 	})
 	if err != nil {
@@ -126,7 +140,9 @@ func resourceSecretAccessPolicyUpdate(ctx context.Context, d *schema.ResourceDat
 	}
 
 	d.SetId(secretID(region, path))
-	return resourceSecretAccessPolicyRead(ctx, d, m)
+	setSecretAccessPolicyState(d, region, path, secret)
+
+	return nil
 }
 
 func resourceSecretAccessPolicyDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
