@@ -30,8 +30,8 @@ func decodeBucketLifecycleResponse(body []byte) (*objectstorage.BucketLifecycle,
 	}
 
 	var payload struct {
-		Lifecycle *objectstorage.BucketLifecycle           `json:"lifecycle"`
-		Rules     []objectstorage.BucketLifecycleRule      `json:"rules"`
+		Lifecycle *objectstorage.BucketLifecycle      `json:"lifecycle"`
+		Rules     []objectstorage.BucketLifecycleRule `json:"rules"`
 	}
 	if err := json.Unmarshal(body, &payload); err != nil {
 		return nil, fmt.Errorf("decoding bucket lifecycle: %w", err)

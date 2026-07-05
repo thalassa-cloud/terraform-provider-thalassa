@@ -40,10 +40,10 @@ func TestDataSourceKmsSummary(t *testing.T) {
 
 func TestParseKmsKeyImportID(t *testing.T) {
 	tests := []struct {
-		name           string
-		id             string
-		wantRegion     string
-		wantIdentity   string
+		name         string
+		id           string
+		wantRegion   string
+		wantIdentity string
 	}{
 		{
 			name:         "composite id",

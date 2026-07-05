@@ -77,7 +77,7 @@ func TestValidateSecretPath(t *testing.T) {
 func TestSetSecretStateKmsKey(t *testing.T) {
 	d := schema.TestResourceDataRaw(t, ResourceSecret().Schema, map[string]any{})
 	secret := &tcsecrets.Secret{
-		Path: "/app/prod/db/password",
+		Path:   "/app/prod/db/password",
 		KmsKey: &tckms.KmsKey{Identity: "kms-abc123"},
 	}
 

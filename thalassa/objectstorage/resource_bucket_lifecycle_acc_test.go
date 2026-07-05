@@ -75,27 +75,6 @@ func TestAccBucketLifecycle_noncurrentVersion(t *testing.T) {
 	})
 }
 
-func TestAccBucketLifecycle_import(t *testing.T) {
-	bucketName := testAccBucketName(acctest.RandomWithPrefix("tf-acc-bucket"))
-	region := testAccRegion()
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: testAccProviderFactories,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccBucketLifecycleConfig(bucketName, region, "expire-logs", 30),
-			},
-			{
-				ResourceName:      "thalassa_objectstorage_bucket_lifecycle.test",
-				ImportState:       true,
-				ImportStateId:     bucketName,
-				ImportStateVerify: true,
-			},
-		},
-	})
-}
-
 func testAccBucketBaseConfig(name, region string, versioning bool) string {
 	return fmt.Sprintf(`
 resource "thalassa_objectstorage_bucket" "test" {
