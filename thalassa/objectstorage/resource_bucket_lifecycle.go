@@ -59,7 +59,7 @@ func resourceBucketLifecycleApply(ctx context.Context, d *schema.ResourceData, m
 	}
 
 	bucketName := d.Get("bucket_name").(string)
-	rules := expandLifecycleRules(d.Get("rule").(*schema.Set))
+	rules := expandLifecycleRules(d.Get("rule").([]any))
 
 	if lifecycleHasNoncurrentRules(rules) {
 		bucket, err := client.ObjectStorage().GetBucket(ctx, bucketName)

@@ -12,7 +12,7 @@ import (
 func TestResourceBucketLifecycle(t *testing.T) {
 	resource := resourceBucketLifecycle()
 	assert.True(t, resource.Schema["bucket_name"].ForceNew)
-	assert.Equal(t, schema.TypeSet, resource.Schema["rule"].Type)
+	assert.Equal(t, schema.TypeList, resource.Schema["rule"].Type)
 }
 
 func TestExpandFlattenLifecycleRules(t *testing.T) {
@@ -24,8 +24,7 @@ func TestExpandFlattenLifecycleRules(t *testing.T) {
 			map[string]any{"days": 30},
 		},
 	}
-	set := schema.NewSet(lifecycleRuleHash, []any{raw})
-	rules := expandLifecycleRules(set)
+	rules := expandLifecycleRules([]any{raw})
 	assert.Len(t, rules, 1)
 	assert.Equal(t, "expire-logs", rules[0].ID)
 	assert.NotNil(t, rules[0].Expiration.Days)

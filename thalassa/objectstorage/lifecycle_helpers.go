@@ -12,9 +12,8 @@ import (
 
 func lifecycleRuleSchema() *schema.Schema {
 	return &schema.Schema{
-		Type:     schema.TypeSet,
+		Type:     schema.TypeList,
 		Required: true,
-		Set:      lifecycleRuleHash,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				"id": {
@@ -195,17 +194,12 @@ func validateRFC3339TimeString(v any, _ string) (warns []string, errs []error) {
 	return nil, nil
 }
 
-func lifecycleRuleHash(v any) int {
-	m := v.(map[string]any)
-	return schema.HashString(m["id"].(string))
-}
-
-func expandLifecycleRules(raw *schema.Set) []objectstorage.BucketLifecycleRule {
-	if raw == nil || raw.Len() == 0 {
+func expandLifecycleRules(raw []any) []objectstorage.BucketLifecycleRule {
+	if len(raw) == 0 {
 		return []objectstorage.BucketLifecycleRule{}
 	}
-	rules := make([]objectstorage.BucketLifecycleRule, 0, raw.Len())
-	for _, item := range raw.List() {
+	rules := make([]objectstorage.BucketLifecycleRule, 0, len(raw))
+	for _, item := range raw {
 		block := item.(map[string]any)
 		rule := objectstorage.BucketLifecycleRule{
 			ID:     block["id"].(string),
