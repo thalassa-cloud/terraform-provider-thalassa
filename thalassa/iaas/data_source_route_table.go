@@ -7,6 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	iaas "github.com/thalassa-cloud/client-go/iaas"
+	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/convert"
 	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/provider"
 )
 
@@ -142,9 +143,7 @@ func setRouteTableData(d *schema.ResourceData, rt *iaas.RouteTable) diag.Diagnos
 	d.Set("id", rt.Identity)
 	d.Set("name", rt.Name)
 	d.Set("slug", rt.Slug)
-	if rt.Description != nil {
-		d.Set("description", *rt.Description)
-	}
+	d.Set("description", convert.StringValue(rt.Description))
 	if rt.Labels != nil {
 		d.Set("labels", rt.Labels)
 	}

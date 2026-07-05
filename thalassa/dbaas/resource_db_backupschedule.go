@@ -171,7 +171,7 @@ func resourceDbBackupScheduleCreate(ctx context.Context, d *schema.ResourceData,
 	d.SetId(createdBackupSchedule.Identity)
 	d.Set("db_cluster_id", dbClusterId)
 	d.Set("name", createdBackupSchedule.Name)
-	d.Set("description", createdBackupSchedule.Description)
+	d.Set("description", convert.StringValue(createdBackupSchedule.Description))
 	d.Set("labels", createdBackupSchedule.Labels)
 	d.Set("annotations", createdBackupSchedule.Annotations)
 	d.Set("schedule", createdBackupSchedule.Schedule)
@@ -206,8 +206,8 @@ func resourceDbBackupScheduleRead(ctx context.Context, d *schema.ResourceData, m
 			d.Set("suspended", backupSchedule.Suspended)
 			d.Set("id", backupSchedule.Identity)
 			d.Set("method", backupSchedule.Method)
-			if backupSchedule.Description != nil {
-				d.Set("description", *backupSchedule.Description)
+			if err := d.Set("description", convert.StringValue(backupSchedule.Description)); err != nil {
+				return diag.FromErr(err)
 			}
 			d.Set("labels", backupSchedule.Labels)
 			d.Set("annotations", backupSchedule.Annotations)
