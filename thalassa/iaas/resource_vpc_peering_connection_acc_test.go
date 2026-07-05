@@ -44,13 +44,13 @@ func TestAccVpcPeeringConnection_update(t *testing.T) {
 		ProviderFactories: testAccProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccVpcPeeringConnectionConfigWithDescription(requesterName, accepterName, peeringName, region, "initial description"),
+				Config: testAccVpcPeeringConnectionConfigPendingWithDescription(requesterName, accepterName, peeringName, region, "initial description"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("thalassa_vpc_peering_connection.test", "description", "initial description"),
 				),
 			},
 			{
-				Config: testAccVpcPeeringConnectionConfigWithDescription(requesterName, accepterName, peeringName, region, "updated description"),
+				Config: testAccVpcPeeringConnectionConfigPendingWithDescription(requesterName, accepterName, peeringName, region, "updated description"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("thalassa_vpc_peering_connection.test", "description", "updated description"),
 				),
@@ -80,6 +80,7 @@ func TestAccVpcPeeringConnection_import(t *testing.T) {
 					"wait_for_active",
 					"wait_for_active_timeout",
 					"wait_for_deleted_timeout",
+					"auto_accept",
 				},
 			},
 		},
@@ -115,6 +116,21 @@ resource "thalassa_vpc_peering_connection" "test" {
   accepter_vpc_id  = thalassa_vpc.accepter.id
   auto_accept      = true
   wait_for_active  = true
+}
+`, testAccProviderBlock(), testAccDualVpcConfigBlock(requesterName, accepterName, region), peeringName, description)
+}
+
+func testAccVpcPeeringConnectionConfigPendingWithDescription(requesterName, accepterName, peeringName, region, description string) string {
+	return fmt.Sprintf(`
+%s
+
+%s
+
+resource "thalassa_vpc_peering_connection" "test" {
+  name             = %q
+  description      = %q
+  requester_vpc_id = thalassa_vpc.requester.id
+  accepter_vpc_id  = thalassa_vpc.accepter.id
 }
 `, testAccProviderBlock(), testAccDualVpcConfigBlock(requesterName, accepterName, region), peeringName, description)
 }

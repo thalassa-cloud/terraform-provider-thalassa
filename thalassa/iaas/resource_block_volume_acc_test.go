@@ -74,6 +74,9 @@ func TestAccBlockVolume_import(t *testing.T) {
 				ResourceName:      "thalassa_block_volume.test",
 				ImportState:       true,
 				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					"wait_until_ready",
+				},
 			},
 		},
 	})

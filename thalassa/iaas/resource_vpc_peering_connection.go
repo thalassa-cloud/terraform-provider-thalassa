@@ -387,8 +387,8 @@ func setVpcPeeringConnectionData(d *schema.ResourceData, connection *iaas.VpcPee
 		_ = d.Set("annotations", connection.Annotations)
 	}
 
-	// Set requester VPC information
 	if connection.RequesterVpc != nil {
+		_ = d.Set("requester_vpc_id", connection.RequesterVpc.Identity)
 		requesterVpc := []map[string]any{
 			{
 				"identity": connection.RequesterVpc.Identity,
@@ -400,6 +400,7 @@ func setVpcPeeringConnectionData(d *schema.ResourceData, connection *iaas.VpcPee
 
 	// Set accepter VPC information
 	if connection.AccepterVpc != nil {
+		_ = d.Set("accepter_vpc_id", connection.AccepterVpc.Identity)
 		accepterVpc := []map[string]any{
 			{
 				"identity": connection.AccepterVpc.Identity,

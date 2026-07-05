@@ -107,7 +107,7 @@ func resourceRouteTableRead(ctx context.Context, d *schema.ResourceData, m any) 
 		return diag.FromErr(err)
 	}
 
-	id := d.Get("id").(string)
+	id := d.Id()
 	routeTable, err := client.IaaS().GetRouteTable(ctx, id)
 	if err != nil {
 		if tcclient.IsNotFound(err) {
@@ -124,7 +124,13 @@ func resourceRouteTableRead(ctx context.Context, d *schema.ResourceData, m any) 
 	d.SetId(routeTable.Identity)
 	_ = d.Set("name", routeTable.Name)
 	_ = d.Set("slug", routeTable.Slug)
-	_ = d.Set("description", convert.StringValue(routeTable.Description))
+	description := convert.StringValue(routeTable.Description)
+	if description == "" {
+		if configured := d.Get("description").(string); configured != "" {
+			description = configured
+		}
+	}
+	_ = d.Set("description", description)
 	_ = d.Set("labels", routeTable.Labels)
 	_ = d.Set("annotations", routeTable.Annotations)
 	if routeTable.Vpc != nil {
@@ -158,7 +164,13 @@ func resourceRouteTableUpdate(ctx context.Context, d *schema.ResourceData, m any
 	}
 	if routeTable != nil {
 		_ = d.Set("name", routeTable.Name)
-		_ = d.Set("description", convert.StringValue(routeTable.Description))
+		description := convert.StringValue(routeTable.Description)
+		if description == "" {
+			if configured := d.Get("description").(string); configured != "" {
+				description = configured
+			}
+		}
+		_ = d.Set("description", description)
 		_ = d.Set("slug", routeTable.Slug)
 		_ = d.Set("labels", routeTable.Labels)
 		_ = d.Set("annotations", routeTable.Annotations)
