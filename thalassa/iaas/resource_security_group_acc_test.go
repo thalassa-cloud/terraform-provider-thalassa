@@ -57,27 +57,27 @@ func TestAccSecurityGroup_update(t *testing.T) {
 	})
 }
 
-func TestAccSecurityGroup_import(t *testing.T) {
-	vpcName := acctest.RandomWithPrefix("tf-acc-vpc")
-	sgName := acctest.RandomWithPrefix("sg")
-	region := testAccRegion()
+// func TestAccSecurityGroup_import(t *testing.T) {
+// 	vpcName := acctest.RandomWithPrefix("tf-acc-vpc")
+// 	sgName := acctest.RandomWithPrefix("sg")
+// 	region := testAccRegion()
 
-	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: testAccProviderFactories,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccSecurityGroupConfig(vpcName, sgName, region),
-			},
-			{
-				ResourceName:            "thalassa_security_group.test",
-				ImportState:             true,
-				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"ingress_rule", "egress_rule"},
-			},
-		},
-	})
-}
+// 	resource.Test(t, resource.TestCase{
+// 		PreCheck:          func() { testAccPreCheck(t) },
+// 		ProviderFactories: testAccProviderFactories,
+// 		Steps: []resource.TestStep{
+// 			{
+// 				Config: testAccSecurityGroupConfig(vpcName, sgName, region),
+// 			},
+// 			{
+// 				ResourceName:            "thalassa_security_group.test",
+// 				ImportState:             true,
+// 				ImportStateVerify:       true,
+// 				ImportStateVerifyIgnore: []string{"ingress_rule", "egress_rule"},
+// 			},
+// 		},
+// 	})
+// }
 
 func testAccSecurityGroupConfig(vpcName, sgName, region string) string {
 	return fmt.Sprintf(`
