@@ -126,7 +126,9 @@ func resourceRouteTableRead(ctx context.Context, d *schema.ResourceData, m inter
 	d.SetId(routeTable.Identity)
 	d.Set("name", routeTable.Name)
 	d.Set("slug", routeTable.Slug)
-	d.Set("description", routeTable.Description)
+	if err := d.Set("description", convert.StringValue(routeTable.Description)); err != nil {
+		return diag.FromErr(err)
+	}
 	d.Set("labels", routeTable.Labels)
 	d.Set("annotations", routeTable.Annotations)
 	if routeTable.Vpc != nil {
@@ -160,7 +162,9 @@ func resourceRouteTableUpdate(ctx context.Context, d *schema.ResourceData, m int
 	}
 	if routeTable != nil {
 		d.Set("name", routeTable.Name)
-		d.Set("description", routeTable.Description)
+		if err := d.Set("description", convert.StringValue(routeTable.Description)); err != nil {
+			return diag.FromErr(err)
+		}
 		d.Set("slug", routeTable.Slug)
 		d.Set("labels", routeTable.Labels)
 		d.Set("annotations", routeTable.Annotations)
