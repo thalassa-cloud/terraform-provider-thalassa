@@ -78,13 +78,15 @@ func ProviderConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 	}
 
 	return ConfiguredProvider{
-		Client:       internalClient,
-		Organisation: organisation,
-		token:        token,
-		apiEndpoint:  apiEndpoint,
-		clientID:     clientID,
-		clientSecret: clientSecret,
-		projectID:    projectID,
+		Client:            internalClient,
+		Organisation:      organisation,
+		token:             token,
+		accessToken:       accessToken,
+		apiEndpoint:       apiEndpoint,
+		clientID:          clientID,
+		clientSecret:      clientSecret,
+		allowInsecureOIDC: allowInsecureOIDC,
+		projectID:         projectID,
 	}, nil
 }
 
