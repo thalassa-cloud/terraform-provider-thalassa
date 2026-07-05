@@ -444,14 +444,15 @@ make testacc
 
 **Run a single acceptance test**
 
-Pass `-run` via `TESTARGS`:
+Scope to a package with `PKG` and filter tests with `TESTARGS`:
 
 ```bash
 export TF_ACC=1
 export THALASSA_API_TOKEN="your-token"
 export THALASSA_ORGANISATION="my-org"
 
-make testacc TESTARGS='-run TestAccVpc_basic ./thalassa/iaas/...'
+make testacc PKG='./thalassa/iaas/...' TESTARGS='-run TestAccVpc_basic'
+make testacc PKG='./thalassa/secrets/...' TESTARGS='-run TestAcc'
 ```
 
 Or invoke `go test` directly:

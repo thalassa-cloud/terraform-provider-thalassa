@@ -72,3 +72,5 @@ _exampleprovider.tf
 
 !vendor/**
 !vendor/
+
+.env
