@@ -53,7 +53,7 @@ release:
 
 # Documentation: https://goreleaser.com/customization/changelog/
 changelog:
-  use: gitlab
+  use: github
   sort: asc
   # Group commits messages by given regex and title.
   # Order value defines the order of the groups.
