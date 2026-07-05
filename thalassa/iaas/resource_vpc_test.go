@@ -5,6 +5,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/stretchr/testify/assert"
+	iaas "github.com/thalassa-cloud/client-go/iaas"
 )
 
 func TestResourceVpc(t *testing.T) {
@@ -70,4 +71,36 @@ func TestDataSourceVpc(t *testing.T) {
 	t.Run("read handler", func(t *testing.T) {
 		assert.NotNil(t, dataSource.ReadContext)
 	})
+}
+
+func TestVpcMatchesRegion(t *testing.T) {
+	t.Parallel()
+
+	region := &iaas.Region{Identity: "region-id", Slug: "nl-01"}
+
+	tests := []struct {
+		name   string
+		filter string
+		want   bool
+	}{
+		{name: "empty filter matches", filter: "", want: true},
+		{name: "identity matches", filter: "region-id", want: true},
+		{name: "slug matches", filter: "nl-01", want: true},
+		{name: "no match", filter: "eu-01", want: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			assert.Equal(t, tt.want, vpcMatchesRegion(region, tt.filter))
+		})
+	}
+}
+
+func TestVpcRegionStateValue(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, "", vpcRegionStateValue(nil))
+	assert.Equal(t, "nl-01", vpcRegionStateValue(&iaas.Region{Identity: "region-id", Slug: "nl-01"}))
+	assert.Equal(t, "region-id", vpcRegionStateValue(&iaas.Region{Identity: "region-id"}))
 }

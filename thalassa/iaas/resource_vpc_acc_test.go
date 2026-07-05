@@ -86,14 +86,82 @@ func TestAccVpcDataSource_byName(t *testing.T) {
 		ProviderFactories: testAccProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccVpcDataSourceConfig(name, region),
+				Config: testAccVpcDataSourceConfigByName(name, region),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrPair("data.thalassa_vpc.test", "id", "thalassa_vpc.test", "id"),
+					resource.TestCheckResourceAttrPair("data.thalassa_vpc.test", "slug", "thalassa_vpc.test", "slug"),
 					resource.TestCheckResourceAttr("data.thalassa_vpc.test", "name", name),
 					resource.TestCheckResourceAttr("data.thalassa_vpc.test", "region", region),
 					resource.TestCheckResourceAttr("data.thalassa_vpc.test", "cidrs.#", "1"),
 					resource.TestCheckResourceAttr("data.thalassa_vpc.test", "cidrs.0", "10.0.0.0/16"),
+					resource.TestCheckResourceAttrSet("data.thalassa_vpc.test", "status"),
 				),
+			},
+		},
+	})
+}
+
+func TestAccVpcDataSource_bySlug(t *testing.T) {
+	name := acctest.RandomWithPrefix("tf-acc-vpc")
+	region := testAccRegion()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccVpcDataSourceConfigBySlug(name, region),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrPair("data.thalassa_vpc.test", "id", "thalassa_vpc.test", "id"),
+					resource.TestCheckResourceAttrPair("data.thalassa_vpc.test", "slug", "thalassa_vpc.test", "slug"),
+					resource.TestCheckResourceAttr("data.thalassa_vpc.test", "name", name),
+				),
+			},
+		},
+	})
+}
+
+func TestAccVpc_updateLabelsAndAnnotations(t *testing.T) {
+	name := acctest.RandomWithPrefix("tf-acc-vpc")
+	region := testAccRegion()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccVpcConfigWithLabels(name, region, "initial", "terraform"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("thalassa_vpc.test", "labels.environment", "initial"),
+					resource.TestCheckResourceAttr("thalassa_vpc.test", "annotations.managed_by", "terraform"),
+				),
+			},
+			{
+				Config: testAccVpcConfigWithLabels(name, region, "updated", "terraform-acc"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("thalassa_vpc.test", "labels.environment", "updated"),
+					resource.TestCheckResourceAttr("thalassa_vpc.test", "annotations.managed_by", "terraform-acc"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccVpc_import(t *testing.T) {
+	name := acctest.RandomWithPrefix("tf-acc-vpc")
+	region := testAccRegion()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccVpcConfig(name, region, "10.0.0.0/16"),
+			},
+			{
+				ResourceName:      "thalassa_vpc.test",
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -145,7 +213,7 @@ resource "thalassa_vpc" "test" {
 `, name, region)
 }
 
-func testAccVpcDataSourceConfig(name, region string) string {
+func testAccVpcDataSourceConfigByName(name, region string) string {
 	return fmt.Sprintf(`
 provider "thalassa" {}
 
@@ -160,4 +228,41 @@ data "thalassa_vpc" "test" {
   region = thalassa_vpc.test.region
 }
 `, name, region)
+}
+
+func testAccVpcDataSourceConfigBySlug(name, region string) string {
+	return fmt.Sprintf(`
+provider "thalassa" {}
+
+resource "thalassa_vpc" "test" {
+  name   = %q
+  region = %q
+  cidrs  = ["10.0.0.0/16"]
+}
+
+data "thalassa_vpc" "test" {
+  slug   = thalassa_vpc.test.slug
+  region = thalassa_vpc.test.region
+}
+`, name, region)
+}
+
+func testAccVpcConfigWithLabels(name, region, labelValue, annotationValue string) string {
+	return fmt.Sprintf(`
+provider "thalassa" {}
+
+resource "thalassa_vpc" "test" {
+  name   = %q
+  region = %q
+  cidrs  = ["10.0.0.0/16"]
+
+  labels = {
+    environment = %q
+  }
+
+  annotations = {
+    managed_by = %q
+  }
+}
+`, name, region, labelValue, annotationValue)
 }
