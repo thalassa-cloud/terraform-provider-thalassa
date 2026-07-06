@@ -126,7 +126,7 @@ output "node_pool_name" {
 - `autoscaler_config` (Block List, Max: 1) Configuration for the cluster autoscaler. These values can also be configured using annotations on a KubernetesNodePool object. (see [below for nested schema](#nestedblock--autoscaler_config))
 - `cluster_type` (String) Cluster type of the Kubernetes Cluster. Must be one of: managed, hosted-control-plane. Default: managed.
 - `cluster_version` (String) Cluster version of the Kubernetes Cluster, can be a name, slug or identity of the Kubernetes version. If not provided, the latest stable version will be used for provisioning.
-- `default_network_policy` (String) Default network policy of the Kubernetes Cluster. Must be one of: allow-all, deny-all. Default: deny-all.
+- `default_network_policy` (String) Default network policy of the Kubernetes Cluster. Must be one of: allow-all, deny. Default: allow-all.
 - `delete_protection` (Boolean) Delete protection of the Kubernetes Cluster
 - `description` (String) A human readable description about the Kubernetes Cluster
 - `disable_public_endpoint` (Boolean) Disable the public Kubernetes API endpoint. When true, access the API only via the private VPC endpoint and provide your own connectivity.
