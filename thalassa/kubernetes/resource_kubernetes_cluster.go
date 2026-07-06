@@ -236,9 +236,9 @@ func resourceKubernetesCluster() *schema.Resource {
 			"default_network_policy": {
 				Type:         schema.TypeString,
 				Optional:     true,
-				Default:      "deny-all",
-				ValidateFunc: validate.StringInSlice([]string{"", "allow-all", "deny-all"}, false),
-				Description:  "Default network policy of the Kubernetes Cluster. Must be one of: allow-all, deny-all. Default: deny-all.",
+				Default:      "allow-all",
+				ValidateFunc: validate.StringInSlice([]string{"", "allow-all", "deny"}, false),
+				Description:  "Default network policy of the Kubernetes Cluster. Must be one of: allow-all, deny. Default: allow-all.",
 			},
 			"kubernetes_api_server_endpoint": {
 				Type:        schema.TypeString,
