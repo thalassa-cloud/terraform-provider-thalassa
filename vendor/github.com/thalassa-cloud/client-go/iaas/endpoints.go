@@ -69,8 +69,8 @@ type EndpointResourceMetadata struct {
 	Name          string      `json:"name,omitempty"`
 	Slug          string      `json:"slug,omitempty"`
 	Description   string      `json:"description,omitempty"`
-	CreatedAt     time.Time   `json:"createdAt,omitempty"`
-	UpdatedAt     time.Time   `json:"updatedAt,omitempty"`
+	CreatedAt     time.Time   `json:"createdAt"`
+	UpdatedAt     time.Time   `json:"updatedAt"`
 	ObjectVersion int         `json:"objectVersion,omitempty"`
 	Labels        Labels      `json:"labels,omitempty"`
 	Annotations   Annotations `json:"annotations,omitempty"`

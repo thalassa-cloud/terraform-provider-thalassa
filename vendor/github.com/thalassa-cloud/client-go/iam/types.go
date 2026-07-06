@@ -43,7 +43,7 @@ type TeamMember struct {
 // LocalJWKS represents a locally stored JWKS (JSON Web Key Set)
 // This allows offline verification without fetching from the issuer
 type LocalJWKS struct {
-	Keys []map[string]interface{} `json:"keys"`
+	Keys []map[string]any `json:"keys"`
 }
 
 // FederatedIdentityProviderStatus represents the status of a federated identity provider
@@ -178,7 +178,7 @@ type FederatedIdentity struct {
 	// Conditions is a JSONB field containing conditions/claims matcher rules
 	// This allows locking to specific branches, environments, PRs, ref_protected, workflow_ref, etc.
 	// Example: {"branch": "main", "environment": "production", "ref_protected": true}
-	Conditions map[string]interface{} `json:"conditions,omitempty"`
+	Conditions map[string]any `json:"conditions,omitempty"`
 
 	// CreatedBy is the user that created the federated identity
 	CreatedBy *base.AppUser `json:"createdBy,omitempty"`

@@ -220,7 +220,7 @@ type VpcLoadbalancerTargetGroup struct {
 	TargetSelector map[string]string `json:"targetSelector"`
 
 	// EnableProxyProtocol enables proxy protocol on the target group. When enabled, the load balancer will use the proxy protocol to communicate with the target group.
-	// Enabling proxy protocl means all targets within the target group must support proxy protocol, otherwise connections may fail.
+	// Enabling proxy protocol means all targets within the target group must support proxy protocol, otherwise connections may fail.
 	EnableProxyProtocol *bool `json:"enableProxyProtocol,omitempty"`
 
 	// LoadbalancingPolicy is the load balancing policy for the target group. Must be one of ROUND_ROBIN, RANDOM, or MAGLEV.
@@ -292,7 +292,7 @@ type CreateTargetGroup struct {
 	TargetSelector map[string]string `json:"targetSelector,omitempty"`
 
 	// EnableProxyProtocol enables proxy protocol on the target group. When enabled, the load balancer will use the proxy protocol to communicate with the target group.
-	// Enabling proxy protocl means all targets within the target group must support proxy protocol, otherwise connections may fail.
+	// Enabling proxy protocol means all targets within the target group must support proxy protocol, otherwise connections may fail.
 	EnableProxyProtocol *bool `json:"enableProxyProtocol,omitempty"`
 
 	// LoadbalancingPolicy is the load balancing policy for the target group. Must be one of ROUND_ROBIN, RANDOM, or MAGLEV.
@@ -363,7 +363,7 @@ type UpdateTargetGroup struct {
 	TargetSelector map[string]string `json:"targetSelector,omitempty"`
 
 	// EnableProxyProtocol enables proxy protocol on the target group. When enabled, the load balancer will use the proxy protocol to communicate with the target group.
-	// Enabling proxy protocl means all targets within the target group must support proxy protocol, otherwise connections may fail.
+	// Enabling proxy protocol means all targets within the target group must support proxy protocol, otherwise connections may fail.
 	EnableProxyProtocol *bool `json:"enableProxyProtocol,omitempty"`
 
 	// LoadbalancingPolicy is the load balancing policy for the target group. Must be one of ROUND_ROBIN, RANDOM, or MAGLEV.

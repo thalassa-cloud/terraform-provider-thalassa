@@ -96,18 +96,18 @@ type PolicyDocument struct {
 
 // Statement defines an individual rule in the policy.
 type Statement struct {
-	Sid       string      `json:"Sid,omitempty"`
-	Effect    string      `json:"Effect"`
-	Principal Principal   `json:"Principal"`
-	Action    interface{} `json:"Action"` // can be string or []string
-	Resource  []string    `json:"Resource"`
-	Condition interface{} `json:"Condition,omitempty"`
+	Sid       string    `json:"Sid,omitempty"`
+	Effect    string    `json:"Effect"`
+	Principal Principal `json:"Principal"`
+	Action    any       `json:"Action"` // can be string or []string
+	Resource  []string  `json:"Resource"`
+	Condition any       `json:"Condition,omitempty"`
 }
 
 // Principal defines which user(s) the statement applies to.
 type Principal struct {
-	AWS      interface{} `json:"AWS,omitempty"`      // can be string or []string
-	Thalassa interface{} `json:"Thalassa,omitempty"` // can be string or []string
+	AWS      any `json:"AWS,omitempty"`      // can be string or []string
+	Thalassa any `json:"Thalassa,omitempty"` // can be string or []string
 }
 
 type PrincipalARN string

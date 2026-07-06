@@ -13,6 +13,7 @@ import (
 	"github.com/thalassa-cloud/client-go/objectstorage"
 	"github.com/thalassa-cloud/client-go/observability/prometheus"
 	"github.com/thalassa-cloud/client-go/pkg/client"
+	"github.com/thalassa-cloud/client-go/projects"
 	"github.com/thalassa-cloud/client-go/quicklaunch"
 	"github.com/thalassa-cloud/client-go/quotas"
 	"github.com/thalassa-cloud/client-go/secrets"
@@ -38,6 +39,8 @@ type Client interface {
 	Secrets() *secrets.Client
 	// DNS returns a client for DNS zones and records.
 	DNS() *dns.Client
+	// Projects returns a client for organisation-scoped project management.
+	Projects() *projects.Client
 	// SetOrganisation sets the organisation for the client
 	SetOrganisation(organisation string)
 	GetClient() client.Client
@@ -184,6 +187,14 @@ func (c *thalassaCloudClient) DNS() *dns.Client {
 		panic(err)
 	}
 	return dnsClient
+}
+
+func (c *thalassaCloudClient) Projects() *projects.Client {
+	projectsClient, err := projects.New(c.client)
+	if err != nil {
+		panic(err)
+	}
+	return projectsClient
 }
 
 func (c *thalassaCloudClient) GetClient() client.Client {

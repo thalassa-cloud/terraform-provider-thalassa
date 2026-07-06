@@ -58,7 +58,7 @@ func (t KmsKeyType) IsValid() bool {
 type KmsKeyVersion struct {
 	Version   int       `json:"version"`
 	Status    string    `json:"status,omitempty"`
-	CreatedAt time.Time `json:"createdAt,omitempty"`
+	CreatedAt time.Time `json:"createdAt"`
 }
 
 type KmsKey struct {
@@ -77,8 +77,8 @@ type KmsKey struct {
 	RotationPeriodInDays *int               `json:"rotationPeriodInDays,omitempty"`
 	LatestVersion        int                `json:"latestVersion,omitempty"`
 	Versions             []KmsKeyVersion    `json:"versions,omitempty"`
-	CreatedAt            time.Time          `json:"createdAt,omitempty"`
-	UpdatedAt            time.Time          `json:"updatedAt,omitempty"`
+	CreatedAt            time.Time          `json:"createdAt"`
+	UpdatedAt            time.Time          `json:"updatedAt"`
 	ObjectVersion        int                `json:"objectVersion,omitempty"`
 	Organisation         *base.Organisation `json:"organisation,omitempty"`
 }

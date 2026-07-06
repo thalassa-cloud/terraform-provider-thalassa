@@ -2,6 +2,8 @@ package client
 
 import (
 	"crypto/tls"
+	"crypto/x509"
+	"errors"
 	"time"
 
 	"github.com/go-resty/resty/v2"
@@ -98,6 +100,21 @@ func WithInsecure() Option {
 	return func(c *thalassaCloudClient) error {
 		c.insecure = true
 		c.resty.SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true})
+		return nil
+	}
+}
+
+// WithRootCAs configures a custom root CA pool for TLS verification.
+func WithRootCAs(pool *x509.CertPool) Option {
+	return func(c *thalassaCloudClient) error {
+		if pool == nil {
+			return errors.New("root CA pool cannot be nil")
+		}
+		c.rootCAs = pool
+		c.resty.SetTLSClientConfig(&tls.Config{
+			RootCAs:    pool,
+			MinVersion: tls.VersionTLS12,
+		})
 		return nil
 	}
 }

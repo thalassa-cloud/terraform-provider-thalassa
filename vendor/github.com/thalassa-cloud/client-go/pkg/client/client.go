@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"crypto/x509"
 	"errors"
 	"fmt"
 	"net/http"
@@ -130,8 +131,8 @@ type thalassaCloudClient struct {
 	allowInsecureOIDC bool
 
 	// OIDC token exchange (RFC 8693-style) for IdP JWT → Thalassa bearer token.
-	oidcTokenExchange   *OIDCTokenExchangeConfig
-	oidcTokenExchangeMu sync.Mutex
+	oidcTokenExchange *OIDCTokenExchangeConfig
+	oidcTokenMu       sync.Mutex
 
 	// Personal Access Token.
 	personalToken string
@@ -147,11 +148,12 @@ type thalassaCloudClient struct {
 	breaker *gobreaker.CircuitBreaker
 
 	insecure bool
+	rootCAs  *x509.CertPool
 }
 
 func (c *thalassaCloudClient) WithOptions(opts ...Option) Client {
 	for _, opt := range opts {
-		opt(c)
+		_ = opt(c)
 	}
 	return c
 }
@@ -173,7 +175,13 @@ func (c *thalassaCloudClient) SetOrganisation(organisation string) {
 
 func (c *thalassaCloudClient) GetAuthToken() string {
 	switch c.authType {
+	case AuthToken:
+		if c.oidcToken != nil && c.oidcToken.Valid() {
+			return c.oidcToken.AccessToken
+		}
 	case AuthOIDC, AuthOIDCTokenExchange:
+		c.oidcTokenMu.Lock()
+		defer c.oidcTokenMu.Unlock()
 		if c.oidcToken != nil && c.oidcToken.Valid() {
 			return c.oidcToken.AccessToken
 		}
@@ -186,11 +194,7 @@ func (c *thalassaCloudClient) GetAuthToken() string {
 // DialWebsocket creates a websocket connection to the specified URL, with authentication
 // and organization headers from the client.
 func (c *thalassaCloudClient) DialWebsocket(ctx context.Context, wsURL string) (*websocket.Conn, error) {
-
-	wsUrlWithToken := wsURL + "?token=" + c.GetAuthToken()
-
-	// Parse the WebSocket URL
-	parsedURL, err := url.Parse(wsUrlWithToken)
+	parsedURL, err := url.Parse(wsURL)
 	if err != nil {
 		return nil, fmt.Errorf("invalid websocket URL: %w", err)
 	}

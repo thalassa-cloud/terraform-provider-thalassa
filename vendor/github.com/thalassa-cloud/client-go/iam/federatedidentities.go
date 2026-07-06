@@ -133,7 +133,7 @@ type CreateFederatedIdentityRequest struct {
 	ExpiresAt *time.Time `json:"expiresAt,omitempty"`
 
 	// Conditions is a JSONB field containing conditions/claims matcher rules
-	Conditions map[string]interface{} `json:"conditions,omitempty"`
+	Conditions map[string]any `json:"conditions,omitempty"`
 }
 
 // UpdateFederatedIdentityRequest is the request for updating a federated identity
@@ -159,5 +159,5 @@ type UpdateFederatedIdentityRequest struct {
 	ExpiresAt *time.Time `json:"expiresAt,omitempty"`
 
 	// Conditions is a JSONB field containing conditions/claims matcher rules
-	Conditions map[string]interface{} `json:"conditions,omitempty"`
+	Conditions map[string]any `json:"conditions,omitempty"`
 }

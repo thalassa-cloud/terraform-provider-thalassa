@@ -10,7 +10,7 @@ import (
 type SecretVersion struct {
 	Version     int        `json:"version"`
 	Status      string     `json:"status,omitempty"`
-	CreatedAt   time.Time  `json:"createdAt,omitempty"`
+	CreatedAt   time.Time  `json:"createdAt"`
 	DestroyedAt *time.Time `json:"destroyedAt,omitempty"`
 }
 
@@ -33,8 +33,8 @@ type Secret struct {
 	Description string            `json:"description,omitempty"`
 	Labels      map[string]string `json:"labels,omitempty"`
 	Annotations map[string]string `json:"annotations,omitempty"`
-	CreatedAt   time.Time         `json:"createdAt,omitempty"`
-	UpdatedAt   time.Time         `json:"updatedAt,omitempty"`
+	CreatedAt   time.Time         `json:"createdAt"`
+	UpdatedAt   time.Time         `json:"updatedAt"`
 
 	KmsKey         *kms.KmsKey `json:"kmsKey,omitempty"`
 	CurrentVersion int         `json:"currentVersion"`

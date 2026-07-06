@@ -227,7 +227,7 @@ type RestoreRecoveryTarget struct {
 	TargetLSN *string `json:"targetLSN,omitempty"`
 }
 
-type DbClusterAutoUpgradePolicy string //@name DbClusterAutoUpgradePolicy
+type DbClusterAutoUpgradePolicy string
 
 const (
 	// DbClusterAutoUpgradePolicyNone does not perform any auto upgrades. User is expected to manually upgrade the cluster.

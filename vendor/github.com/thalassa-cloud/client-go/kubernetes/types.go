@@ -275,9 +275,11 @@ const (
 type KubernetesDefaultNetworkPolicies string
 
 const (
-	KubernetesDefaultNetworkPolicyNone     KubernetesDefaultNetworkPolicies = ""          // No default policy
+	KubernetesDefaultNetworkPolicyNone     KubernetesDefaultNetworkPolicies = ""          // Default policy Kubernetes behaviour
 	KubernetesDefaultNetworkPolicyAllowAll KubernetesDefaultNetworkPolicies = "allow-all" // Allow all traffic
-	KubernetesDefaultNetworkPolicyDenyAll  KubernetesDefaultNetworkPolicies = "deny-all"  // Deny all traffic
+	KubernetesDefaultNetworkPolicyDeny     KubernetesDefaultNetworkPolicies = "deny"      // Deny all traffic
+	// Deprecated: Use KubernetesDefaultNetworkPolicyDeny instead.
+	KubernetesDefaultNetworkPolicyDenyAll KubernetesDefaultNetworkPolicies = "deny-all" // Legacy
 )
 
 // KubernetesNodePool represents a group of nodes in a Kubernetes cluster with identical configuration.
@@ -455,8 +457,8 @@ type NodeCondition struct {
 	// Status of the condition, one of True, False, Unknown.
 	Status string `json:"status"`
 	// Last time we got an update on a given condition.
-	LastHeartbeatTime  time.Time `json:"lastHeartbeatTime,omitempty"`
-	LastTransitionTime time.Time `json:"lastTransitionTime,omitempty"`
+	LastHeartbeatTime  time.Time `json:"lastHeartbeatTime"`
+	LastTransitionTime time.Time `json:"lastTransitionTime"`
 	Reason             string    `json:"reason,omitempty"`
 	Message            string    `json:"message,omitempty"`
 }

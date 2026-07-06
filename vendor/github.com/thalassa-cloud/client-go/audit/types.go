@@ -8,21 +8,21 @@ import (
 )
 
 type AuditLog struct {
-	CreatedAt              time.Time              `json:"createdAt"`
-	EventID                string                 `json:"eventID"`
-	UserIdentity           *string                `json:"userIdentity,omitempty"`
-	User                   *base.AppUser          `json:"user,omitempty"`
-	ServiceAccountIdentity *string                `json:"serviceAccountIdentity,omitempty"`
-	ServiceAccount         *iam.ServiceAccount    `json:"serviceAccount,omitempty"`
-	OrganizationIdentity   *string                `json:"organizationIdentity,omitempty"`
-	Organization           *base.Organisation     `json:"organization,omitempty"`
-	ImpersonatorIdentity   *string                `json:"impersonatorIdentity,omitempty"`
-	Impersonator           *base.AppUser          `json:"impersonator,omitempty"`
-	Action                 string                 `json:"action"`
-	Description            *string                `json:"description,omitempty"`
-	ResourceType           *string                `json:"resourceType,omitempty"`
-	ResourceIdentity       *string                `json:"resourceIdentity,omitempty"`
-	Context                map[string]interface{} `json:"context,omitempty"`
+	CreatedAt              time.Time           `json:"createdAt"`
+	EventID                string              `json:"eventID"`
+	UserIdentity           *string             `json:"userIdentity,omitempty"`
+	User                   *base.AppUser       `json:"user,omitempty"`
+	ServiceAccountIdentity *string             `json:"serviceAccountIdentity,omitempty"`
+	ServiceAccount         *iam.ServiceAccount `json:"serviceAccount,omitempty"`
+	OrganizationIdentity   *string             `json:"organizationIdentity,omitempty"`
+	Organization           *base.Organisation  `json:"organization,omitempty"`
+	ImpersonatorIdentity   *string             `json:"impersonatorIdentity,omitempty"`
+	Impersonator           *base.AppUser       `json:"impersonator,omitempty"`
+	Action                 string              `json:"action"`
+	Description            *string             `json:"description,omitempty"`
+	ResourceType           *string             `json:"resourceType,omitempty"`
+	ResourceIdentity       *string             `json:"resourceIdentity,omitempty"`
+	Context                map[string]any      `json:"context,omitempty"`
 }
 
 type AuditLogFilter struct {

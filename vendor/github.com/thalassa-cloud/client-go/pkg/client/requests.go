@@ -18,7 +18,7 @@ import (
 func (c *thalassaCloudClient) Do(ctx context.Context, req *resty.Request, method httpMethod, url string) (*resty.Response, error) {
 	// If we have a circuit breaker, wrap the request call in breaker.Execute.
 	if c.breaker != nil {
-		result, err := c.breaker.Execute(func() (interface{}, error) {
+		result, err := c.breaker.Execute(func() (any, error) {
 			return c.executeRequest(ctx, req, method, url)
 		})
 		if err != nil {
@@ -32,6 +32,15 @@ func (c *thalassaCloudClient) Do(ctx context.Context, req *resty.Request, method
 }
 
 // executeRequest does the actual rate-limit & resty request call.
+type contextKey int
+
+const withoutProjectKey contextKey = iota
+
+// WithoutProject returns a context that suppresses X-Project-Identity on the request.
+func WithoutProject(ctx context.Context) context.Context {
+	return context.WithValue(ctx, withoutProjectKey, true)
+}
+
 func (c *thalassaCloudClient) executeRequest(ctx context.Context, req *resty.Request, method httpMethod, url string) (*resty.Response, error) {
 	// Enforce rate limiting if configured.
 	if c.limiter != nil {
@@ -43,7 +52,7 @@ func (c *thalassaCloudClient) executeRequest(ctx context.Context, req *resty.Req
 	if c.organisationIdentity != nil {
 		req.SetHeader("X-Organisation-Identity", *c.organisationIdentity)
 	}
-	if c.projectIdentity != nil {
+	if c.projectIdentity != nil && ctx.Value(withoutProjectKey) == nil {
 		req.SetHeader("X-Project-Identity", *c.projectIdentity)
 	}
 	// All API calls are JSON.

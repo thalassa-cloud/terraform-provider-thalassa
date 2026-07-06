@@ -50,7 +50,7 @@ type QuickLaunchResource struct {
 	// Identity is the unique identity of the resource.
 	Identity string `json:"identity"`
 
-	LastSeenAt time.Time `json:"lastSeenAt,omitempty"`
+	LastSeenAt time.Time `json:"lastSeenAt"`
 	LastStatus string    `json:"lastStatus,omitempty"`
 }
 
