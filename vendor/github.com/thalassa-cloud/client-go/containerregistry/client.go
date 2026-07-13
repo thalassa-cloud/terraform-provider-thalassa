@@ -14,5 +14,5 @@ func New(c client.Client, opts ...client.Option) (*Client, error) {
 }
 
 const (
-	ContainerRegistryEndpoint = "/v1/container-registry"
+	ContainerRegistryEndpoint = "/v1/container-registries"
 )
