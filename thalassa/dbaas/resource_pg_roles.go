@@ -139,15 +139,13 @@ func resourcePgRolesCreate(ctx context.Context, d *schema.ResourceData, m any) d
 		return diag.FromErr(err)
 	}
 
-	waitCtx, cancel := context.WithTimeout(ctx, dbClusterReadyTimeout)
-	defer cancel()
 	for {
 		select {
-		case <-waitCtx.Done():
+		case <-ctx.Done():
 			return diag.FromErr(fmt.Errorf("timeout waiting for pg role %q to become available", createRole.Name))
 		default:
 		}
-		dbCluster, err = client.DBaaS().GetDbCluster(waitCtx, dbClusterId)
+		dbCluster, err = client.DBaaS().GetDbCluster(ctx, dbClusterId)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -246,15 +244,13 @@ func resourcePgRolesUpdate(ctx context.Context, d *schema.ResourceData, m any) d
 	}
 
 	roleID := d.Get("id").(string)
-	waitCtx, cancel := context.WithTimeout(ctx, dbClusterReadyTimeout)
-	defer cancel()
 	for {
 		select {
-		case <-waitCtx.Done():
+		case <-ctx.Done():
 			return diag.FromErr(fmt.Errorf("timeout waiting for pg role %q to reflect update", roleID))
 		default:
 		}
-		dbCluster, err = client.DBaaS().GetDbCluster(waitCtx, dbClusterId)
+		dbCluster, err = client.DBaaS().GetDbCluster(ctx, dbClusterId)
 		if err != nil {
 			return diag.FromErr(fmt.Errorf("error getting db cluster: %w", err))
 		}

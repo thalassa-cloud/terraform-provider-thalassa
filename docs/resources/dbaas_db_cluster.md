@@ -107,6 +107,7 @@ output "db_cluster_port" {
 - `restore_from_backup_id` (String) Identity of the DB object store used for barman backups (optional). Ignored if provision_db_object_store is true.
 - `restore_recovery_target` (Block List, Max: 1) Recovery target for Point-In-Time Recovery (PITR). Only used when restore_from_backup_id is specified. (see [below for nested schema](#nestedblock--restore_recovery_target))
 - `security_groups` (List of String) List of security groups associated with the cluster
+- `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 
 ### Read-Only
 
@@ -122,6 +123,16 @@ output "db_cluster_port" {
 Optional:
 
 - `target_lsn` (String) Log Sequence Number to restore to. Example: '0/1234567'
-- `target_time` (String) Timestamp to restore to (RFC3339 format). Example: '2023-12-25T10:00:00Z'
+- `target_time` (String) Timestamp to restore to in barman format (YYYY-MM-DD HH:MM:SS.00000±TZ). Example: '2023-08-11 11:14:21.00000+02'
+
+
+<a id="nestedblock--timeouts"></a>
+### Nested Schema for `timeouts`
+
+Optional:
+
+- `create` (String)
+- `delete` (String)
+- `update` (String)
 
  
