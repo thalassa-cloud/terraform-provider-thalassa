@@ -231,7 +231,7 @@ github.com/sony/gobreaker
 ## explicit; go 1.17
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/assert/yaml
-# github.com/thalassa-cloud/client-go v0.35.1
+# github.com/thalassa-cloud/client-go v0.35.3
 ## explicit; go 1.25.0
 github.com/thalassa-cloud/client-go/audit
 github.com/thalassa-cloud/client-go/containerregistry
