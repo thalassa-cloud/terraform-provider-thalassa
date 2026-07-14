@@ -26,6 +26,40 @@ func resourceDbCluster() *schema.Resource {
 		ReadContext:   resourceDbClusterRead,
 		UpdateContext: resourceDbClusterUpdate,
 		DeleteContext: resourceDbClusterDelete,
+		CustomizeDiff: func(_ context.Context, diff *schema.ResourceDiff, _ any) error {
+			raw, ok := diff.GetOk("restore_recovery_target")
+			if !ok {
+				return nil
+			}
+
+			blocks, ok := raw.([]any)
+			if !ok || len(blocks) == 0 {
+				return nil
+			}
+
+			block, ok := blocks[0].(map[string]any)
+			if !ok {
+				return nil
+			}
+
+			if err := validateRestoreRecoveryTargetBlock(block); err != nil {
+				return err
+			}
+
+			restoreFromBackupID, hasRestoreFromBackupID := diff.GetOk("restore_from_backup_id")
+			if !hasRestoreFromBackupID || strings.TrimSpace(restoreFromBackupID.(string)) == "" {
+				return fmt.Errorf(
+					"restore_recovery_target can only be used when restore_from_backup_id is set",
+				)
+			}
+
+			return nil
+		},
+		Timeouts: &schema.ResourceTimeout{
+			// Pre-destroy backups can take up to create_backup_before_destroy_timeout minutes,
+			// and cluster deletion itself can take several more minutes.
+			Delete: schema.DefaultTimeout(60 * time.Minute),
+		},
 		Schema: map[string]*schema.Schema{
 			"id": {
 				Type:     schema.TypeString,
@@ -195,14 +229,16 @@ func resourceDbCluster() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"target_time": {
-							Type:        schema.TypeString,
-							Optional:    true,
-							Description: "Timestamp to restore to (RFC3339 format). Example: '2023-12-25T10:00:00Z'",
+							Type:         schema.TypeString,
+							Optional:     true,
+							Description:  barmanTargetTimeDescription,
+							ValidateFunc: validateBarmanTargetTimeString,
 						},
 						"target_lsn": {
-							Type:        schema.TypeString,
-							Optional:    true,
-							Description: "Log Sequence Number to restore to. Example: '0/1234567'",
+							Type:         schema.TypeString,
+							Optional:     true,
+							Description:  "Log Sequence Number to restore to. Example: '0/1234567'",
+							ValidateFunc: validateTargetLSNString,
 						},
 					},
 				},
@@ -512,8 +548,12 @@ func resourceDbClusterCreate(ctx context.Context, d *schema.ResourceData, m any)
 			if restoreRecoveryTargetMap, ok := restoreRecoveryTargetList[0].(map[string]any); ok {
 				recoveryTarget := &dbaas.RestoreRecoveryTarget{}
 				if targetTime, exists := restoreRecoveryTargetMap["target_time"]; exists && targetTime != nil {
-					if strVal, ok := targetTime.(string); ok && strVal != "" {
-						recoveryTarget.TargetTime = convert.Ptr(strVal)
+					if strVal, ok := targetTime.(string); ok && strings.TrimSpace(strVal) != "" {
+						parsedTargetTime, err := parseRecoveryTargetTime(strVal)
+						if err != nil {
+							return diag.FromErr(err)
+						}
+						recoveryTarget.TargetTime = convert.Ptr(formatBarmanTargetTime(parsedTargetTime))
 					}
 				}
 				if targetLSN, exists := restoreRecoveryTargetMap["target_lsn"]; exists && targetLSN != nil {
@@ -766,6 +806,18 @@ func resourceDbClusterUpdate(ctx context.Context, d *schema.ResourceData, m any)
 	return resourceDbClusterRead(ctx, d, m)
 }
 
+func isBackupComplete(backup *dbaas.DbClusterBackup) bool {
+	if backup == nil {
+		return false
+	}
+	switch backup.Status {
+	case dbaas.ObjectStatusReady, dbaas.ObjectStatus("completed"):
+		return true
+	default:
+		return false
+	}
+}
+
 func createBackupBeforeDestroy(ctx context.Context, dbaasClient *dbaas.Client, dbClusterIdentity string, timeoutMinutes int) diag.Diagnostics {
 	backupName := fmt.Sprintf("terraform-pre-destroy-%d", time.Now().Unix())
 	createBackup := dbaas.CreateDbClusterBackupRequest{
@@ -788,7 +840,10 @@ func createBackupBeforeDestroy(ctx context.Context, dbaasClient *dbaas.Client, d
 	for {
 		select {
 		case <-ctxWithTimeout.Done():
-			return diag.FromErr(fmt.Errorf("timeout waiting for pre-destroy backup to complete"))
+			if ctxWithTimeout.Err() == context.Canceled {
+				return diag.FromErr(fmt.Errorf("pre-destroy backup wait cancelled"))
+			}
+			return diag.FromErr(fmt.Errorf("timeout waiting for pre-destroy backup %q to complete (last status: %s)", backup.Identity, backup.Status))
 		default:
 		}
 
@@ -797,17 +852,22 @@ func createBackupBeforeDestroy(ctx context.Context, dbaasClient *dbaas.Client, d
 			return diag.FromErr(fmt.Errorf("failed to retrieve pre-destroy backup: %w", err))
 		}
 
-		switch backup.Status {
-		case dbaas.ObjectStatusReady:
+		if isBackupComplete(backup) {
 			tflog.Info(ctx, "pre-destroy backup completed", map[string]any{
 				"backup_id": backup.Identity,
+				"status":    backup.Status,
 			})
 			return nil
-		case dbaas.ObjectStatusFailed:
-			return diag.FromErr(fmt.Errorf("pre-destroy backup failed: %s", backup.StatusMessage))
-		default:
-			time.Sleep(1 * time.Second)
 		}
+		if backup.Status == dbaas.ObjectStatusFailed {
+			return diag.FromErr(fmt.Errorf("pre-destroy backup failed: %s", backup.StatusMessage))
+		}
+
+		tflog.Debug(ctx, "pre-destroy backup still in progress", map[string]any{
+			"backup_id": backup.Identity,
+			"status":    backup.Status,
+		})
+		time.Sleep(1 * time.Second)
 	}
 }
 

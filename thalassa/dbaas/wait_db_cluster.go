@@ -5,14 +5,17 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/thalassa-cloud/client-go/dbaas"
 	tcclient "github.com/thalassa-cloud/client-go/pkg/client"
 	"github.com/thalassa-cloud/client-go/thalassa"
 )
 
 const (
-	dbClusterReadyPollInterval = time.Second
-	dbClusterReadyTimeout      = 10 * time.Minute
+	dbClusterReadyPollInterval  = time.Second
+	dbClusterReadyTimeout       = 10 * time.Minute
+	dbClusterDeletePollInterval = time.Second
+	dbClusterDeleteTimeout      = 20 * time.Minute
 )
 
 func waitForReadyDbCluster(ctx context.Context, client thalassa.Client, dbClusterID string) (*dbaas.DbCluster, error) {
@@ -45,7 +48,7 @@ func waitForReadyDbCluster(ctx context.Context, client thalassa.Client, dbCluste
 }
 
 func waitForDeletedDbCluster(ctx context.Context, client thalassa.Client, dbClusterID string) error {
-	waitCtx, cancel := context.WithTimeout(ctx, dbClusterReadyTimeout)
+	waitCtx, cancel := context.WithTimeout(ctx, dbClusterDeleteTimeout)
 	defer cancel()
 
 	for {
@@ -68,10 +71,29 @@ func waitForDeletedDbCluster(ctx context.Context, client thalassa.Client, dbClus
 		if dbCluster == nil {
 			return nil
 		}
-		if dbCluster.Status == dbaas.DbClusterStatusDeleted {
+
+		switch dbCluster.Status {
+		case dbaas.DbClusterStatusDeleted:
 			return nil
+		case dbaas.DbClusterStatusDeleting:
+			tflog.Debug(ctx, "db cluster deletion in progress", map[string]any{
+				"cluster_id": dbClusterID,
+				"status":     dbCluster.Status,
+			})
+		case dbaas.DbClusterStatusReady, dbaas.DbClusterStatusUpdating:
+			// The delete API can return before the cluster transitions to deleting.
+			if err := client.DBaaS().DeleteDbCluster(waitCtx, dbClusterID); err != nil && !tcclient.IsNotFound(err) {
+				return fmt.Errorf("failed to re-issue delete for db cluster %q: %w", dbClusterID, err)
+			}
+		case dbaas.DbClusterStatusFailed:
+			return fmt.Errorf("db cluster %q failed to delete (status: %s)", dbClusterID, dbCluster.Status)
+		default:
+			tflog.Debug(ctx, "waiting for db cluster deletion", map[string]any{
+				"cluster_id": dbClusterID,
+				"status":     dbCluster.Status,
+			})
 		}
 
-		time.Sleep(dbClusterReadyPollInterval)
+		time.Sleep(dbClusterDeletePollInterval)
 	}
 }
