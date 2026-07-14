@@ -56,8 +56,8 @@ func resourceDbCluster() *schema.Resource {
 			return nil
 		},
 		Timeouts: &schema.ResourceTimeout{
-			// Pre-destroy backups can take up to create_backup_before_destroy_timeout minutes,
-			// and cluster deletion itself can take several more minutes.
+			Create: schema.DefaultTimeout(60 * time.Minute),
+			Update: schema.DefaultTimeout(30 * time.Minute),
 			Delete: schema.DefaultTimeout(60 * time.Minute),
 		},
 		Schema: map[string]*schema.Schema{
