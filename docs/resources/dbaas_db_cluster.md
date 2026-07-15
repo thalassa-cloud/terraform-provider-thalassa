@@ -49,7 +49,7 @@ resource "thalassa_dbaas_db_cluster" "example" {
   volume_type_class      = "block"
 
   # DB object storage is required for backups. Provision it with the cluster, or attach an
-  # existing store via restore_from_backup_id.
+  # existing store via db_object_store_id.
   provision_db_object_store = true
 
   # Create a final backup before destroy when the cluster is ready (default: true).
@@ -102,9 +102,10 @@ output "db_cluster_port" {
 - `maintenance_start_at` (Number) Start time of the maintenance window on the maintenance day in UTC. 0 is 00:00, 23 is 23:00
 - `organisation_id` (String) Reference to the Organisation of the Db Cluster. If not provided, the organisation of the (Terraform) provider will be used.
 - `parameters` (Map of String) Map of parameter name to database engine specific parameter value
-- `provision_db_object_store` (Boolean) Flag to indicate if the DB object store should be provisioned for the cluster. If true, restore_from_backup_id will be ignored.
+- `provision_db_object_store` (Boolean) Whether to provision a DB object store for the cluster. If true, db_object_store_id will be ignored.
 - `replicas` (Number) Number of instances in the cluster
-- `restore_from_backup_id` (String) Identity of the DB object store used for barman backups (optional). Ignored if provision_db_object_store is true.
+- `db_object_store_id` (String) Identity of an existing DB object store to use for barman backups. Ignored if provision_db_object_store is true.
+- `restore_from_backup_id` (String) Identity of the backup to restore from when creating the cluster.
 - `restore_recovery_target` (Block List, Max: 1) Recovery target for Point-In-Time Recovery (PITR). Only used when restore_from_backup_id is specified. (see [below for nested schema](#nestedblock--restore_recovery_target))
 - `security_groups` (List of String) List of security groups associated with the cluster
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
