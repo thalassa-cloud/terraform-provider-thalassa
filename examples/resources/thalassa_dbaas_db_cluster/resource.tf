@@ -33,7 +33,7 @@ resource "thalassa_dbaas_db_cluster" "example" {
   volume_type_class      = "block"
 
   # DB object storage is required for backups. Provision it with the cluster, or attach an
-  # existing store via restore_from_backup_id.
+  # existing store via db_object_store_id.
   provision_db_object_store = true
 
   # Create a final backup before destroy when the cluster is ready (default: true).

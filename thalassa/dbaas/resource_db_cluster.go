@@ -287,14 +287,20 @@ func resourceDbCluster() *schema.Resource {
 			"restore_from_backup_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Identity of the DB object store used for barman backups (optional). Ignored if provision_db_object_store is true.",
+				Description: "ID of the backup to restore from when creating the cluster.",
+			},
+			"db_object_store_id": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
+				Description: "ID of an existing DB object store to use for backups. Ignored if provision_db_object_store is true.",
 			},
 			"provision_db_object_store": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,
 				ForceNew:    true,
-				Description: "Flag to indicate if the DB object store should be provisioned for the cluster. If true, restore_from_backup_id will be ignored.",
+				Description: "Whether to provision a DB object store for the cluster. If true, db_object_store_id will be ignored.",
 			},
 			"create_backup_before_destroy": {
 				Type:        schema.TypeBool,
@@ -591,14 +597,14 @@ func resourceDbClusterCreate(ctx context.Context, d *schema.ResourceData, m any)
 	}
 
 	// Handle DB object store
-	if dbObjectStoreIdentity := d.Get("restore_from_backup_id"); dbObjectStoreIdentity != nil && dbObjectStoreIdentity != "" {
-		if strVal, ok := dbObjectStoreIdentity.(string); ok {
-			createDbCluster.DbObjectStoreIdentity = convert.Ptr(strVal)
-		}
-	}
 	if provisionDbObjectStore := d.Get("provision_db_object_store"); provisionDbObjectStore != nil {
 		if boolVal, ok := provisionDbObjectStore.(bool); ok {
 			createDbCluster.ProvisionDbObjectStore = boolVal
+		}
+	}
+	if !d.Get("provision_db_object_store").(bool) {
+		if dbObjectStoreIdentity, ok := d.GetOk("db_object_store_id"); ok {
+			createDbCluster.DbObjectStoreIdentity = convert.Ptr(dbObjectStoreIdentity.(string))
 		}
 	}
 
@@ -788,10 +794,8 @@ func resourceDbClusterUpdate(ctx context.Context, d *schema.ResourceData, m any)
 	}
 
 	// Handle DB object store
-	if dbObjectStoreIdentity := d.Get("restore_from_backup_id"); dbObjectStoreIdentity != nil && dbObjectStoreIdentity != "" {
-		if strVal, ok := dbObjectStoreIdentity.(string); ok {
-			updateDbCluster.DbObjectStoreIdentity = convert.Ptr(strVal)
-		}
+	if dbObjectStoreIdentity, ok := d.GetOk("db_object_store_id"); ok {
+		updateDbCluster.DbObjectStoreIdentity = convert.Ptr(dbObjectStoreIdentity.(string))
 	}
 
 	_, err = client.DBaaS().UpdateDbCluster(ctx, id, updateDbCluster)
