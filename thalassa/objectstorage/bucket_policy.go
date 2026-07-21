@@ -10,7 +10,7 @@ import (
 	"github.com/thalassa-cloud/client-go/objectstorage"
 )
 
-var thalassaServiceAccountPrincipalPattern = regexp.MustCompile(`^arn:thalassa:iam:::serviceaccount/[^:]+:[^:]+$`)
+var thalassaPrincipalARNPattern = regexp.MustCompile(`^arn:thalassa:iam:::(?:serviceaccount|user)/[^:]+:(?:[^:]+|\*)$`)
 
 func parseBucketPolicyJSON(raw string) (*objectstorage.PolicyDocument, error) {
 	if raw == "" {
@@ -69,12 +69,12 @@ func validateThalassaPrincipalARN(arn string) error {
 		return fmt.Errorf("Principal.Thalassa ARN cannot be empty")
 	}
 
-	if thalassaServiceAccountPrincipalPattern.MatchString(arn) {
+	if arn == "*" || thalassaPrincipalARNPattern.MatchString(arn) {
 		return nil
 	}
 
 	return fmt.Errorf(
-		"invalid Principal.Thalassa ARN %q: expected arn:thalassa:iam:::serviceaccount/<organisation-id>:<service-account-id>",
+		"invalid Principal.Thalassa ARN %q: expected \"*\", arn:thalassa:iam:::serviceaccount/<organisation-id>:<service-account-id>, arn:thalassa:iam:::serviceaccount/<organisation-id>/*, arn:thalassa:iam:::user/<organisation-id>:<user-id>, or arn:thalassa:iam:::user/<organisation-id>/*",
 		arn,
 	)
 }
@@ -87,8 +87,11 @@ func enrichBucketError(err error, action string) error {
 	if strings.Contains(strings.ToLower(err.Error()), "invalid principal arn") {
 		return fmt.Errorf(
 			"failed to %s bucket: the policy contains an invalid Principal.Thalassa ARN. "+
-				"Use a service account principal such as "+
-				"arn:thalassa:iam:::serviceaccount/<organisation-id>:<service-account-id>: %w",
+				"Use \"*\", a service account principal such as "+
+				"arn:thalassa:iam:::serviceaccount/<organisation-id>:<service-account-id>, "+
+				"arn:thalassa:iam:::serviceaccount/<organisation-id>/*, "+
+				"or a user principal such as arn:thalassa:iam:::user/<organisation-id>:<user-id> or "+
+				"arn:thalassa:iam:::user/<organisation-id>/*: %w",
 			action,
 			err,
 		)

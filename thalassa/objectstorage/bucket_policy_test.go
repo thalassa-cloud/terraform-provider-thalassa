@@ -22,8 +22,29 @@ func TestValidateThalassaPrincipalARN(t *testing.T) {
 			arn:  "arn:thalassa:iam:::serviceaccount/o-org123:sa-account456",
 		},
 		{
+			name: "valid service account wildcard principal",
+			arn:  "arn:thalassa:iam:::serviceaccount/o-org123:*",
+		},
+		{
+			name: "valid user principal",
+			arn:  "arn:thalassa:iam:::user/o-org123:u-user456",
+		},
+		{
+			name: "valid user wildcard principal",
+			arn:  "arn:thalassa:iam:::user/o-org123:*",
+		},
+		{
+			name: "wildcard principal (allow public access)",
+			arn:  "*",
+		},
+		{
 			name:    "invalid colon-separated principal",
 			arn:     "arn:thalassa:iam:::serviceaccount:o-org123:sa-account456",
+			wantErr: "invalid Principal.Thalassa ARN",
+		},
+		{
+			name:    "invalid colon-separated user principal",
+			arn:     "arn:thalassa:iam:::user:o-org123:u-user456",
 			wantErr: "invalid Principal.Thalassa ARN",
 		},
 		{
@@ -120,5 +141,9 @@ func TestEnrichBucketError(t *testing.T) {
 	err := enrichBucketError(fmt.Errorf("bad request: invalid principal ARN"), "create")
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to create bucket")
+	assert.Contains(t, err.Error(), `"*"`)
 	assert.Contains(t, err.Error(), "serviceaccount/<organisation-id>:<service-account-id>")
+	assert.Contains(t, err.Error(), "serviceaccount/<organisation-id>/*")
+	assert.Contains(t, err.Error(), "user/<organisation-id>:<user-id>")
+	assert.Contains(t, err.Error(), "user/<organisation-id>/*")
 }
