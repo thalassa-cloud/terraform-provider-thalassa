@@ -63,6 +63,16 @@ func thalassaPrincipalARNs(raw any) []string {
 	}
 }
 
+var (
+	expectedPrincipalARNs = []string{
+		"*",
+		"arn:thalassa:iam:::serviceaccount/<organisation-id>:<service-account-id>",
+		"arn:thalassa:iam:::serviceaccount/<organisation-id>/*",
+		"arn:thalassa:iam:::user/<organisation-id>:<user-id>",
+		"arn:thalassa:iam:::user/<organisation-id>/*",
+	}
+)
+
 func validateThalassaPrincipalARN(arn string) error {
 	arn = strings.TrimSpace(arn)
 	if arn == "" {
@@ -74,8 +84,9 @@ func validateThalassaPrincipalARN(arn string) error {
 	}
 
 	return fmt.Errorf(
-		"invalid Principal.Thalassa ARN %q: expected \"*\", arn:thalassa:iam:::serviceaccount/<organisation-id>:<service-account-id>, arn:thalassa:iam:::serviceaccount/<organisation-id>/*, arn:thalassa:iam:::user/<organisation-id>:<user-id>, or arn:thalassa:iam:::user/<organisation-id>/*",
+		"invalid Principal.Thalassa ARN %q: expected one of %s",
 		arn,
+		strings.Join(expectedPrincipalARNs, ", "),
 	)
 }
 
