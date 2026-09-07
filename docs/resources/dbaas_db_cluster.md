@@ -94,6 +94,7 @@ output "db_cluster_port" {
 - `auto_upgrade_policy` (String) Auto upgrade policy for the cluster. Options: 'none', 'latest-version', 'latest-stable', 'latest-patch', 'latest-minor', 'latest-major'
 - `create_backup_before_destroy` (Boolean) Whether to create a backup before destroying the cluster. Only applies when the cluster is in ready status.
 - `create_backup_before_destroy_timeout` (Number) The timeout in minutes to wait for the pre-destroy backup to complete. Only used when create_backup_before_destroy is true.
+- `db_object_store_id` (String) ID of an existing DB object store to use for backups. Ignored if provision_db_object_store is true.
 - `delete_protection` (Boolean) Flag indicating if the cluster should be protected from deletion
 - `description` (String) Description of the DB Cluster
 - `init_db` (Map of String) Map of init db parameters
@@ -104,8 +105,7 @@ output "db_cluster_port" {
 - `parameters` (Map of String) Map of parameter name to database engine specific parameter value
 - `provision_db_object_store` (Boolean) Whether to provision a DB object store for the cluster. If true, db_object_store_id will be ignored.
 - `replicas` (Number) Number of instances in the cluster
-- `db_object_store_id` (String) Identity of an existing DB object store to use for barman backups. Ignored if provision_db_object_store is true.
-- `restore_from_backup_id` (String) Identity of the backup to restore from when creating the cluster.
+- `restore_from_backup_id` (String) ID of the backup to restore from when creating the cluster.
 - `restore_recovery_target` (Block List, Max: 1) Recovery target for Point-In-Time Recovery (PITR). Only used when restore_from_backup_id is specified. (see [below for nested schema](#nestedblock--restore_recovery_target))
 - `security_groups` (List of String) List of security groups associated with the cluster
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))

@@ -73,9 +73,10 @@ func resourceSnapshotPolicy() *schema.Resource {
 				Description: "Region of the snapshot policy",
 			},
 			"ttl": {
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "Time to live for snapshots created by this policy. Supports formats like '168h' (hours), '7d' (days), '1w' (weeks). Examples: '24h', '7d', '30d'",
+				Type:             schema.TypeString,
+				Required:         true,
+				Description:      "Time to live for snapshots created by this policy. Supports formats like '168h' (hours), '7d' (days), '1w' (weeks). Examples: '24h', '7d', '30d'",
+				DiffSuppressFunc: suppressEquivalentDuration,
 				ValidateFunc: func(val any, key string) (warns []string, errs []error) {
 					ttlStr := val.(string)
 					_, err := parseDuration(ttlStr)
@@ -191,6 +192,30 @@ func parseDuration(s string) (time.Duration, error) {
 	return time.ParseDuration(s)
 }
 
+func suppressEquivalentDuration(_, old, new string, _ *schema.ResourceData) bool {
+	if old == new {
+		return true
+	}
+
+	oldDuration, oldErr := parseDuration(old)
+	newDuration, newErr := parseDuration(new)
+	if oldErr != nil || newErr != nil {
+		return false
+	}
+
+	return oldDuration == newDuration
+}
+
+func snapshotPolicyTTLState(configured string, ttl time.Duration) string {
+	if configured != "" {
+		if parsed, err := parseDuration(configured); err == nil && parsed == ttl {
+			return configured
+		}
+	}
+
+	return ttl.String()
+}
+
 func resourceSnapshotPolicyCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
@@ -304,15 +329,14 @@ func resourceSnapshotPolicyRead(ctx context.Context, d *schema.ResourceData, m a
 	_ = d.Set("schedule", policy.Schedule)
 	_ = d.Set("timezone", policy.Timezone)
 
-	// Convert TTL duration to string
-	_ = d.Set("ttl", policy.Ttl.String())
+	_ = d.Set("ttl", snapshotPolicyTTLState(d.Get("ttl").(string), policy.Ttl))
 
 	if policy.KeepCount != nil {
 		_ = d.Set("keep_count", *policy.KeepCount)
 	}
 
 	if policy.Region != nil {
-		_ = d.Set("region", policy.Region.Identity)
+		convert.SetReferenceField(d, "region", policy.Region.Identity, policy.Region.Slug, policy.Region.Name)
 	}
 
 	if policy.NextSnapshotAt != nil {
@@ -389,7 +413,7 @@ func resourceSnapshotPolicyUpdate(ctx context.Context, d *schema.ResourceData, m
 		_ = d.Set("timezone", policy.Timezone)
 		_ = d.Set("labels", policy.Labels)
 		_ = d.Set("annotations", policy.Annotations)
-		_ = d.Set("ttl", policy.Ttl.String())
+		_ = d.Set("ttl", snapshotPolicyTTLState(d.Get("ttl").(string), policy.Ttl))
 		if policy.KeepCount != nil {
 			_ = d.Set("keep_count", *policy.KeepCount)
 		}

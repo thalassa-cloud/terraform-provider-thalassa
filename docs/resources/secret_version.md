@@ -36,8 +36,8 @@ resource "thalassa_secret_version" "db_password" {
 
 - `generate_secret` (Block List, Max: 1) (see [below for nested schema](#nestedblock--generate_secret))
 - `organisation_id` (String)
-- `secret_key_values` (Map of String, Sensitive)
-- `secret_string` (String, Sensitive) Secret string value (not returned on read).
+- `secret_key_values` (Map of String, Sensitive) Key-value secret payload as plaintext (not returned on read). The provider base64-encodes each value. Do not pre-encode with base64encode().
+- `secret_string` (String, Sensitive) Secret string value as plaintext (not returned on read). The provider base64-encodes the value.
 
 ### Read-Only
 

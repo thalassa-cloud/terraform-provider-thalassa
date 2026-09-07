@@ -2,6 +2,7 @@ package iaas_test
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
@@ -71,6 +72,33 @@ func TestAccVpc_update(t *testing.T) {
 				Config: testAccVpcConfigWithDescription(name, region, "updated description"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("thalassa_vpc.test", "description", "updated description"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccVpc_updateCidrs(t *testing.T) {
+	name := acctest.RandomWithPrefix("tf-acc-vpc")
+	region := testAccRegion()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccVpcConfig(name, region, "10.0.0.0/16"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("thalassa_vpc.test", "cidrs.#", "1"),
+					resource.TestCheckResourceAttr("thalassa_vpc.test", "cidrs.0", "10.0.0.0/16"),
+				),
+			},
+			{
+				Config: testAccVpcConfigWithCidrs(name, region, "10.0.0.0/16", "10.1.0.0/16"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("thalassa_vpc.test", "cidrs.#", "2"),
+					resource.TestCheckResourceAttr("thalassa_vpc.test", "cidrs.0", "10.0.0.0/16"),
+					resource.TestCheckResourceAttr("thalassa_vpc.test", "cidrs.1", "10.1.0.0/16"),
 				),
 			},
 		},
@@ -265,4 +293,21 @@ resource "thalassa_vpc" "test" {
   }
 }
 `, name, region, labelValue, annotationValue)
+}
+
+func testAccVpcConfigWithCidrs(name, region string, cidrs ...string) string {
+	quoted := make([]string, 0, len(cidrs))
+	for _, cidr := range cidrs {
+		quoted = append(quoted, fmt.Sprintf("%q", cidr))
+	}
+
+	return fmt.Sprintf(`
+provider "thalassa" {}
+
+resource "thalassa_vpc" "test" {
+  name   = %q
+  region = %q
+  cidrs  = [%s]
+}
+`, name, region, strings.Join(quoted, ", "))
 }

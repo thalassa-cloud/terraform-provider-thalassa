@@ -96,7 +96,7 @@ func ResourceSecret() *schema.Resource {
 				Sensitive:     true,
 				ForceNew:      true,
 				ConflictsWith: []string{"generate_secret", "secret_key_values"},
-				Description:   "Initial secret string value (create only; not returned on read).",
+				Description:   "Initial secret string value as plaintext. The provider base64-encodes the value.",
 			},
 			"secret_key_values": {
 				Type:          schema.TypeMap,
@@ -105,7 +105,7 @@ func ResourceSecret() *schema.Resource {
 				ForceNew:      true,
 				ConflictsWith: []string{"generate_secret", "secret_string"},
 				Elem:          &schema.Schema{Type: schema.TypeString},
-				Description:   "Initial key-value secret payload (create only; not returned on read).",
+				Description:   "Initial key-value secret payload as plaintext. The provider base64-encodes each value.",
 			},
 			"current_version": {
 				Type:        schema.TypeInt,
@@ -159,7 +159,7 @@ func resourceSecretCreate(ctx context.Context, d *schema.ResourceData, m any) di
 		createReq.SecretString = tcsecrets.EncodeBytes([]byte(v.(string)))
 	}
 	if v, ok := d.GetOk("secret_key_values"); ok {
-		createReq.SecretKeyValues = convert.ConvertToMap(v)
+		createReq.SecretKeyValues = encodeSecretKeyValues(v)
 	}
 	if v, ok := d.GetOk("generate_secret"); ok {
 		createReq.GenerateSecret = expandGenerateSecret(v.([]any))

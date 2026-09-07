@@ -9,6 +9,8 @@ import (
 
 	tcclient "github.com/thalassa-cloud/client-go/pkg/client"
 	tcsecrets "github.com/thalassa-cloud/client-go/secrets"
+
+	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/convert"
 )
 
 const timeFormatRFC3339 = time.RFC3339
@@ -78,6 +80,17 @@ func setSecretState(d interface {
 		_ = d.Set("last_accessed_at", secret.LastAccessedAt.Format(timeFormatRFC3339))
 	}
 	return nil
+}
+
+// encodeSecretKeyValues converts a Terraform TypeMap into the API payload.
+// Each value must be base64-encoded on the wire, matching secret_string.
+func encodeSecretKeyValues(v any) map[string]string {
+	kv := convert.ConvertToMap(v)
+	encoded := make(map[string]string, len(kv))
+	for k, val := range kv {
+		encoded[k] = tcsecrets.EncodeBytes([]byte(val))
+	}
+	return encoded
 }
 
 func expandGenerateSecret(raw []any) *tcsecrets.GenerateSecret {

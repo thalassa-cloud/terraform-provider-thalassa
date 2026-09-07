@@ -25,8 +25,9 @@ resource "thalassa_block_volume" "example" {
 
 # Create a snapshot from the block volume
 resource "thalassa_snapshot" "example" {
-  name        = "example-snapshot"
-  description = "Example snapshot created from block volume"
+  name            = "example-snapshot"
+  description     = "Example snapshot created from block volume"
+  volume_identity = thalassa_block_volume.example.id
 
   # Optional attributes
   delete_protection = false
@@ -73,6 +74,7 @@ output "source_volume_id" {
 ### Required
 
 - `name` (String) Name of the snapshot
+- `volume_identity` (String) Identity of the volume to create a snapshot from
 
 ### Optional
 

@@ -80,6 +80,12 @@ func resourceSnapshot() *schema.Resource {
 				Computed:    true,
 				Description: "Region of the snapshot",
 			},
+			"volume_identity": {
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Description: "Identity of the volume to create a snapshot from",
+			},
 			"source_volume_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -188,11 +194,23 @@ func resourceSnapshotRead(ctx context.Context, d *schema.ResourceData, m any) di
 	_ = d.Set("delete_protection", snapshot.DeleteProtection)
 
 	if snapshot.Region != nil {
-		_ = d.Set("region", snapshot.Region.Identity)
+		convert.SetReferenceField(d, "region", snapshot.Region.Identity, snapshot.Region.Slug, snapshot.Region.Name)
 	}
 
 	if snapshot.SourceVolumeId != nil {
 		_ = d.Set("source_volume_id", *snapshot.SourceVolumeId)
+		if d.Get("volume_identity").(string) == "" {
+			// Import and first read should persist the volume identity, not the slug.
+			_ = d.Set("volume_identity", *snapshot.SourceVolumeId)
+		} else {
+			sourceSlug := ""
+			sourceName := ""
+			if snapshot.SourceVolume != nil {
+				sourceSlug = snapshot.SourceVolume.Slug
+				sourceName = snapshot.SourceVolume.Name
+			}
+			convert.SetReferenceField(d, "volume_identity", *snapshot.SourceVolumeId, sourceSlug, sourceName)
+		}
 	}
 
 	if snapshot.SizeGB != nil {
