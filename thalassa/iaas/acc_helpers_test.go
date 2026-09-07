@@ -26,6 +26,18 @@ resource "thalassa_subnet" "test" {
 `, subnetName)
 }
 
+func testAccBlockVolumeConfigBlock(name, region, volumeType string, sizeGB int) string {
+	return fmt.Sprintf(`
+resource "thalassa_block_volume" "test" {
+  name             = %q
+  region           = %q
+  volume_type      = %q
+  size_gb          = %d
+  wait_until_ready = true
+}
+`, name, region, volumeType, sizeGB)
+}
+
 func testAccDualVpcConfigBlock(requesterName, accepterName, region string) string {
 	return fmt.Sprintf(`
 resource "thalassa_vpc" "requester" {
