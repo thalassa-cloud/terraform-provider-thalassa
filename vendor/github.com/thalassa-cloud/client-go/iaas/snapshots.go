@@ -2,6 +2,7 @@ package iaas
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -535,6 +536,17 @@ type CreateSnapshotPolicyRequest struct {
 	Target SnapshotPolicyTarget `json:"target"`
 }
 
+// MarshalJSON encodes Ttl as a duration string such as "168h0m0s". The API
+// expects a string for this field, whereas the default encoding of
+// time.Duration is an integer number of nanoseconds.
+func (r CreateSnapshotPolicyRequest) MarshalJSON() ([]byte, error) {
+	type alias CreateSnapshotPolicyRequest
+	return json.Marshal(struct {
+		alias
+		Ttl string `json:"ttl"`
+	}{alias(r), r.Ttl.String()})
+}
+
 type UpdateSnapshotPolicyRequest struct {
 	// Name is the name of the snapshot policy. Must be unique within the organisation.
 	// The name is used for identification and display purposes.
@@ -563,4 +575,15 @@ type UpdateSnapshotPolicyRequest struct {
 	Timezone string `json:"timezone"`
 	// Target is the target of the snapshot policy
 	Target SnapshotPolicyTarget `json:"target"`
+}
+
+// MarshalJSON encodes Ttl as a duration string such as "168h0m0s". The API
+// expects a string for this field, whereas the default encoding of
+// time.Duration is an integer number of nanoseconds.
+func (r UpdateSnapshotPolicyRequest) MarshalJSON() ([]byte, error) {
+	type alias UpdateSnapshotPolicyRequest
+	return json.Marshal(struct {
+		alias
+		Ttl string `json:"ttl"`
+	}{alias(r), r.Ttl.String()})
 }
