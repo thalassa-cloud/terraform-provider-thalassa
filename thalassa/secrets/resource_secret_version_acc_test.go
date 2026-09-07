@@ -56,6 +56,28 @@ func TestAccSecretVersion_addSecondVersion(t *testing.T) {
 	})
 }
 
+func TestAccSecretVersion_withKeyValues(t *testing.T) {
+	kmsName := acctest.RandomWithPrefix("tf-acc-kms")
+	path := testAccSecretPath(acctest.RandomWithPrefix("tf_acc_secret"))
+	region := testAccRegion()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccSecretVersionConfigWithKeyValues(kmsName, region, path),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("thalassa_secret_version.test", "region", region),
+					resource.TestCheckResourceAttr("thalassa_secret_version.test", "path", path),
+					resource.TestCheckResourceAttrSet("thalassa_secret_version.test", "version"),
+					resource.TestCheckResourceAttrSet("thalassa_secret_version.test", "id"),
+				),
+			},
+		},
+	})
+}
+
 func TestAccSecretVersion_import(t *testing.T) {
 	kmsName := acctest.RandomWithPrefix("tf-acc-kms")
 	path := testAccSecretPath(acctest.RandomWithPrefix("tf_acc_secret"))
@@ -106,4 +128,22 @@ resource "thalassa_secret_version" "second" {
   secret_string = %q
 }
 `, testAccSecretBaseConfigBlock(kmsName, region, path), region, firstValue, region, secondValue)
+}
+
+func testAccSecretVersionConfigWithKeyValues(kmsName, region, path string) string {
+	return fmt.Sprintf(`
+%s
+
+resource "thalassa_secret_version" "test" {
+  region = %q
+  path   = thalassa_secret.test.path
+
+  secret_key_values = {
+    host     = "192.0.2.10"
+    port     = "5432"
+    dbname   = "databasename"
+    username = "username"
+  }
+}
+`, testAccSecretBaseConfigBlock(kmsName, region, path), region)
 }

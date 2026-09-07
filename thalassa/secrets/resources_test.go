@@ -8,6 +8,8 @@ import (
 
 	tckms "github.com/thalassa-cloud/client-go/kms"
 	tcsecrets "github.com/thalassa-cloud/client-go/secrets"
+
+	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/convert"
 )
 
 func TestResourceSecret(t *testing.T) {
@@ -72,6 +74,63 @@ func TestValidateSecretPath(t *testing.T) {
 
 	_, errs = validateSecretPath("app/prod", "path")
 	assert.NotEmpty(t, errs)
+}
+
+func TestSecretKeyValuesPlaintextIsNotAlwaysValidBase64(t *testing.T) {
+	// Issue #91: the API base64-decodes each map value. Unencoded plaintext
+	// either fails DecodeBytes or coincidentally decodes to the wrong bytes.
+	invalid := []string{"192.0.2.10", "p#ss&w*rd"}
+	for _, v := range invalid {
+		_, err := tcsecrets.DecodeBytes("secretKeyValues", v)
+		assert.Error(t, err, "plaintext %q must fail DecodeBytes; the API requires encoding", v)
+	}
+
+	coincidentallyValid := []string{"username", "5432", "databasename"}
+	for _, v := range coincidentallyValid {
+		decoded, err := tcsecrets.DecodeBytes("secretKeyValues", v)
+		assert.NoError(t, err, "plaintext %q happens to be valid base64", v)
+		assert.NotEqual(t, v, string(decoded), "coincidentally valid base64 must not round-trip to the original plaintext")
+	}
+}
+
+func TestEncodeSecretKeyValues(t *testing.T) {
+	tests := []struct {
+		name  string
+		input any
+	}{
+		{name: "nil", input: nil},
+		{name: "empty map", input: map[string]any{}},
+		{
+			name: "issue 91 reproduction values",
+			input: map[string]any{
+				"host":     "192.0.2.10",
+				"port":     "5432",
+				"dbname":   "databasename",
+				"username": "username",
+			},
+		},
+		{
+			name: "special characters",
+			input: map[string]any{
+				"password": "p#ss&w*rd",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			encoded := encodeSecretKeyValues(tt.input)
+			plain := convert.ConvertToMap(tt.input)
+			assert.Len(t, encoded, len(plain))
+
+			for k, v := range plain {
+				decoded, err := tcsecrets.DecodeBytes("secretKeyValues["+k+"]", encoded[k])
+				if assert.NoError(t, err, "value for %q must be valid base64", k) {
+					assert.Equal(t, v, string(decoded))
+				}
+			}
+		})
+	}
 }
 
 func TestSetSecretStateKmsKey(t *testing.T) {

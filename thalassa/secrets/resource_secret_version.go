@@ -10,7 +10,6 @@ import (
 	tcclient "github.com/thalassa-cloud/client-go/pkg/client"
 	tcsecrets "github.com/thalassa-cloud/client-go/secrets"
 
-	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/convert"
 	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/provider"
 )
 
@@ -56,7 +55,7 @@ func ResourceSecretVersion() *schema.Resource {
 				ForceNew:      true,
 				Sensitive:     true,
 				ConflictsWith: []string{"secret_key_values", "generate_secret"},
-				Description:   "Secret string value (not returned on read).",
+				Description:   "Secret string value as plaintext (not returned on read). The provider base64-encodes the value.",
 			},
 			"secret_key_values": {
 				Type:          schema.TypeMap,
@@ -65,6 +64,7 @@ func ResourceSecretVersion() *schema.Resource {
 				Sensitive:     true,
 				ConflictsWith: []string{"secret_string", "generate_secret"},
 				Elem:          &schema.Schema{Type: schema.TypeString},
+				Description:   "Key-value secret payload as plaintext (not returned on read). The provider base64-encodes each value. Do not pre-encode with base64encode().",
 			},
 			"generate_secret": {
 				Type:          schema.TypeList,
@@ -111,7 +111,7 @@ func resourceSecretVersionCreate(ctx context.Context, d *schema.ResourceData, m 
 		putReq.SecretString = tcsecrets.EncodeBytes([]byte(v.(string)))
 	}
 	if v, ok := d.GetOk("secret_key_values"); ok {
-		putReq.SecretKeyValues = convert.ConvertToMap(v)
+		putReq.SecretKeyValues = encodeSecretKeyValues(v)
 	}
 	if v, ok := d.GetOk("generate_secret"); ok {
 		putReq.GenerateSecret = expandGenerateSecret(v.([]any))

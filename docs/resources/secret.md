@@ -54,8 +54,8 @@ resource "thalassa_secret_version" "db_password" {
 - `generate_secret` (Block List, Max: 1) Generate a random secret value on create. Mutually exclusive with secret_string and secret_key_values. (see [below for nested schema](#nestedblock--generate_secret))
 - `labels` (Map of String)
 - `organisation_id` (String) Organisation ID. Defaults to the provider organisation.
-- `secret_key_values` (Map of String, Sensitive) Initial key-value secret payload (create only; not returned on read).
-- `secret_string` (String, Sensitive) Initial secret string value (create only; not returned on read).
+- `secret_key_values` (Map of String, Sensitive) Initial key-value secret payload as plaintext. The provider base64-encodes each value.
+- `secret_string` (String, Sensitive) Initial secret string value as plaintext. The provider base64-encodes the value.
 
 ### Read-Only
 
