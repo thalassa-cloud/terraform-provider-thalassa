@@ -51,12 +51,12 @@ func DataSourceFederatedIdentity() *schema.Resource {
 				Description: "Annotations for the federated identity",
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
-			"service_account_identity": {
+			"service_account_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Identity of the bound service account",
 			},
-			"provider_identity": {
+			"provider_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Identity of the federated identity provider",

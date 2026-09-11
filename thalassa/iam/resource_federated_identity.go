@@ -82,13 +82,13 @@ func ResourceFederatedIdentity() *schema.Resource {
 				Description: "Annotations for the federated identity",
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
-			"service_account_identity": {
+			"service_account_id": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 				Description: "Identity of the service account to bind",
 			},
-			"provider_identity": {
+			"provider_id": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
@@ -233,8 +233,8 @@ func resourceFederatedIdentityCreate(ctx context.Context, d *schema.ResourceData
 		Description:            d.Get("description").(string),
 		Labels:                 convert.ConvertToMap(d.Get("labels")),
 		Annotations:            convert.ConvertToMap(d.Get("annotations")),
-		ServiceAccountIdentity: d.Get("service_account_identity").(string),
-		ProviderIdentity:       d.Get("provider_identity").(string),
+		ServiceAccountIdentity: d.Get("service_account_id").(string),
+		ProviderIdentity:       d.Get("provider_id").(string),
 		ProviderSubject:        d.Get("provider_subject").(string),
 		TrustedAudiences:       convert.ConvertToStringSlice(d.Get("trusted_audiences")),
 		AudienceMatchMode:      iam.AudienceMatchMode(d.Get("audience_match_mode").(string)),
@@ -306,10 +306,10 @@ func setFederatedIdentityState(d *schema.ResourceData, identity *iam.FederatedId
 	_ = d.Set("object_version", identity.ObjectVersion)
 
 	if identity.ServiceAccount != nil && identity.ServiceAccount.Identity != "" {
-		_ = d.Set("service_account_identity", identity.ServiceAccount.Identity)
+		_ = d.Set("service_account_id", identity.ServiceAccount.Identity)
 	}
 	if identity.Provider != nil && identity.Provider.Identity != "" {
-		_ = d.Set("provider_identity", identity.Provider.Identity)
+		_ = d.Set("provider_id", identity.Provider.Identity)
 	}
 	if identity.UpdatedAt != nil {
 		_ = d.Set("updated_at", identity.UpdatedAt.Format(TimeFormatRFC3339))

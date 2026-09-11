@@ -12,8 +12,8 @@ resource "thalassa_iam_federated_identity_provider" "github" {
 resource "thalassa_iam_federated_identity" "ci" {
   name                     = "github-ci"
   description              = "Federated identity for GitHub Actions"
-  service_account_identity = thalassa_iam_service_account.ci.id
-  provider_identity        = thalassa_iam_federated_identity_provider.github.id
+  service_account_id = thalassa_iam_service_account.ci.id
+  provider_id        = thalassa_iam_federated_identity_provider.github.id
   provider_subject         = "repo:example-org/example-repo:ref:refs/heads/main"
   trusted_audiences        = ["https://api.thalassa.cloud"]
   audience_match_mode      = "any"

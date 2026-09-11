@@ -117,8 +117,8 @@ func TestAccFederatedIdentity_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("thalassa_iam_federated_identity.test", "status", "active"),
 					resource.TestCheckResourceAttr("thalassa_iam_federated_identity.test", "allowed_scopes.#", "2"),
 					resource.TestCheckResourceAttrSet("thalassa_iam_federated_identity.test", "id"),
-					resource.TestCheckResourceAttrPair("thalassa_iam_federated_identity.test", "service_account_identity", "thalassa_iam_service_account.test", "id"),
-					resource.TestCheckResourceAttrPair("thalassa_iam_federated_identity.test", "provider_identity", "thalassa_iam_federated_identity_provider.test", "id"),
+					resource.TestCheckResourceAttrPair("thalassa_iam_federated_identity.test", "service_account_id", "thalassa_iam_service_account.test", "id"),
+					resource.TestCheckResourceAttrPair("thalassa_iam_federated_identity.test", "provider_id", "thalassa_iam_federated_identity_provider.test", "id"),
 				),
 			},
 		},
@@ -227,8 +227,8 @@ resource "thalassa_iam_federated_identity_provider" "test" {
 resource "thalassa_iam_federated_identity" "test" {
   name                     = %q
   description              = "federated identity for acceptance tests"
-  service_account_identity = thalassa_iam_service_account.test.id
-  provider_identity        = thalassa_iam_federated_identity_provider.test.id
+  service_account_id = thalassa_iam_service_account.test.id
+  provider_id        = thalassa_iam_federated_identity_provider.test.id
   provider_subject         = %q
   trusted_audiences        = ["https://api.thalassa.cloud"]
   audience_match_mode      = "any"
@@ -257,8 +257,8 @@ resource "thalassa_iam_federated_identity_provider" "test" {
 
 resource "thalassa_iam_federated_identity" "test" {
   name                     = %q
-  service_account_identity = thalassa_iam_service_account.test.id
-  provider_identity        = thalassa_iam_federated_identity_provider.test.id
+  service_account_id = thalassa_iam_service_account.test.id
+  provider_id        = thalassa_iam_federated_identity_provider.test.id
   provider_subject         = %q
   trusted_audiences        = ["https://api.thalassa.cloud"]
   audience_match_mode      = "any"
