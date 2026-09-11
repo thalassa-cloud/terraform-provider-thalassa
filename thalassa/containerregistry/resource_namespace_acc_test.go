@@ -108,7 +108,6 @@ func TestAccContainerRegistryNamespaceConfiguration_basic(t *testing.T) {
 				Config: testAccNamespaceConfigurationConfig(namespace, region, false, 0),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("thalassa_containerregistry_namespace_configuration.test", "visibility", "private"),
-					resource.TestCheckResourceAttr("thalassa_containerregistry_namespace_configuration.test", "retention_policy.0.enabled", "false"),
 					resource.TestCheckResourceAttrPair("thalassa_containerregistry_namespace_configuration.test", "namespace_id", "thalassa_containerregistry_namespace.test", "id"),
 					resource.TestCheckResourceAttrSet("thalassa_containerregistry_namespace_configuration.test", "id"),
 				),
@@ -159,12 +158,7 @@ data "thalassa_containerregistry_namespace" "test" {
 }
 
 func testAccNamespaceConfigurationConfig(namespace, region string, retentionEnabled bool, days int) string {
-	retentionBlock := `
-  retention_policy {
-    enabled                = false
-    delete_untagged_images = false
-  }
-`
+	retentionBlock := ""
 	if retentionEnabled {
 		retentionBlock = fmt.Sprintf(`
   retention_policy {

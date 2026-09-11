@@ -163,6 +163,9 @@ func expandRetentionPolicy(v any) *tcregistry.RetentionPolicy {
 
 	rulesRaw, ok := m["rules"].([]any)
 	if !ok {
+		if !policy.Enabled {
+			return nil
+		}
 		return policy
 	}
 
@@ -192,6 +195,11 @@ func expandRetentionPolicy(v any) *tcregistry.RetentionPolicy {
 			rule.Count = &count
 		}
 		policy.Rules = append(policy.Rules, rule)
+	}
+
+	// The API rejects retention policies with an empty rules list.
+	if len(policy.Rules) == 0 {
+		return nil
 	}
 
 	return policy

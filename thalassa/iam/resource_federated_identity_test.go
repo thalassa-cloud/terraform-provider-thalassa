@@ -23,6 +23,7 @@ func TestResourceFederatedIdentityProvider(t *testing.T) {
 		assert.True(t, schema["labels"].Optional)
 		assert.True(t, schema["annotations"].Optional)
 		assert.True(t, schema["provider_jwks_uri"].Optional)
+		assert.True(t, schema["provider_jwks_uri"].Computed)
 		assert.True(t, schema["local_jwks"].Optional)
 		assert.True(t, schema["local_jwks"].Sensitive)
 		assert.True(t, schema["status"].Optional)

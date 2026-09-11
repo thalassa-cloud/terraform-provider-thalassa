@@ -71,7 +71,8 @@ func ResourceFederatedIdentityProvider() *schema.Resource {
 			"provider_jwks_uri": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Optional JWKS URI override for the provider",
+				Computed:    true,
+				Description: "JWKS URI for the provider. When omitted, the platform may derive this from the issuer.",
 			},
 			"local_jwks": {
 				Type:        schema.TypeString,

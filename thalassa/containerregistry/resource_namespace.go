@@ -115,6 +115,16 @@ func resourceNamespaceCreate(ctx context.Context, d *schema.ResourceData, m any)
 	}
 
 	d.SetId(ns.Identity)
+
+	// Some create responses omit labels/annotations; apply them via update so state converges.
+	desiredLabels := convert.ConvertToMap(d.Get("labels"))
+	desiredAnnotations := convert.ConvertToMap(d.Get("annotations"))
+	labelsMissing := len(desiredLabels) > 0 && len(ns.Labels) == 0
+	annotationsMissing := len(desiredAnnotations) > 0 && len(ns.Annotations) == 0
+	if labelsMissing || annotationsMissing {
+		return resourceNamespaceUpdate(ctx, d, m)
+	}
+
 	return resourceNamespaceRead(ctx, d, m)
 }
 
@@ -144,8 +154,8 @@ func setNamespaceResourceState(d *schema.ResourceData, ns *tcregistry.ContainerR
 	d.SetId(ns.Identity)
 	_ = d.Set("namespace", ns.Namespace)
 	_ = d.Set("description", ns.Description)
-	_ = d.Set("labels", ns.Labels)
-	_ = d.Set("annotations", ns.Annotations)
+	_ = d.Set("labels", coalesceStringMap(ns.Labels, d.Get("labels")))
+	_ = d.Set("annotations", coalesceStringMap(ns.Annotations, d.Get("annotations")))
 	_ = d.Set("created_at", ns.CreatedAt.Format(TimeFormatRFC3339))
 	_ = d.Set("updated_at", ns.UpdatedAt.Format(TimeFormatRFC3339))
 	_ = d.Set("object_version", ns.ObjectVersion)
@@ -154,6 +164,15 @@ func setNamespaceResourceState(d *schema.ResourceData, ns *tcregistry.ContainerR
 		_ = d.Set("region", ns.Region.Slug)
 	}
 	return nil
+}
+
+// coalesceStringMap prefers API values when present; otherwise keeps the configured map.
+// The registry API currently may omit labels/annotations on read responses.
+func coalesceStringMap(fromAPI map[string]string, fromState any) map[string]string {
+	if len(fromAPI) > 0 {
+		return fromAPI
+	}
+	return convert.ConvertToMap(fromState)
 }
 
 func resourceNamespaceUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
