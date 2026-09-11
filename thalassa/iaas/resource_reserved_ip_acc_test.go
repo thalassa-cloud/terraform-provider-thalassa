@@ -138,12 +138,26 @@ func TestAccReservedIP_import(t *testing.T) {
 				Config: testAccReservedIPConfig(name, region),
 			},
 			{
-				ResourceName:      "thalassa_reserved_ip.test",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            "thalassa_reserved_ip.test",
+				ImportState:             true,
+				ImportStateIdFunc:       testAccReservedIPImportStateID,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"organisation_id"},
 			},
 		},
 	})
+}
+
+func testAccReservedIPImportStateID(s *terraform.State) (string, error) {
+	rs, ok := s.RootModule().Resources["thalassa_reserved_ip.test"]
+	if !ok {
+		return "", fmt.Errorf("resource thalassa_reserved_ip.test not found")
+	}
+	region := rs.Primary.Attributes["region"]
+	if region == "" {
+		return "", fmt.Errorf("region attribute is empty")
+	}
+	return region + "/" + rs.Primary.ID, nil
 }
 
 func testAccCheckReservedIPHasPublicAddress(resourceName string) resource.TestCheckFunc {

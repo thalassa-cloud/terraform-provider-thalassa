@@ -3,6 +3,7 @@ package iaas
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -37,7 +38,7 @@ func resourceReservedIP() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Region of the reserved IP. Provide the identity of the region. Can only be set on creation.",
+				Description: "Region of the reserved IP. Provide the identity or slug of the region. Can only be set on creation. Import as region/identity.",
 			},
 			"name": {
 				Type:         schema.TypeString,
@@ -96,7 +97,7 @@ func resourceReservedIP() *schema.Resource {
 			},
 		},
 		Importer: &schema.ResourceImporter{
-			StateContext: schema.ImportStatePassthroughContext,
+			StateContext: resourceReservedIPImport,
 		},
 		CustomizeDiff: func(ctx context.Context, diff *schema.ResourceDiff, meta any) error {
 			_, new := diff.GetChange("description")
@@ -106,6 +107,30 @@ func resourceReservedIP() *schema.Resource {
 			return nil
 		},
 	}
+}
+
+func resourceReservedIPImport(_ context.Context, d *schema.ResourceData, _ any) ([]*schema.ResourceData, error) {
+	region, identity := parseReservedIPImportID(d.Id())
+	if identity == "" {
+		return nil, fmt.Errorf("invalid import id %q; expected \"region/identity\" or \"identity\"", d.Id())
+	}
+	if region != "" {
+		_ = d.Set("region", region)
+	}
+	d.SetId(identity)
+	return []*schema.ResourceData{d}, nil
+}
+
+func parseReservedIPImportID(id string) (region, identity string) {
+	id = strings.TrimSpace(id)
+	if id == "" {
+		return "", ""
+	}
+	parts := strings.SplitN(id, "/", 2)
+	if len(parts) == 1 {
+		return "", parts[0]
+	}
+	return parts[0], parts[1]
 }
 
 func resourceReservedIPCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
@@ -216,7 +241,14 @@ func resourceReservedIPRead(ctx context.Context, d *schema.ResourceData, m any) 
 	_ = d.Set("attached_to_resource_identity", fip.AttachedToResourceIdentity)
 
 	if fip.Region != nil {
-		_ = d.Set("region", fip.Region.Slug)
+		switch {
+		case fip.Region.Slug != "":
+			_ = d.Set("region", fip.Region.Slug)
+		case fip.Region.Identity != "":
+			_ = d.Set("region", fip.Region.Identity)
+		case fip.Region.Name != "":
+			_ = d.Set("region", fip.Region.Name)
+		}
 	}
 
 	return nil
