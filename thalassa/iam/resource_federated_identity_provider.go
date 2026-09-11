@@ -220,8 +220,8 @@ func resourceFederatedIdentityProviderUpdate(ctx context.Context, d *schema.Reso
 		Annotations: convert.ConvertToMap(d.Get("annotations")),
 	}
 
-	if d.HasChange("provider_jwks_uri") {
-		uri := d.Get("provider_jwks_uri").(string)
+	// Updates require either local JWKS or a JWKS URI; always send the current URI.
+	if uri := d.Get("provider_jwks_uri").(string); uri != "" {
 		updateReq.ProviderJwksURI = &uri
 	}
 

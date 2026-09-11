@@ -45,18 +45,6 @@ func DataSourceNamespace() *schema.Resource {
 				Computed:    true,
 				Description: "Human-readable description of the namespace",
 			},
-			"labels": {
-				Type:        schema.TypeMap,
-				Computed:    true,
-				Description: "Labels for the namespace",
-				Elem:        &schema.Schema{Type: schema.TypeString},
-			},
-			"annotations": {
-				Type:        schema.TypeMap,
-				Computed:    true,
-				Description: "Annotations for the namespace",
-				Elem:        &schema.Schema{Type: schema.TypeString},
-			},
 			"created_at": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -137,14 +125,17 @@ func setNamespaceDataSourceState(d *schema.ResourceData, ns *tcregistry.Containe
 	_ = d.Set("id", ns.Identity)
 	_ = d.Set("namespace", ns.Namespace)
 	_ = d.Set("description", ns.Description)
-	_ = d.Set("labels", ns.Labels)
-	_ = d.Set("annotations", ns.Annotations)
 	_ = d.Set("created_at", ns.CreatedAt.Format(TimeFormatRFC3339))
 	_ = d.Set("updated_at", ns.UpdatedAt.Format(TimeFormatRFC3339))
 	_ = d.Set("object_version", ns.ObjectVersion)
 	_ = d.Set("total_size_bytes", ns.TotalSizeBytes)
-	if ns.Region != nil && ns.Region.Slug != "" {
-		_ = d.Set("region", ns.Region.Slug)
+	if ns.Region != nil {
+		switch {
+		case ns.Region.Slug != "":
+			_ = d.Set("region", ns.Region.Slug)
+		case ns.Region.Name != "":
+			_ = d.Set("region", ns.Region.Name)
+		}
 	}
 	return nil
 }

@@ -28,8 +28,8 @@ func TestResourceNamespace(t *testing.T) {
 		assert.True(t, schema["total_size_bytes"].Computed)
 
 		assert.True(t, schema["description"].Optional)
-		assert.True(t, schema["labels"].Optional)
-		assert.True(t, schema["annotations"].Optional)
+		assert.Nil(t, schema["labels"])
+		assert.Nil(t, schema["annotations"])
 		assert.True(t, schema["organisation_id"].Optional)
 		assert.True(t, schema["organisation_id"].ForceNew)
 	})

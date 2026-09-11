@@ -3,13 +3,13 @@ package containerregistry
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	validate "github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	tcregistry "github.com/thalassa-cloud/client-go/containerregistry"
 	tcclient "github.com/thalassa-cloud/client-go/pkg/client"
-	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/convert"
 	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/provider"
 )
 
@@ -21,7 +21,7 @@ func ResourceNamespace() *schema.Resource {
 		UpdateContext: resourceNamespaceUpdate,
 		DeleteContext: resourceNamespaceDelete,
 		Importer: &schema.ResourceImporter{
-			StateContext: schema.ImportStatePassthroughContext,
+			StateContext: resourceNamespaceImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"id": {
@@ -40,7 +40,7 @@ func ResourceNamespace() *schema.Resource {
 				Required:     true,
 				ForceNew:     true,
 				ValidateFunc: validate.StringLenBetween(1, 255),
-				Description:  "Region slug where the namespace is created (e.g. nl-01)",
+				Description:  "Region slug where the namespace is created (e.g. nl-01). Import as region/identity.",
 			},
 			"namespace": {
 				Type:         schema.TypeString,
@@ -55,18 +55,6 @@ func ResourceNamespace() *schema.Resource {
 				Default:      "",
 				ValidateFunc: validate.StringLenBetween(0, 1024),
 				Description:  "Human-readable description of the namespace",
-			},
-			"labels": {
-				Type:        schema.TypeMap,
-				Optional:    true,
-				Description: "Labels for the namespace",
-				Elem:        &schema.Schema{Type: schema.TypeString},
-			},
-			"annotations": {
-				Type:        schema.TypeMap,
-				Optional:    true,
-				Description: "Annotations for the namespace",
-				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 			"created_at": {
 				Type:        schema.TypeString,
@@ -92,6 +80,30 @@ func ResourceNamespace() *schema.Resource {
 	}
 }
 
+func resourceNamespaceImport(_ context.Context, d *schema.ResourceData, _ any) ([]*schema.ResourceData, error) {
+	region, identity := parseNamespaceImportID(d.Id())
+	if identity == "" {
+		return nil, fmt.Errorf("invalid import id %q; expected \"region/identity\" or \"identity\"", d.Id())
+	}
+	if region != "" {
+		_ = d.Set("region", region)
+	}
+	d.SetId(identity)
+	return []*schema.ResourceData{d}, nil
+}
+
+func parseNamespaceImportID(id string) (region, identity string) {
+	id = strings.TrimSpace(id)
+	if id == "" {
+		return "", ""
+	}
+	parts := strings.SplitN(id, "/", 2)
+	if len(parts) == 1 {
+		return "", parts[0]
+	}
+	return parts[0], parts[1]
+}
+
 func resourceNamespaceCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
 	client, err := provider.GetClient(provider.GetProvider(m), d)
 	if err != nil {
@@ -102,8 +114,6 @@ func resourceNamespaceCreate(ctx context.Context, d *schema.ResourceData, m any)
 		Region:      d.Get("region").(string),
 		Namespace:   d.Get("namespace").(string),
 		Description: d.Get("description").(string),
-		Labels:      tcregistry.Labels(convert.ConvertToMap(d.Get("labels"))),
-		Annotations: tcregistry.Annotations(convert.ConvertToMap(d.Get("annotations"))),
 	}
 
 	ns, err := client.ContainerRegistry().CreateContainerRegistryNamespace(ctx, createReq)
@@ -115,16 +125,6 @@ func resourceNamespaceCreate(ctx context.Context, d *schema.ResourceData, m any)
 	}
 
 	d.SetId(ns.Identity)
-
-	// Some create responses omit labels/annotations; apply them via update so state converges.
-	desiredLabels := convert.ConvertToMap(d.Get("labels"))
-	desiredAnnotations := convert.ConvertToMap(d.Get("annotations"))
-	labelsMissing := len(desiredLabels) > 0 && len(ns.Labels) == 0
-	annotationsMissing := len(desiredAnnotations) > 0 && len(ns.Annotations) == 0
-	if labelsMissing || annotationsMissing {
-		return resourceNamespaceUpdate(ctx, d, m)
-	}
-
 	return resourceNamespaceRead(ctx, d, m)
 }
 
@@ -154,25 +154,19 @@ func setNamespaceResourceState(d *schema.ResourceData, ns *tcregistry.ContainerR
 	d.SetId(ns.Identity)
 	_ = d.Set("namespace", ns.Namespace)
 	_ = d.Set("description", ns.Description)
-	_ = d.Set("labels", coalesceStringMap(ns.Labels, d.Get("labels")))
-	_ = d.Set("annotations", coalesceStringMap(ns.Annotations, d.Get("annotations")))
 	_ = d.Set("created_at", ns.CreatedAt.Format(TimeFormatRFC3339))
 	_ = d.Set("updated_at", ns.UpdatedAt.Format(TimeFormatRFC3339))
 	_ = d.Set("object_version", ns.ObjectVersion)
 	_ = d.Set("total_size_bytes", ns.TotalSizeBytes)
-	if ns.Region != nil && ns.Region.Slug != "" {
-		_ = d.Set("region", ns.Region.Slug)
+	if ns.Region != nil {
+		switch {
+		case ns.Region.Slug != "":
+			_ = d.Set("region", ns.Region.Slug)
+		case ns.Region.Name != "":
+			_ = d.Set("region", ns.Region.Name)
+		}
 	}
 	return nil
-}
-
-// coalesceStringMap prefers API values when present; otherwise keeps the configured map.
-// The registry API currently may omit labels/annotations on read responses.
-func coalesceStringMap(fromAPI map[string]string, fromState any) map[string]string {
-	if len(fromAPI) > 0 {
-		return fromAPI
-	}
-	return convert.ConvertToMap(fromState)
 }
 
 func resourceNamespaceUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
@@ -183,8 +177,6 @@ func resourceNamespaceUpdate(ctx context.Context, d *schema.ResourceData, m any)
 
 	updateReq := tcregistry.UpdateContainerRegistryNamespaceRequest{
 		Description: d.Get("description").(string),
-		Labels:      tcregistry.Labels(convert.ConvertToMap(d.Get("labels"))),
-		Annotations: tcregistry.Annotations(convert.ConvertToMap(d.Get("annotations"))),
 	}
 
 	ns, err := client.ContainerRegistry().UpdateContainerRegistryNamespace(ctx, d.Id(), updateReq)

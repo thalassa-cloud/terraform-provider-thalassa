@@ -6,6 +6,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccContainerRegistryNamespace_basic(t *testing.T) {
@@ -48,7 +49,6 @@ func TestAccContainerRegistryNamespace_update(t *testing.T) {
 				Config: testAccNamespaceConfig(namespace, region, "updated"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("thalassa_containerregistry_namespace.test", "description", "updated"),
-					resource.TestCheckResourceAttr("thalassa_containerregistry_namespace.test", "labels.environment", "test"),
 				),
 			},
 		},
@@ -69,6 +69,7 @@ func TestAccContainerRegistryNamespace_import(t *testing.T) {
 			{
 				ResourceName:            "thalassa_containerregistry_namespace.test",
 				ImportState:             true,
+				ImportStateIdFunc:       testAccNamespaceImportStateID,
 				ImportStateVerify:       true,
 				ImportStateVerifyIgnore: []string{"organisation_id"},
 			},
@@ -125,6 +126,18 @@ func TestAccContainerRegistryNamespaceConfiguration_basic(t *testing.T) {
 	})
 }
 
+func testAccNamespaceImportStateID(s *terraform.State) (string, error) {
+	rs, ok := s.RootModule().Resources["thalassa_containerregistry_namespace.test"]
+	if !ok {
+		return "", fmt.Errorf("resource not found")
+	}
+	region := rs.Primary.Attributes["region"]
+	if region == "" {
+		return "", fmt.Errorf("region attribute is empty")
+	}
+	return region + "/" + rs.Primary.ID, nil
+}
+
 func testAccNamespaceConfig(namespace, region, description string) string {
 	return fmt.Sprintf(`
 %s
@@ -133,10 +146,6 @@ resource "thalassa_containerregistry_namespace" "test" {
   region      = %q
   namespace   = %q
   description = %q
-
-  labels = {
-    environment = "test"
-  }
 }
 `, testAccProviderBlock(), region, namespace, description)
 }

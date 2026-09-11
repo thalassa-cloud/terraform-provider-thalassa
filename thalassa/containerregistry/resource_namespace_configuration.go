@@ -255,6 +255,12 @@ func flattenRetentionPolicy(policy *tcregistry.RetentionPolicy) []any {
 		rules = append(rules, rm)
 	}
 
+	// Treat a platform default empty/disabled policy as unset so Terraform
+	// does not plan to remove an absent retention_policy block.
+	if !policy.Enabled && !policy.DeleteUntaggedImages && len(rules) == 0 {
+		return []any{}
+	}
+
 	return []any{
 		map[string]any{
 			"enabled":                policy.Enabled,
