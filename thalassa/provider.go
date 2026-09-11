@@ -5,6 +5,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
+	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/containerregistry"
 	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/dbaas"
 	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/dns"
 	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/iaas"
@@ -13,6 +14,7 @@ import (
 	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/kubernetes"
 	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/objectstorage"
 	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/organisation"
+	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/projects"
 	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/provider"
 	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/secrets"
 	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/tfs"
@@ -85,6 +87,8 @@ func Provider() *schema.Provider {
 			secrets.ResourcesMap,
 			objectstorage.ResourcesMap,
 			tfs.ResourcesMap,
+			projects.ResourcesMap,
+			containerregistry.ResourcesMap,
 		),
 		DataSourcesMap: JoinMaps(
 			iaas.DataSourcesMap,
@@ -95,6 +99,8 @@ func Provider() *schema.Provider {
 			kms.DataSourcesMap,
 			objectstorage.DataSourcesMap,
 			tfs.DataSourcesMap,
+			projects.DataSourcesMap,
+			containerregistry.DataSourcesMap,
 		),
 		ConfigureContextFunc: provider.ProviderConfigure,
 	}
