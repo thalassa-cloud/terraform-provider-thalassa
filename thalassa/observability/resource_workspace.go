@@ -305,14 +305,14 @@ func resourceWorkspaceUpdate(ctx context.Context, d *schema.ResourceData, m any)
 		updateReq.RetentionDays = convert.Ptr(v.(int))
 	}
 
-	workspace, err := client.Observability().UpdateObservabilityWorkspace(ctx, d.Id(), updateReq)
+	_, err = client.Observability().UpdateObservabilityWorkspace(ctx, d.Id(), updateReq)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error updating observability workspace: %w", err))
 	}
 
 	waitCtx, cancel := context.WithTimeout(ctx, d.Timeout(schema.TimeoutUpdate))
 	defer cancel()
-	workspace, err = client.Observability().WaitUntilObservabilityWorkspaceReady(waitCtx, d.Id())
+	workspace, err := client.Observability().WaitUntilObservabilityWorkspaceReady(waitCtx, d.Id())
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error waiting for observability workspace to become ready: %w", err))
 	}
