@@ -146,18 +146,12 @@ func ResourceWorkspace() *schema.Resource {
 				Computed:    true,
 				Description: "Object version of the workspace",
 			},
-			"wait_for_deleted": {
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Default:     false,
-				Description: "Whether to wait for the workspace and its underlying data to be fully deleted. Deletion is asynchronous; leave disabled (default) to return after the delete is accepted.",
-			},
 			"wait_for_deleted_timeout": {
 				Type:         schema.TypeInt,
 				Optional:     true,
-				Default:      20,
-				ValidateFunc: validate.IntAtLeast(1),
-				Description:  "Timeout in minutes to wait for the workspace to be fully deleted. Only used if wait_for_deleted is true.",
+				Default:      0,
+				ValidateFunc: validate.IntAtLeast(0),
+				Description:  "Timeout in minutes to wait for the workspace and its underlying data to be fully deleted. Set to 0 (default) to return after the delete is accepted without waiting.",
 			},
 		},
 		Timeouts: &schema.ResourceTimeout{
@@ -345,9 +339,8 @@ func resourceWorkspaceDelete(ctx context.Context, d *schema.ResourceData, m any)
 		return diag.FromErr(fmt.Errorf("error deleting observability workspace: %w", err))
 	}
 
-	if d.Get("wait_for_deleted").(bool) {
-		timeout := time.Duration(d.Get("wait_for_deleted_timeout").(int)) * time.Minute
-		waitCtx, cancel := context.WithTimeout(ctx, timeout)
+	if timeoutMinutes := d.Get("wait_for_deleted_timeout").(int); timeoutMinutes > 0 {
+		waitCtx, cancel := context.WithTimeout(ctx, time.Duration(timeoutMinutes)*time.Minute)
 		defer cancel()
 		for {
 			select {

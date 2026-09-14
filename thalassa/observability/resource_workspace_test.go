@@ -28,10 +28,8 @@ func TestResourceWorkspace(t *testing.T) {
 		assert.True(t, schema["retention_days"].Computed)
 		assert.True(t, schema["organisation_id"].Optional)
 		assert.True(t, schema["organisation_id"].ForceNew)
-		assert.True(t, schema["wait_for_deleted"].Optional)
-		assert.Equal(t, false, schema["wait_for_deleted"].Default)
 		assert.True(t, schema["wait_for_deleted_timeout"].Optional)
-		assert.Equal(t, 20, schema["wait_for_deleted_timeout"].Default)
+		assert.Equal(t, 0, schema["wait_for_deleted_timeout"].Default)
 	})
 
 	t.Run("resource CRUD operations", func(t *testing.T) {

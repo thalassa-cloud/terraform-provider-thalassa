@@ -4,8 +4,7 @@ resource "thalassa_observability_workspace" "example" {
   description    = "Metrics and logs for example workloads"
   retention_days = 30
 
-  # Deletion is asynchronous; set wait_for_deleted = true to block until data is gone.
-  # wait_for_deleted         = true
+  # Deletion is asynchronous; set wait_for_deleted_timeout > 0 to block until data is gone.
   # wait_for_deleted_timeout = 20
 
   labels = {

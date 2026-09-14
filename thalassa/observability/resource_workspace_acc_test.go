@@ -77,7 +77,7 @@ func TestAccObservabilityWorkspace_import(t *testing.T) {
 				ImportState:             true,
 				ImportStateIdFunc:       testAccObservabilityWorkspaceImportStateID,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"organisation_id", "wait_for_deleted", "wait_for_deleted_timeout"},
+				ImportStateVerifyIgnore: []string{"organisation_id", "wait_for_deleted_timeout"},
 			},
 		},
 	})
