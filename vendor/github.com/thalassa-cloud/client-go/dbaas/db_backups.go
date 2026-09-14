@@ -129,7 +129,34 @@ func (c *Client) CancelDeleteDbBackup(ctx context.Context, backupIdentity string
 	return c.Check(resp)
 }
 
+// UpdateDbBackup updates a backup (currently delete protection).
+func (c *Client) UpdateDbBackup(ctx context.Context, backupIdentity string, update UpdateDbClusterBackupRequest) (*DbClusterBackup, error) {
+	if backupIdentity == "" {
+		return nil, fmt.Errorf("backup identity is required")
+	}
+	if update.DeleteProtection == nil {
+		return nil, fmt.Errorf("deleteProtection is required")
+	}
+
+	var backup *DbClusterBackup
+	req := c.R().SetBody(update).SetResult(&backup)
+	resp, err := c.Do(ctx, req, client.PUT, fmt.Sprintf("%s/%s", DbBackupEndpoint, backupIdentity))
+	if err != nil {
+		return nil, err
+	}
+	if err := c.Check(resp); err != nil {
+		return backup, err
+	}
+	return backup, nil
+}
+
 // ListDbBackupsRequest is the request for listing backups.
 type ListDbBackupsRequest struct {
 	Filters []filters.Filter
+}
+
+// UpdateDbClusterBackupRequest updates backup properties.
+type UpdateDbClusterBackupRequest struct {
+	// DeleteProtection indicates if the backup is protected from deletion.
+	DeleteProtection *bool `json:"deleteProtection,omitempty"`
 }

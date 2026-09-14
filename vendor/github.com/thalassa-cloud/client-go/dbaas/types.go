@@ -51,6 +51,16 @@ type DbCluster struct {
 	DatabaseSizeBytes uint64 `json:"databaseSize"`
 	// VolumeTypeClass is the storage type used to determine the size of the cluster storage
 	VolumeTypeClass *iaas.VolumeType `json:"volume_type_class,omitempty"`
+	// StorageAutoScaleEnabled enables automatic storage expansion when usage exceeds the configured threshold.
+	StorageAutoScaleEnabled bool `json:"storageAutoScaleEnabled,omitempty"`
+	// StorageAutoScaleMaxGB is the maximum provisioned storage in GB when autoscaling is enabled.
+	StorageAutoScaleMaxGB uint64 `json:"storageAutoScaleMaxGB,omitempty"`
+	// StorageAutoScaleThresholdPercent is the usage percentage at which storage is expanded. Defaults to 90.
+	StorageAutoScaleThresholdPercent uint `json:"storageAutoScaleThresholdPercent,omitempty"`
+	// StorageAutoScaleIncreasePercent is the percentage of current allocated storage to add per expansion. Defaults to 10.
+	StorageAutoScaleIncreasePercent uint `json:"storageAutoScaleIncreasePercent,omitempty"`
+	// StorageAutoScaleMaxIncreaseGB caps the storage added in a single expansion step in GB. Defaults to 100.
+	StorageAutoScaleMaxIncreaseGB uint64 `json:"storageAutoScaleMaxIncreaseGB,omitempty"`
 	// AutoMinorVersionUpgrade is a flag indicating if the cluster should automatically upgrade to the latest minor version
 	AutoMinorVersionUpgrade bool `json:"autoMinorVersionUpgrade"`
 	// DatabaseName is the name of the database on the cluster. Optional name. If provided, it will be used as the name of the database on the cluster.
@@ -79,6 +89,9 @@ type DbCluster struct {
 	// DatabaseInstancesStatus is the status of the database instances in the cluster
 	DatabaseInstancesStatus DatabaseInstancesStatus `json:"databaseInstancesStatus"`
 
+	// HealthStatus reports database engine health signals mirrored from the regional controller.
+	HealthStatus DbClusterHealthStatus `json:"healthStatus"`
+
 	// AutoUpgradePolicy is the auto upgrade policy for the cluster
 	AutoUpgradePolicy DbClusterAutoUpgradePolicy `json:"autoUpgradePolicy,omitempty"`
 	// MaintenanceDay is the day of the week for the maintenance window. 0 is Sunday, 6 is Saturday.
@@ -90,6 +103,26 @@ type DbCluster struct {
 	ScheduledMaintenances []DbClusterScheduledMaintenance `json:"scheduledMaintenances"`
 	// DbObjectStore is the DB object store used for barman backups
 	DbObjectStore *DbObjectStore `json:"dbObjectStore,omitempty"`
+	// BackupRecoveryWindow is the Barman recovery window for this cluster's backup server.
+	BackupRecoveryWindow *DbObjectStoreRecoveryWindow `json:"backupRecoveryWindow,omitempty"`
+}
+
+// DbClusterHealthStatus reports database engine health signals for a cluster.
+type DbClusterHealthStatus struct {
+	// ContinuousArchiving reports WAL archiving health when continuous archiving is enabled.
+	ContinuousArchiving *DbClusterHealthCondition `json:"continuousArchiving,omitempty"`
+}
+
+// DbClusterHealthCondition is a single health condition reported for a cluster.
+type DbClusterHealthCondition struct {
+	// Healthy indicates whether the condition is in a healthy state.
+	Healthy bool `json:"healthy"`
+	// Reason is the machine-readable reason for the current status.
+	Reason string `json:"reason,omitempty"`
+	// Message is a human-readable message with additional detail.
+	Message string `json:"message,omitempty"`
+	// LastTransitionTime is when the condition last changed.
+	LastTransitionTime *time.Time `json:"lastTransitionTime,omitempty"`
 }
 
 type DatabaseInstancesStatus struct {
@@ -189,6 +222,16 @@ type CreateDbClusterRequest struct {
 	VolumeTypeClassIdentity string `json:"volumeTypeClassIdentity"`
 	// DatabaseInstanceTypeIdentity is the identity of the database instance type
 	DatabaseInstanceTypeIdentity string `json:"databaseInstanceTypeIdentity"`
+	// StorageAutoScaleEnabled enables automatic storage expansion when usage exceeds the configured threshold.
+	StorageAutoScaleEnabled *bool `json:"storageAutoScaleEnabled,omitempty"`
+	// StorageAutoScaleMaxGB is the maximum provisioned storage in GB when autoscaling is enabled.
+	StorageAutoScaleMaxGB *uint64 `json:"storageAutoScaleMaxGB,omitempty"`
+	// StorageAutoScaleThresholdPercent is the usage percentage at which storage is expanded. Defaults to 90.
+	StorageAutoScaleThresholdPercent *uint `json:"storageAutoScaleThresholdPercent,omitempty"`
+	// StorageAutoScaleIncreasePercent is the percentage of current allocated storage to add per expansion. Defaults to 10.
+	StorageAutoScaleIncreasePercent *uint `json:"storageAutoScaleIncreasePercent,omitempty"`
+	// StorageAutoScaleMaxIncreaseGB caps the storage added in a single expansion step in GB. Defaults to 100.
+	StorageAutoScaleMaxIncreaseGB *uint64 `json:"storageAutoScaleMaxIncreaseGB,omitempty"`
 	// AutoMinorVersionUpgrade is a flag indicating if the cluster should automatically upgrade to the latest minor version
 	AutoMinorVersionUpgrade bool `json:"autoMinorVersionUpgrade"`
 	// AutoUpgradePolicy is the auto upgrade policy for the cluster
@@ -312,6 +355,16 @@ type UpdateDbClusterRequest struct {
 	Parameters map[string]string `json:"parameters"`
 	// AllocatedStorage is the amount of storage allocated to the cluster in GB
 	AllocatedStorage uint64 `json:"allocatedStorage"`
+	// StorageAutoScaleEnabled enables automatic storage expansion when usage exceeds the configured threshold.
+	StorageAutoScaleEnabled *bool `json:"storageAutoScaleEnabled,omitempty"`
+	// StorageAutoScaleMaxGB is the maximum provisioned storage in GB when autoscaling is enabled.
+	StorageAutoScaleMaxGB *uint64 `json:"storageAutoScaleMaxGB,omitempty"`
+	// StorageAutoScaleThresholdPercent is the usage percentage at which storage is expanded. Defaults to 90.
+	StorageAutoScaleThresholdPercent *uint `json:"storageAutoScaleThresholdPercent,omitempty"`
+	// StorageAutoScaleIncreasePercent is the percentage of current allocated storage to add per expansion. Defaults to 10.
+	StorageAutoScaleIncreasePercent *uint `json:"storageAutoScaleIncreasePercent,omitempty"`
+	// StorageAutoScaleMaxIncreaseGB caps the storage added in a single expansion step in GB. Defaults to 100.
+	StorageAutoScaleMaxIncreaseGB *uint64 `json:"storageAutoScaleMaxIncreaseGB,omitempty"`
 	// AutoUpgradePolicy is the auto upgrade policy for the cluster
 	AutoUpgradePolicy *DbClusterAutoUpgradePolicy `json:"autoUpgradePolicy,omitempty"`
 	// MaintenanceDay is the day of the week for the maintenance window. 0 is Sunday, 6 is Saturday.
@@ -596,6 +649,12 @@ type DbClusterBackup struct {
 	// StatusMessage is the message of the backup status
 	StatusMessage string `json:"statusMessage,omitempty"`
 
+	// RetentionExpired indicates the backup is outside the retention period of its backup store.
+	RetentionExpired bool `json:"retentionExpired"`
+
+	// SizeBytes is the size of the base backup in object storage, in bytes.
+	SizeBytes *int64 `json:"sizeBytes,omitempty"`
+
 	// CreatedAt is the date and time the object was created
 	CreatedAt time.Time `json:"createdAt"`
 
@@ -714,17 +773,28 @@ type DbClusterScheduledMaintenance struct {
 	CanceledAt *time.Time `json:"canceledAt,omitempty"`
 	// FailedAt is the date and time the scheduled maintenance failed
 	FailedAt *time.Time `json:"failedAt,omitempty"`
+	// PostponedAt is the date and time the scheduled maintenance was postponed
+	PostponedAt *time.Time `json:"postponedAt,omitempty"`
 	// DbCluster is the cluster the scheduled maintenance belongs to
 	DbCluster *DbCluster `json:"dbCluster"`
 	// Status is the status of the scheduled maintenance
 	Status DbClusterScheduledMaintenanceStatus `json:"status"`
 	// StatusReason is the reason for the status of the scheduled maintenance
 	StatusReason string `json:"statusReason,omitempty"`
+	// Type is the kind of scheduled maintenance
+	Type DbClusterScheduledMaintenanceType `json:"type"`
 	// CurrentVersion is the current version of the engine
 	CurrentVersion *DbClusterEngineVersion `json:"currentVersion,omitempty"`
 	// TargetVersion is the target version of the engine
 	TargetVersion *DbClusterEngineVersion `json:"targetVersion,omitempty"`
 }
+
+type DbClusterScheduledMaintenanceType string
+
+const (
+	DbClusterScheduledMaintenanceTypeUpgrade         DbClusterScheduledMaintenanceType = "upgrade"
+	DbClusterScheduledMaintenanceTypeNodeMaintenance DbClusterScheduledMaintenanceType = "nodeMaintenance"
+)
 
 type DbClusterScheduledMaintenanceStatus string
 
@@ -736,6 +806,20 @@ const (
 	DbClusterScheduledMaintenanceStatusCancelled  DbClusterScheduledMaintenanceStatus = "cancelled"
 	DbClusterScheduledMaintenanceStatusSkipped    DbClusterScheduledMaintenanceStatus = "skipped"
 )
+
+// DbClusterRevision is a point-in-time snapshot of cluster configuration used for deployments.
+type DbClusterRevision struct {
+	Identity          string               `json:"identity"`
+	ProjectId         string               `json:"projectId,omitempty"`
+	Revision          DbCluster            `json:"revision"`
+	InstanceType      DatabaseInstanceType `json:"instanceType"`
+	DeployStartedAt   *time.Time           `json:"deployStartedAt,omitempty"`
+	DeployCompletedAt *time.Time           `json:"deployCompletedAt,omitempty"`
+	CreatedAt         time.Time            `json:"createdAt"`
+	UpdatedAt         *time.Time           `json:"updatedAt,omitempty"`
+	ObjectVersion     int64                `json:"objectVersion"`
+	IsDeployTarget    bool                 `json:"isDeployTarget,omitempty"`
+}
 
 // DbObjectStore represents an object storage location for database backups.
 // When created, it provisions an object storage bucket with correct policies
@@ -776,6 +860,56 @@ type DbObjectStore struct {
 	// For example, "30d" means backups will be retained for 30 days.
 	// This is used with barman-cloud-backup-delete command: --retention-policy "RECOVERY WINDOW OF <number> days"
 	RetentionPolicy string `json:"retentionPolicy,omitempty"`
+	// RetentionMode controls post-expiry cleanup behaviour for Barman backups.
+	// retainForPointInTime (default) keeps the latest backup so the recovery window stays restorable.
+	// forceCleanupAfterExpiry allows cleanup of backups (including the latest) after retention expiry.
+	RetentionMode DbObjectStoreRetentionMode `json:"retentionMode,omitempty"`
+	// ServerRecoveryWindow maps Barman server names to their recovery window timestamps.
+	ServerRecoveryWindow map[string]DbObjectStoreRecoveryWindow `json:"serverRecoveryWindow,omitempty"`
+}
+
+// DbObjectStoreRecoveryWindow is the Barman recovery window for a backup server.
+type DbObjectStoreRecoveryWindow struct {
+	// FirstRecoverabilityPoint is the earliest point in time to which the database can be restored.
+	FirstRecoverabilityPoint *time.Time `json:"firstRecoverabilityPoint,omitempty"`
+	// LastSuccessfulBackupTime is the timestamp of the last successful backup.
+	LastSuccessfulBackupTime *time.Time `json:"lastSuccessfulBackupTime,omitempty"`
+	// LastFailedBackupTime is the timestamp of the last failed backup.
+	LastFailedBackupTime *time.Time `json:"lastFailedBackupTime,omitempty"`
+}
+
+// PitrAvailable reports whether point-in-time recovery can be offered for this window.
+func (w DbObjectStoreRecoveryWindow) PitrAvailable(objectStoreReady bool, backupObjectStoreReady bool) bool {
+	if !objectStoreReady || !backupObjectStoreReady {
+		return false
+	}
+	return w.FirstRecoverabilityPoint != nil && w.LastSuccessfulBackupTime != nil
+}
+
+// DbObjectStoreRetentionMode controls how expired backups are cleaned up on an object store.
+type DbObjectStoreRetentionMode string
+
+const (
+	// DbObjectStoreRetentionModeRetainForPointInTime keeps the latest backup so PITR remains restorable.
+	DbObjectStoreRetentionModeRetainForPointInTime DbObjectStoreRetentionMode = "retainForPointInTime"
+	// DbObjectStoreRetentionModeForceCleanupAfterExpiry allows cleanup of all expired backups.
+	DbObjectStoreRetentionModeForceCleanupAfterExpiry DbObjectStoreRetentionMode = "forceCleanupAfterExpiry"
+)
+
+// RetainsForPointInTime reports whether this mode keeps the latest backup for PITR.
+// Empty/unknown values default to retainForPointInTime.
+func (m DbObjectStoreRetentionMode) RetainsForPointInTime() bool {
+	return m != DbObjectStoreRetentionModeForceCleanupAfterExpiry
+}
+
+// IsValid reports whether m is a known retention mode.
+func (m DbObjectStoreRetentionMode) IsValid() bool {
+	switch m {
+	case DbObjectStoreRetentionModeRetainForPointInTime, DbObjectStoreRetentionModeForceCleanupAfterExpiry:
+		return true
+	default:
+		return false
+	}
 }
 
 // CreateDbObjectStoreRequest is the request body for creating a DB object store.
@@ -791,6 +925,8 @@ type CreateDbObjectStoreRequest struct {
 	// RetentionPolicy is the retention policy for backups in the format "<number>d" where d is days.
 	// For example, "30d" means backups will be retained for 30 days.
 	RetentionPolicy string `json:"retentionPolicy,omitempty"`
+	// RetentionMode controls post-expiry cleanup. Omit or empty defaults to retainForPointInTime.
+	RetentionMode DbObjectStoreRetentionMode `json:"retentionMode,omitempty"`
 	// DeleteProtection is a flag to indicate if the object store is protected from deletion
 	DeleteProtection bool `json:"deleteProtection"`
 }
@@ -805,6 +941,8 @@ type UpdateDbObjectStoreRequest struct {
 	Labels Labels `json:"labels,omitempty"`
 	// RetentionPolicy is the retention policy for backups in the format "<number>d" where d is days.
 	RetentionPolicy string `json:"retentionPolicy,omitempty"`
+	// RetentionMode controls post-expiry cleanup. Nil leaves the current value unchanged.
+	RetentionMode *DbObjectStoreRetentionMode `json:"retentionMode,omitempty"`
 	// DeleteProtection is a flag to indicate if the object store is protected from deletion
 	DeleteProtection bool `json:"deleteProtection"`
 }
