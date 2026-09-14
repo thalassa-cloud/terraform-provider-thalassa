@@ -40,3 +40,21 @@ func (c *Client) GetKubernetesVersion(ctx context.Context, identity string) (*Ku
 	}
 	return subnet, nil
 }
+
+// GetUpgradableVersions retrieves versions that can be upgraded to from a given Kubernetes version identity.
+func (c *Client) GetUpgradableVersions(ctx context.Context, versionIdentity string) ([]KubernetesVersion, error) {
+	if versionIdentity == "" {
+		return nil, fmt.Errorf("version identity is required")
+	}
+
+	versions := []KubernetesVersion{}
+	req := c.R().SetResult(&versions)
+	resp, err := c.Do(ctx, req, client.GET, fmt.Sprintf("%s/%s/upgradable-versions", KubernetesVersionEndpoint, versionIdentity))
+	if err != nil {
+		return nil, err
+	}
+	if err := c.Check(resp); err != nil {
+		return versions, err
+	}
+	return versions, nil
+}

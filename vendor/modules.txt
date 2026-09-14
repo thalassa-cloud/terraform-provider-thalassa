@@ -227,7 +227,7 @@ github.com/stretchr/testify/assert
 github.com/stretchr/testify/assert/yaml
 github.com/stretchr/testify/internal/difflib
 github.com/stretchr/testify/internal/spew
-# github.com/thalassa-cloud/client-go v0.35.4
+# github.com/thalassa-cloud/client-go v0.37.0
 ## explicit; go 1.25.0
 github.com/thalassa-cloud/client-go/audit
 github.com/thalassa-cloud/client-go/containerregistry
@@ -240,7 +240,7 @@ github.com/thalassa-cloud/client-go/kms
 github.com/thalassa-cloud/client-go/kubernetes
 github.com/thalassa-cloud/client-go/me
 github.com/thalassa-cloud/client-go/objectstorage
-github.com/thalassa-cloud/client-go/observability/prometheus
+github.com/thalassa-cloud/client-go/observability
 github.com/thalassa-cloud/client-go/pkg/base
 github.com/thalassa-cloud/client-go/pkg/client
 github.com/thalassa-cloud/client-go/projects

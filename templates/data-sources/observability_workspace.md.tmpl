@@ -1,0 +1,22 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.RenderedProviderName}}"
+subcategory: "Observability"
+description: |-
+{{ .Description | plainmarkdown | trimspace | prefixlines "  " }}
+---
+
+# {{.Name}} ({{.Type}})
+
+{{ .Description | trimspace }}
+
+~> **Beta:** Observability workspaces are beta and require sign up to the beta program before they can be used by your organisation.
+
+See [Observability workspaces](https://docs.thalassa.cloud/docs/observability/workspaces/) and [Getting started with Observability](https://docs.thalassa.cloud/docs/observability/getting-started/).
+
+{{ if .HasExample -}}
+## Example Usage
+
+{{codefile "terraform" .ExampleFile}}
+{{- end }}
+
+{{ .SchemaMarkdown | trimspace }}

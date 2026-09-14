@@ -11,7 +11,7 @@ import (
 	"github.com/thalassa-cloud/client-go/kubernetes"
 	"github.com/thalassa-cloud/client-go/me"
 	"github.com/thalassa-cloud/client-go/objectstorage"
-	"github.com/thalassa-cloud/client-go/observability/prometheus"
+	"github.com/thalassa-cloud/client-go/observability"
 	"github.com/thalassa-cloud/client-go/pkg/client"
 	"github.com/thalassa-cloud/client-go/projects"
 	"github.com/thalassa-cloud/client-go/quicklaunch"
@@ -31,7 +31,8 @@ type Client interface {
 	Quotas() *quotas.Client
 	QuickLaunch() *quicklaunch.Client
 	Tfs() *tfs.Client
-	ObservabilityPrometheus() *prometheus.Client
+	// Observability returns a client for observability workspaces (metrics + logs).
+	Observability() *observability.Client
 	ContainerRegistry() *containerregistry.Client
 	// KMS returns a client for the Key Management Service.
 	KMS() *kms.Client
@@ -148,12 +149,12 @@ func (c *thalassaCloudClient) Tfs() *tfs.Client {
 	return tfsClient
 }
 
-func (c *thalassaCloudClient) ObservabilityPrometheus() *prometheus.Client {
-	prometheusClient, err := prometheus.New(c.client)
+func (c *thalassaCloudClient) Observability() *observability.Client {
+	observabilityClient, err := observability.New(c.client)
 	if err != nil {
 		panic(err)
 	}
-	return prometheusClient
+	return observabilityClient
 }
 
 // container registry

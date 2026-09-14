@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/thalassa-cloud/client-go/iaas"
+	"github.com/thalassa-cloud/client-go/iam"
 	"github.com/thalassa-cloud/client-go/pkg/base"
 )
 
@@ -21,6 +22,28 @@ type KubernetesClusterSessionToken struct {
 	Token string `json:"token"`
 	// Complete kubeconfig file content
 	Kubeconfig string `json:"kubeconfig"`
+}
+
+// KubernetesClusterSession is a listed kubeconfig session (without the secret token/kubeconfig payload).
+type KubernetesClusterSession struct {
+	Identity       string              `json:"identity"`
+	CreatedAt      time.Time           `json:"createdAt"`
+	LastUsedAt     *time.Time          `json:"lastUsedAt,omitempty"`
+	ExpiresAt      time.Time           `json:"expiresAt"`
+	User           *base.AppUser       `json:"user,omitempty"`
+	ServiceAccount *iam.ServiceAccount `json:"serviceAccount,omitempty"`
+}
+
+// ContainerImagesInUse lists container images observed on cluster machines.
+type ContainerImagesInUse struct {
+	Images []ContainerImage `json:"images"`
+}
+
+// ContainerImage is a container image reference observed on a cluster node.
+type ContainerImage struct {
+	Image string `json:"image"`
+	Tag   string `json:"tag"`
+	Hash  string `json:"hash"`
 }
 
 // KubernetesVersion represents a supported Kubernetes version configuration.

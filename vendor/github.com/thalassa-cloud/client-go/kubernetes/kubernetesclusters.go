@@ -134,3 +134,39 @@ func (c *Client) DeleteKubernetesCluster(ctx context.Context, identity string) e
 	}
 	return nil
 }
+
+// GetUpgradableVersionsForCluster retrieves Kubernetes versions the cluster can upgrade to.
+func (c *Client) GetUpgradableVersionsForCluster(ctx context.Context, clusterIdentity string) ([]KubernetesVersion, error) {
+	if clusterIdentity == "" {
+		return nil, fmt.Errorf("cluster identity is required")
+	}
+
+	versions := []KubernetesVersion{}
+	req := c.R().SetResult(&versions)
+	resp, err := c.Do(ctx, req, client.GET, fmt.Sprintf("%s/%s/upgradable-versions", KubernetesClusterEndpoint, clusterIdentity))
+	if err != nil {
+		return nil, err
+	}
+	if err := c.Check(resp); err != nil {
+		return versions, err
+	}
+	return versions, nil
+}
+
+// ListContainerImagesInUse lists container images currently present on cluster node pool machines.
+func (c *Client) ListContainerImagesInUse(ctx context.Context, clusterIdentity string) (*ContainerImagesInUse, error) {
+	if clusterIdentity == "" {
+		return nil, fmt.Errorf("cluster identity is required")
+	}
+
+	var images *ContainerImagesInUse
+	req := c.R().SetResult(&images)
+	resp, err := c.Do(ctx, req, client.GET, fmt.Sprintf("%s/%s/container-images", KubernetesClusterEndpoint, clusterIdentity))
+	if err != nil {
+		return nil, err
+	}
+	if err := c.Check(resp); err != nil {
+		return images, err
+	}
+	return images, nil
+}

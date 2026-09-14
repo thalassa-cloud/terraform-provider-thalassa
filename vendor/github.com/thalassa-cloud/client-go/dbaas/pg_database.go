@@ -118,3 +118,24 @@ func (c *Client) CancelDeletePgDatabase(ctx context.Context, dbClusterIdentity s
 	}
 	return c.Check(resp)
 }
+
+// GetPgDatabase retrieves a PostgreSQL database by identity within a database cluster.
+func (c *Client) GetPgDatabase(ctx context.Context, dbClusterIdentity string, postgresDatabaseIdentity string) (*DbClusterPostgresDatabase, error) {
+	if dbClusterIdentity == "" {
+		return nil, fmt.Errorf("database cluster identity is required")
+	}
+	if postgresDatabaseIdentity == "" {
+		return nil, fmt.Errorf("postgres database identity is required")
+	}
+
+	var database *DbClusterPostgresDatabase
+	req := c.R().SetResult(&database)
+	resp, err := c.Do(ctx, req, client.GET, fmt.Sprintf("%s/%s/postgres-databases/%s", DbClusterEndpoint, dbClusterIdentity, postgresDatabaseIdentity))
+	if err != nil {
+		return nil, err
+	}
+	if err := c.Check(resp); err != nil {
+		return database, err
+	}
+	return database, nil
+}
