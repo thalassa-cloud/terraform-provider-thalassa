@@ -13,7 +13,7 @@ import (
 
 func DataSourceWorkspace() *schema.Resource {
 	return &schema.Resource{
-		Description: "Get an observability workspace by identity or by name (optionally scoped by region)",
+		Description: "Get an observability workspace by identity or by name. Observability workspaces are beta and require sign up to the beta program before they can be used by your organisation.",
 		ReadContext: dataSourceWorkspaceRead,
 		Schema: map[string]*schema.Schema{
 			"id": {

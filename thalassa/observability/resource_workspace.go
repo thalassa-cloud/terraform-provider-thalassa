@@ -17,7 +17,7 @@ import (
 
 func ResourceWorkspace() *schema.Resource {
 	return &schema.Resource{
-		Description:   "Create and manage an observability workspace (metrics and logs) in Thalassa Cloud",
+		Description:   "Create and manage an observability workspace (metrics and logs) in Thalassa Cloud. Observability workspaces are beta and require sign up to the beta program before they can be used by your organisation.",
 		CreateContext: resourceWorkspaceCreate,
 		ReadContext:   resourceWorkspaceRead,
 		UpdateContext: resourceWorkspaceUpdate,

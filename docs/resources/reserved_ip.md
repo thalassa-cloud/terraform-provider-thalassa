@@ -70,7 +70,7 @@ output "nat_gateway_endpoint_ip" {
 ### Required
 
 - `name` (String) Display name of the reserved IP.
-- `region` (String) Region of the reserved IP. Provide the identity of the region. Can only be set on creation.
+- `region` (String) Region of the reserved IP. Provide the identity or slug of the region. Can only be set on creation. Import as region/identity.
 
 ### Optional
 

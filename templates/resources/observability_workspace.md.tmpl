@@ -1,0 +1,33 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.RenderedProviderName}}"
+subcategory: "Observability"
+description: |-
+{{ .Description | plainmarkdown | trimspace | prefixlines "  " }}
+---
+
+# {{.Name}} ({{.Type}})
+
+{{ .Description | trimspace }}
+
+~> **Beta:** Observability workspaces are beta and require sign up to the beta program before they can be used by your organisation.
+
+See [Observability workspaces](https://docs.thalassa.cloud/docs/observability/workspaces/) and [Getting started with Observability](https://docs.thalassa.cloud/docs/observability/getting-started/).
+
+## Deletion behaviour
+
+Workspace deletion is asynchronous while underlying metrics and logs data are removed. By default Terraform returns after the delete is accepted. Set `wait_for_deleted_timeout` to a positive number of minutes to block until the workspace is fully gone.
+
+{{ if .HasExample -}}
+## Example Usage
+
+{{codefile "terraform" .ExampleFile}}
+{{- end }}
+{{ .SchemaMarkdown | trimspace }}
+
+{{ if .HasImport -}}
+## Import
+
+Import ID: `region/identity` (for example `nl-01/obsw-abc123`). Identity-only import is accepted, but region may be missing from state if the API does not return it.
+
+{{codefile "shell" .ImportFile}}
+{{- end }}

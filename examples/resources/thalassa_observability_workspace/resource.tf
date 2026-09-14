@@ -1,3 +1,5 @@
+# Observability workspaces are beta and require sign up to the beta program
+# before they can be used by your organisation.
 resource "thalassa_observability_workspace" "example" {
   name           = "example-observability"
   region         = "nl-01"

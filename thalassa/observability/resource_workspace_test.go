@@ -11,7 +11,7 @@ func TestResourceWorkspace(t *testing.T) {
 
 	t.Run("resource schema validation", func(t *testing.T) {
 		assert.NotNil(t, resource)
-		assert.Equal(t, "Create and manage an observability workspace (metrics and logs) in Thalassa Cloud", resource.Description)
+		assert.Equal(t, "Create and manage an observability workspace (metrics and logs) in Thalassa Cloud. Observability workspaces are beta and require sign up to the beta program before they can be used by your organisation.", resource.Description)
 
 		schema := resource.Schema
 		assert.True(t, schema["name"].Required)
@@ -46,7 +46,7 @@ func TestDataSourceWorkspace(t *testing.T) {
 
 	t.Run("data source schema validation", func(t *testing.T) {
 		assert.NotNil(t, dataSource)
-		assert.Equal(t, "Get an observability workspace by identity or by name (optionally scoped by region)", dataSource.Description)
+		assert.Equal(t, "Get an observability workspace by identity or by name. Observability workspaces are beta and require sign up to the beta program before they can be used by your organisation.", dataSource.Description)
 
 		schema := dataSource.Schema
 		assert.True(t, schema["id"].Optional)
