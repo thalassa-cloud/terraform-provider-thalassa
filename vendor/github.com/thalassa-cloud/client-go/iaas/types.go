@@ -174,6 +174,8 @@ type VpcNatGateway struct {
 	ObjectVersion int       `json:"objectVersion"`
 	Status        string    `json:"status"`
 
+	InstanceSize string `json:"instanceSize,omitempty"`
+
 	Labels      map[string]string `json:"labels"`
 	Annotations map[string]string `json:"annotations"`
 
@@ -195,6 +197,25 @@ type VpcNatGateway struct {
 	SecurityGroups []SecurityGroup `json:"securityGroups"`
 }
 
+// NatGatewayInstanceSize is an enabled NAT gateway sizing profile from GET /v1/nat-gateways/instance-sizes.
+type NatGatewayInstanceSize struct {
+	Identity             string `json:"identity"`
+	Name                 string `json:"name"`
+	Enabled              bool   `json:"enabled"`
+	Replicas             int32  `json:"replicas,omitempty"`
+	IngressBandwidthRate *uint  `json:"ingressBandwidthRate,omitempty"`
+	EgressBandwidthRate  *uint  `json:"egressBandwidthRate,omitempty"`
+}
+
+// LoadbalancerInstanceSize is an enabled load balancer sizing profile from GET /v1/loadbalancers/instance-sizes.
+type LoadbalancerInstanceSize struct {
+	Identity             string `json:"identity"`
+	Name                 string `json:"name"`
+	Enabled              bool   `json:"enabled"`
+	IngressBandwidthRate *uint  `json:"ingressBandwidthRate,omitempty"`
+	EgressBandwidthRate  *uint  `json:"egressBandwidthRate,omitempty"`
+}
+
 type VpcLoadbalancer struct {
 	Identity      string      `json:"identity"`
 	Name          string      `json:"name"`
@@ -206,6 +227,8 @@ type VpcLoadbalancer struct {
 	Labels        Labels      `json:"labels"`
 	Annotations   Annotations `json:"annotations"`
 	Status        string      `json:"status"`
+
+	InstanceSize string `json:"instanceSize,omitempty"`
 
 	Organisation   *base.Organisation `json:"organisation"`
 	VpcIdentity    string             `json:"vpcIdentity"`
@@ -278,6 +301,7 @@ type VolumeAttachment struct {
 	AttachedToResourceType string     `json:"attachedToResourceType"`
 	DetachmentRequestedAt  *time.Time `json:"detachmentRequestedAt,omitempty"`
 	CanDetach              bool       `json:"canDetach"`
+	DeleteOnTermination    bool       `json:"deleteOnTermination"`
 
 	// Only set if attachedToResourceType == "cloud_virtual_machine"
 	VirtualMachine *Machine `json:"virtualMachine"`
@@ -416,9 +440,14 @@ type UpdateVolume struct {
 }
 
 type AttachVolumeRequest struct {
-	Description      string `json:"description"`
-	ResourceType     string `json:"resourceType"`
-	ResourceIdentity string `json:"resourceIdentity"`
+	Description         string `json:"description"`
+	ResourceType        string `json:"resourceType"`
+	ResourceIdentity    string `json:"resourceIdentity"`
+	DeleteOnTermination *bool  `json:"deleteOnTermination,omitempty"`
+}
+
+type UpdateVolumeAttachmentRequest struct {
+	DeleteOnTermination bool `json:"deleteOnTermination"`
 }
 
 type DetachVolumeRequest struct {
@@ -485,8 +514,10 @@ type UpdateRouteTable struct {
 }
 
 type CreateVpcNatGateway struct {
-	Name           string      `json:"name"`
-	Description    string      `json:"description"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	// InstanceSize is a natgateway_instance_sizes.name value (e.g. ng-gp-small).
+	InstanceSize   string      `json:"instanceSize,omitempty"`
 	Labels         Labels      `json:"labels"`
 	Annotations    Annotations `json:"annotations"`
 	SubnetIdentity string      `json:"subnetIdentity"`
@@ -499,8 +530,10 @@ type CreateVpcNatGateway struct {
 }
 
 type UpdateVpcNatGateway struct {
-	Name                     string      `json:"name"`
-	Description              string      `json:"description"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	// InstanceSize is a natgateway_instance_sizes.name value. Nil omits the field (unchanged).
+	InstanceSize             *string     `json:"instanceSize,omitempty"`
 	Labels                   Labels      `json:"labels"`
 	Annotations              Annotations `json:"annotations"`
 	SecurityGroupAttachments []string    `json:"securityGroupAttachments"`
@@ -549,6 +582,9 @@ type CreateMachineVolume struct {
 	Description        *string     `json:"description,omitempty"`
 	Labels             Labels      `json:"labels"`
 	Annotations        Annotations `json:"annotations"`
+	// DeleteOnTermination deletes the volume when the instance is terminated.
+	// Omitted defaults to true for the root volume.
+	DeleteOnTermination *bool `json:"deleteOnTermination,omitempty"`
 }
 
 type UpdateMachine struct {

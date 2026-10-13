@@ -118,6 +118,21 @@ func (c *Client) DeleteLoadbalancer(ctx context.Context, loadbalancerIdentity st
 	return nil
 }
 
+// ListLoadbalancerInstanceSizes lists enabled load balancer instance sizes.
+func (c *Client) ListLoadbalancerInstanceSizes(ctx context.Context) ([]LoadbalancerInstanceSize, error) {
+	sizes := []LoadbalancerInstanceSize{}
+	req := c.R().SetResult(&sizes)
+
+	resp, err := c.Do(ctx, req, client.GET, LoadbalancerEndpoint+"/instance-sizes")
+	if err != nil {
+		return nil, err
+	}
+	if err := c.Check(resp); err != nil {
+		return sizes, err
+	}
+	return sizes, nil
+}
+
 // WaitUntilLoadbalancerIsReady waits until a loadbalancer is ready.
 // The user is expected to provide a timeout context.
 func (c *Client) WaitUntilLoadbalancerIsReady(ctx context.Context, loadbalancerIdentity string) error {
@@ -201,6 +216,9 @@ type CreateLoadbalancer struct {
 	// Annotations are arbitrary key-value pairs that can be used to store additional information about the loadbalancer, and are used for matching resources.
 	Annotations Annotations `json:"annotations,omitempty"`
 
+	// InstanceSize is a loadbalancer_instance_sizes.name value (e.g. lb-gp-small).
+	InstanceSize string `json:"instanceSize,omitempty"`
+
 	// Subnet is the subnet in which the loadbalancer will be deployed.
 	Subnet string `json:"subnet"`
 
@@ -231,6 +249,8 @@ type UpdateLoadbalancer struct {
 	Labels Labels `json:"labels,omitempty"`
 	// Annotations are arbitrary key-value pairs that can be used to store additional information about the loadbalancer, and are used for matching resources.
 	Annotations Annotations `json:"annotations,omitempty"`
+	// InstanceSize is a loadbalancer_instance_sizes.name value. Nil omits the field (unchanged). Empty string is rejected by the API.
+	InstanceSize *string `json:"instanceSize,omitempty"`
 	// DeleteProtection is a flag that indicates whether the loadbalancer should be protected from deletion.
 	DeleteProtection bool `json:"deleteProtection"`
 	// Subnet is the subnet in which the loadbalancer will be deployed. Optional. If provided, the loadbalancer will be moved to the new subnet.

@@ -140,6 +140,23 @@ func (c *Client) AttachVolume(ctx context.Context, volumeIdentity string, attach
 	return attachment, nil
 }
 
+// UpdateVolumeAttachment updates delete-on-termination for the volume's current attachment.
+func (c *Client) UpdateVolumeAttachment(ctx context.Context, volumeIdentity string, update UpdateVolumeAttachmentRequest) (*VolumeAttachment, error) {
+	var attachment *VolumeAttachment
+	req := c.R().SetResult(&attachment).SetBody(update)
+
+	resp, err := c.Do(ctx, req, client.PUT, fmt.Sprintf("%s/%s/attachment", VolumeEndpoint, volumeIdentity))
+	if err != nil {
+		return nil, err
+	}
+
+	if err := c.Check(resp); err != nil {
+		return attachment, err
+	}
+
+	return attachment, nil
+}
+
 // DetachVolumeAndWaitUntilAvailable detaches a volume from a machine and waits until it is available.
 // The user is expected to provide a timeout context.
 func (c *Client) DetachVolumeAndWaitUntilAvailable(ctx context.Context, volumeIdentity string, detach DetachVolumeRequest) error {

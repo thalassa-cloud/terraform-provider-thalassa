@@ -135,6 +135,9 @@ type KubernetesCluster struct {
 
 	// SecurityGroups is a list of security groups that are attached to the Control Plane.
 	SecurityGroups []iaas.SecurityGroup `json:"securityGroups,omitempty"`
+
+	// ServiceAccountIssuer is the OIDC issuer URL for the cluster service account tokens.
+	ServiceAccountIssuer *string `json:"serviceAccountIssuer,omitempty"`
 }
 
 // CreateKubernetesCluster represents the configuration for creating a new Kubernetes cluster.
@@ -231,6 +234,10 @@ type UpdateKubernetesCluster struct {
 	// SecurityGroupAttachments is a list of security group identities that will be attached to the Control Plane VPC-internal endpoint.
 	// These do not apply to the public endpoint. If you wish to configure ACLs for the public endpoint, you can use the AllowedCIDRs field.
 	SecurityGroupAttachments []string `json:"securityGroupAttachments,omitempty"`
+
+	// EnableOidcIssuer enables the OIDC issuer for legacy clusters that do not have one yet.
+	// Prefer ConfigureServiceAccountIssuer for an idempotent dedicated API.
+	EnableOidcIssuer *bool `json:"enableOidcIssuer,omitempty"`
 }
 
 // KubernetesClusterNetworking represents the network configuration for a Kubernetes cluster.
