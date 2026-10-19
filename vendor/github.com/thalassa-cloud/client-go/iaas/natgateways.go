@@ -102,6 +102,21 @@ func (c *Client) DeleteNatGateway(ctx context.Context, identity string) error {
 	return nil
 }
 
+// ListNatGatewayInstanceSizes lists enabled NAT gateway instance sizes.
+func (c *Client) ListNatGatewayInstanceSizes(ctx context.Context) ([]NatGatewayInstanceSize, error) {
+	sizes := []NatGatewayInstanceSize{}
+	req := c.R().SetResult(&sizes)
+
+	resp, err := c.Do(ctx, req, client.GET, NatGatewayEndpoint+"/instance-sizes")
+	if err != nil {
+		return nil, err
+	}
+	if err := c.Check(resp); err != nil {
+		return sizes, err
+	}
+	return sizes, nil
+}
+
 // WaitUntilNatGatewayHasEndpoint waits until the nat gateway has an endpoint.
 // It returns the nat gateway when it has an endpoint or an error if the nat gateway fails to get an endpoint.
 // You are responsible for providing a context that can be cancelled, and for handling the error case.
