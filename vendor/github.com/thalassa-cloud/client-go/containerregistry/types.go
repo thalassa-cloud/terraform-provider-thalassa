@@ -39,9 +39,9 @@ type UpdateNamespaceConfigurationRequest struct {
 type ContainerRegistryNamespace struct {
 	Identity      string      `json:"identity"`
 	Namespace     string      `json:"namespace"`
-	CreatedAt     time.Time   `json:"createdAt"`
-	UpdatedAt     time.Time   `json:"updatedAt"`
-	ObjectVersion int64       `json:"objectVersion"`
+	CreatedAt     time.Time   `json:"created_at"`
+	UpdatedAt     time.Time   `json:"updated_at"`
+	ObjectVersion int64       `json:"object_version"`
 	Description   string      `json:"description"`
 	Annotations   Annotations `json:"annotations,omitempty"`
 	Labels        Labels      `json:"labels,omitempty"`
@@ -127,18 +127,22 @@ type RetentionPolicy struct {
 	Rules []RetentionPolicyRule `json:"rules"`
 }
 
+// ContainerRegistryRepository matches the organisation API repository response.
+// Namespace and Registry are plain strings (namespace name and registry host).
 type ContainerRegistryRepository struct {
-	Identity      string                      `json:"identity"`
-	CreatedAt     time.Time                   `json:"createdAt"`
-	UpdatedAt     time.Time                   `json:"updatedAt"`
-	ObjectVersion int64                       `json:"objectVersion"`
-	Namespace     *ContainerRegistryNamespace `json:"namespace,omitempty"`
-	Image         string                      `json:"image"`
-	FullName      string                      `json:"full_name"`
-	Description   string                      `json:"description"`
+	Identity      string     `json:"identity"`
+	CreatedAt     time.Time  `json:"created_at"`
+	UpdatedAt     time.Time  `json:"updated_at"`
+	DeletedAt     *time.Time `json:"deleted_at,omitempty"`
+	ObjectVersion int64      `json:"object_version"`
+	Namespace     string     `json:"namespace"`
+	Registry      string     `json:"registry"`
+	Image         string     `json:"image"`
+	FullName      string     `json:"full_name,omitempty"`
+	Description   string     `json:"description,omitempty"`
 
-	LastPulledAt   *time.Time `json:"last_pulled_at"`
-	LastPushedAt   *time.Time `json:"last_pushed_at"`
+	LastPulledAt   *time.Time `json:"last_pulled_at,omitempty"`
+	LastPushedAt   *time.Time `json:"last_pushed_at,omitempty"`
 	TotalSizeBytes int64      `json:"total_size_bytes"`
 	TagCount       int64      `json:"tag_count"`
 	ArtifactCount  int64      `json:"artifact_count"`

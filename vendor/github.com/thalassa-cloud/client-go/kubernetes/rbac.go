@@ -157,3 +157,18 @@ func (c *Client) DeleteClusterRoleBinding(ctx context.Context, identity string, 
 	}
 	return nil
 }
+
+// ListClusterRoleBindingsForCluster lists role bindings that apply to a cluster (org-wide and cluster-scoped).
+func (c *Client) ListClusterRoleBindingsForCluster(ctx context.Context, clusterIdentity string) ([]KubernetesClusterRoleBinding, error) {
+	bindings := []KubernetesClusterRoleBinding{}
+	req := c.R().SetResult(&bindings)
+
+	resp, err := c.Do(ctx, req, client.GET, fmt.Sprintf("%s/%s/iam/role-bindings", KubernetesClusterEndpoint, clusterIdentity))
+	if err != nil {
+		return nil, err
+	}
+	if err := c.Check(resp); err != nil {
+		return bindings, err
+	}
+	return bindings, nil
+}

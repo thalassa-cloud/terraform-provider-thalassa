@@ -135,6 +135,21 @@ func (c *Client) DeleteKubernetesCluster(ctx context.Context, identity string) e
 	return nil
 }
 
+// ConfigureServiceAccountIssuer idempotently configures the OIDC/JWKS service account issuer for a cluster.
+// Returns nil on success (HTTP 204), including when the issuer is already set correctly.
+func (c *Client) ConfigureServiceAccountIssuer(ctx context.Context, identity string) error {
+	if identity == "" {
+		return fmt.Errorf("cluster identity is required")
+	}
+
+	req := c.R()
+	resp, err := c.Do(ctx, req, client.POST, fmt.Sprintf("%s/%s/service-account-issuer", KubernetesClusterEndpoint, identity))
+	if err != nil {
+		return err
+	}
+	return c.Check(resp)
+}
+
 // GetUpgradableVersionsForCluster retrieves Kubernetes versions the cluster can upgrade to.
 func (c *Client) GetUpgradableVersionsForCluster(ctx context.Context, clusterIdentity string) ([]KubernetesVersion, error) {
 	if clusterIdentity == "" {
