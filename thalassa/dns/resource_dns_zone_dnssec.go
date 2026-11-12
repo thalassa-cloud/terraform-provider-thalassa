@@ -10,6 +10,7 @@ import (
 	tcdns "github.com/thalassa-cloud/client-go/dns"
 	tcclient "github.com/thalassa-cloud/client-go/pkg/client"
 
+	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/convert"
 	"github.com/thalassa-cloud/terraform-provider-thalassa/thalassa/provider"
 )
 
@@ -143,8 +144,8 @@ func resourceDnsZoneDnssecRead(ctx context.Context, d *schema.ResourceData, m an
 	_ = d.Set("enabled", status.Enabled)
 	_ = d.Set("ds_delegated", status.DsDelegated)
 	_ = d.Set("ds_records", flattenDsRecords(status.DsRecords))
-	if status.Region != "" {
-		_ = d.Set("region", status.Region)
+	if status.Region.Identity != "" || status.Region.Slug != "" || status.Region.Name != "" {
+		convert.SetReferenceField(d, "region", status.Region.Identity, status.Region.Slug, status.Region.Name)
 	}
 	if status.KmsKeyIdentity != "" {
 		_ = d.Set("kms_key_id", status.KmsKeyIdentity)

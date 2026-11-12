@@ -93,6 +93,9 @@ type KubernetesClusterRoleBinding struct {
 	OrganisationTeam *iam.Team `json:"team,omitempty"`
 	// ServiceAccount is the service account that the binding is for
 	ServiceAccount *iam.ServiceAccount `json:"serviceAccount,omitempty"`
+	// KubernetesClusterIdentity optionally scopes this binding to a single cluster.
+	// When nil/empty, the binding applies to all clusters in the organisation.
+	KubernetesClusterIdentity *string `json:"kubernetesClusterIdentity,omitempty"`
 	// ExpiresAt is the time at which the binding expires. Optional.
 	ExpiresAt *time.Time `json:"expiresAt,omitempty"`
 	// Note is a human-readable note for the binding. Optional.
@@ -128,6 +131,10 @@ type CreateKubernetesClusterRoleBinding struct {
 
 	// ServiceAccountIdentity is the identity of the service account to bind. Must be provided if UserIdentity and TeamIdentity are not provided.
 	ServiceAccountIdentity *string `json:"serviceAccountIdentity"`
+
+	// KubernetesClusterIdentity optionally scopes the binding to a single cluster.
+	// When omitted, the binding applies to all clusters in the organisation.
+	KubernetesClusterIdentity *string `json:"kubernetesClusterIdentity,omitempty"`
 }
 
 type AddKubernetesClusterRolePermissionRule struct {

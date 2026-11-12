@@ -31,6 +31,10 @@ type OIDCTokenExchangeConfig struct {
 	SubjectTokenFile string
 	OrganisationID   string
 	ServiceAccountID string
+	// ProjectID is optional. When set, it is sent as project_id so the issued token
+	// carries that project. Leave empty for an organisation-root token, or when the
+	// service account is already bound to a project.
+	ProjectID string
 	// AccessTokenLifetime is optional (e.g. "39600s"); sent as access_token_lifetime when non-empty.
 	AccessTokenLifetime string
 }
@@ -256,6 +260,9 @@ func (c *thalassaCloudClient) fetchOIDCTokenExchange(ctx context.Context) (*oaut
 	form.Set("subject_token_type", oidcTokenTypeJWT)
 	form.Set("organisation_id", cfg.OrganisationID)
 	form.Set("service_account_id", cfg.ServiceAccountID)
+	if projectID := strings.TrimSpace(cfg.ProjectID); projectID != "" {
+		form.Set("project_id", projectID)
+	}
 	if strings.TrimSpace(cfg.AccessTokenLifetime) != "" {
 		form.Set("access_token_lifetime", cfg.AccessTokenLifetime)
 	}

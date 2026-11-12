@@ -1,6 +1,10 @@
 package dns
 
-import "time"
+import (
+	"time"
+
+	"github.com/thalassa-cloud/client-go/iaas"
+)
 
 type DnsRecordType string
 
@@ -114,7 +118,7 @@ type DnsZoneDnssecStatus struct {
 	LastSignError  *string           `json:"lastSignError,omitempty"`
 	NextDsProbeAt  *time.Time        `json:"nextDsProbeAt,omitempty"`
 	KmsKeyIdentity string            `json:"kmsKeyIdentity,omitempty"`
-	Region         string            `json:"region,omitempty"`
+	Region         iaas.Region       `json:"region,omitempty"`
 }
 
 type SetDnssecRequest struct {
