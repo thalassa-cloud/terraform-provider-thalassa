@@ -264,9 +264,13 @@ func resourceLoadBalancerUpdate(ctx context.Context, d *schema.ResourceData, m a
 		updateLoadbalancer.ReservedIpID = &reservedIPID
 	}
 
-	slug := d.Get("slug").(string)
+	// The load balancer API addresses the resource by identity. The computed slug is not a valid path key.
+	id := d.Id()
+	if id == "" {
+		return diag.FromErr(fmt.Errorf("loadbalancer identity is required to update"))
+	}
 
-	loadbalancer, err := client.IaaS().UpdateLoadbalancer(ctx, slug, updateLoadbalancer)
+	loadbalancer, err := client.IaaS().UpdateLoadbalancer(ctx, id, updateLoadbalancer)
 	if err != nil {
 		if tcclient.IsNotFound(err) {
 			d.SetId("")
@@ -294,10 +298,10 @@ func resourceLoadBalancerUpdate(ctx context.Context, d *schema.ResourceData, m a
 		case <-time.After(1 * time.Second):
 		}
 		// continue
-		loadbalancer, err = client.IaaS().GetLoadbalancer(ctxWithTimeout, slug)
+		loadbalancer, err = client.IaaS().GetLoadbalancer(ctxWithTimeout, id)
 		if err != nil {
 			if tcclient.IsNotFound(err) {
-				return diag.FromErr(fmt.Errorf("loadbalancer %s was not found after update", slug))
+				return diag.FromErr(fmt.Errorf("loadbalancer %s was not found after update", id))
 			}
 			return diag.FromErr(err)
 		}
