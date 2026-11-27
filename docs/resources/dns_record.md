@@ -67,10 +67,10 @@ resource "thalassa_dns_record" "apex" {
 
 ## Import
 
-Import ID: platform identity of the record (e.g. `dnsr-xyz`). `zone_id` must be set in configuration when importing.
+Import ID: `zone_id/record_id` (e.g. `dnsz-abc/dnsr-xyz`).
 
 ```shell
 #!/bin/bash
-# Example: terraform import thalassa_dns_record.www dnsr-xyz
-terraform import thalassa_dns_record.www dnsr-xyz
+# Example: terraform import thalassa_dns_record.www dnsz-abc/dnsr-xyz
+terraform import thalassa_dns_record.www dnsz-abc/dnsr-xyz
 ```

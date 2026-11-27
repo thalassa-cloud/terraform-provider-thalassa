@@ -3,6 +3,7 @@ package dns
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -23,7 +24,7 @@ func ResourceDnsRecord() *schema.Resource {
 		UpdateContext: resourceDnsRecordUpdate,
 		DeleteContext: resourceDnsRecordDelete,
 		Importer: &schema.ResourceImporter{
-			StateContext: schema.ImportStatePassthroughContext,
+			StateContext: resourceDnsRecordImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"id": {
@@ -77,6 +78,28 @@ func ResourceDnsRecord() *schema.Resource {
 			},
 		},
 	}
+}
+
+func resourceDnsRecordImport(_ context.Context, d *schema.ResourceData, _ any) ([]*schema.ResourceData, error) {
+	zoneID, recordID, err := parseDnsRecordImportID(d.Id())
+	if err != nil {
+		return nil, err
+	}
+
+	if err := d.Set("zone_id", zoneID); err != nil {
+		return nil, err
+	}
+	d.SetId(recordID)
+	return []*schema.ResourceData{d}, nil
+}
+
+func parseDnsRecordImportID(id string) (zoneID, recordID string, err error) {
+	id = strings.TrimSpace(id)
+	parts := strings.SplitN(id, "/", 2)
+	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
+		return "", "", fmt.Errorf("invalid import id %q; expected \"zone_id/record_id\"", id)
+	}
+	return parts[0], parts[1], nil
 }
 
 func resourceDnsRecordCreate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {
