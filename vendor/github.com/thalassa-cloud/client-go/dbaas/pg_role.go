@@ -39,6 +39,27 @@ func (c *Client) ListPgRoles(ctx context.Context, dbClusterIdentity string, list
 	return roles, nil
 }
 
+// GetPgRole retrieves a PostgreSQL role by identity within a database cluster.
+func (c *Client) GetPgRole(ctx context.Context, dbClusterIdentity string, postgresRoleIdentity string) (*DbClusterPostgresRole, error) {
+	if dbClusterIdentity == "" {
+		return nil, fmt.Errorf("database cluster identity is required")
+	}
+	if postgresRoleIdentity == "" {
+		return nil, fmt.Errorf("postgres role identity is required")
+	}
+
+	var role *DbClusterPostgresRole
+	req := c.R().SetResult(&role)
+	resp, err := c.Do(ctx, req, client.GET, fmt.Sprintf("%s/%s/postgres-roles/%s", DbClusterEndpoint, dbClusterIdentity, postgresRoleIdentity))
+	if err != nil {
+		return nil, err
+	}
+	if err := c.Check(resp); err != nil {
+		return role, err
+	}
+	return role, nil
+}
+
 // CreatePgRole creates a new PostgreSQL role in a database cluster.
 func (c *Client) CreatePgRole(ctx context.Context, dbClusterIdentity string, create CreatePgRoleRequest) (*DbClusterPostgresRole, error) {
 	if dbClusterIdentity == "" {

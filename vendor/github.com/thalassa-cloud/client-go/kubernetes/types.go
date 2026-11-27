@@ -144,16 +144,18 @@ type KubernetesCluster struct {
 
 // CreateKubernetesCluster represents the configuration for creating a new Kubernetes cluster.
 type CreateKubernetesCluster struct {
-	Name                        string                                `json:"name"`                        // Display name for the new cluster
-	Description                 string                                `json:"description"`                 // Cluster description
-	Labels                      map[string]string                     `json:"labels"`                      // Custom labels
-	Annotations                 map[string]string                     `json:"annotations"`                 // Custom annotations
-	RegionIdentity              string                                `json:"regionIdentity"`              // Target region identifier
-	ClusterType                 KubernetesClusterType                 `json:"clusterType"`                 // Type of cluster deployment
-	KubernetesVersionIdentity   string                                `json:"kubernetesVersionIdentity"`   // Kubernetes version identifier
-	DeleteProtection            bool                                  `json:"deleteProtection"`            // Whether deletion protection is enabled
-	Subnet                      string                                `json:"subnet"`                      // Subnet for cluster deployment
-	Networking                  KubernetesClusterNetworking           `json:"networking"`                  // Network configuration
+	Name                      string                      `json:"name"`                      // Display name for the new cluster
+	Description               string                      `json:"description"`               // Cluster description
+	Labels                    map[string]string           `json:"labels"`                    // Custom labels
+	Annotations               map[string]string           `json:"annotations"`               // Custom annotations
+	RegionIdentity            string                      `json:"regionIdentity"`            // Target region identifier
+	ClusterType               KubernetesClusterType       `json:"clusterType"`               // Type of cluster deployment
+	KubernetesVersionIdentity string                      `json:"kubernetesVersionIdentity"` // Kubernetes version identifier
+	DeleteProtection          bool                        `json:"deleteProtection"`          // Whether deletion protection is enabled
+	Subnet                    string                      `json:"subnet"`                    // Subnet for cluster deployment
+	Networking                KubernetesClusterNetworking `json:"networking"`                // Network configuration
+	// Storage holds per-driver CSI deployment settings. Create-only. Drivers can run in parallel.
+	Storage                     *KubernetesClusterStorage             `json:"storage,omitempty"`
 	PodSecurityStandardsProfile KubernetesClusterPodSecurityStandards `json:"podSecurityStandardsProfile"` // Pod security standards
 	AuditLogProfile             KubernetesClusterAuditLoggingProfile  `json:"auditLogProfile"`             // Audit logging configuration
 	DefaultNetworkPolicy        KubernetesDefaultNetworkPolicies      `json:"defaultNetworkPolicy"`        // Default network policy
@@ -216,7 +218,9 @@ type UpdateKubernetesCluster struct {
 	PodSecurityStandardsProfile *KubernetesClusterPodSecurityStandards `json:"podSecurityStandardsProfile,omitempty"` // Updated pod security standards
 	AuditLogProfile             *KubernetesClusterAuditLoggingProfile  `json:"auditLogProfile,omitempty"`             // Updated audit logging configuration
 	DisablePublicEndpoint       *bool                                  `json:"disablePublicEndpoint,omitempty"`       // Updated public endpoint setting
-	ApiServerACLs               KubernetesApiServerACLs                `json:"apiServerACL"`                          // ApiServerACLs is the ACLs for the API server
+	// ApiServerACLs updates the public API server ACL when set. Omit to leave unchanged.
+	// Prefer UpdateKubernetesClusterApiServerACL for dedicated updates.
+	ApiServerACLs *KubernetesApiServerACLs `json:"apiServerACL,omitempty"`
 
 	// KubeProxyMode is the mode of the kube proxy. Default is ipvs.
 	KubeProxyMode *KubernetesClusterKubeProxyMode `json:"kubeProxyMode,omitempty"`
@@ -233,13 +237,27 @@ type UpdateKubernetesCluster struct {
 	// For more information, see the Cluster Autoscaler documentation: https://github.com/kubernetes/autoscaler/blob/master/cluster-autoscaler/FAQ.md
 	AutoscalerConfig *AutoscalerConfig `json:"autoscalerConfig,omitempty"`
 
-	// SecurityGroupAttachments is a list of security group identities that will be attached to the Control Plane VPC-internal endpoint.
-	// These do not apply to the public endpoint. If you wish to configure ACLs for the public endpoint, you can use the AllowedCIDRs field.
+	// SecurityGroupAttachments replaces the security groups on the Control Plane VPC-internal endpoint when set.
+	// Omit to leave unchanged. An empty list detaches all.
+	// Prefer AttachSecurityGroupToKubernetesCluster / DetachSecurityGroupFromKubernetesCluster for incremental updates.
 	SecurityGroupAttachments []string `json:"securityGroupAttachments,omitempty"`
 
 	// EnableOidcIssuer enables the OIDC issuer for legacy clusters that do not have one yet.
 	// Prefer ConfigureServiceAccountIssuer for an idempotent dedicated API.
 	EnableOidcIssuer *bool `json:"enableOidcIssuer,omitempty"`
+}
+
+// AttachSecurityGroupToKubernetesClusterRequest attaches a security group to a Kubernetes cluster control plane.
+type AttachSecurityGroupToKubernetesClusterRequest struct {
+	// SecurityGroupIdentity is the identity of the security group to attach.
+	SecurityGroupIdentity string `json:"securityGroupIdentity"`
+}
+
+// UpdateKubernetesClusterApiServerACLRequest updates the public API server ACL for a Kubernetes cluster.
+type UpdateKubernetesClusterApiServerACLRequest struct {
+	// AllowedCIDRs is a list of allowed CIDRs for the public API server endpoint.
+	// An empty list clears the ACL.
+	AllowedCIDRs []string `json:"allowedCIDRs"`
 }
 
 // KubernetesClusterNetworking represents the network configuration for a Kubernetes cluster.
@@ -267,7 +285,25 @@ const (
 
 // KubernetesClusterConfiguration represents the configuration of a Kubernetes cluster.
 type KubernetesClusterConfiguration struct {
-	Networking KubernetesClusterNetworking `json:"networking"` // Network configuration
+	Networking KubernetesClusterNetworking `json:"networking"`        // Network configuration
+	Storage    *KubernetesClusterStorage   `json:"storage,omitempty"` // Per-driver CSI deployment settings
+}
+
+// KubernetesClusterCSIDeployment controls whether a platform CSI driver is managed or disabled.
+type KubernetesClusterCSIDeployment string
+
+const (
+	// KubernetesClusterCSIDeploymentManaged installs and manages the CSI driver.
+	KubernetesClusterCSIDeploymentManaged KubernetesClusterCSIDeployment = "managed"
+	// KubernetesClusterCSIDeploymentDisabled skips install of the CSI driver.
+	KubernetesClusterCSIDeploymentDisabled KubernetesClusterCSIDeployment = "disabled"
+)
+
+// KubernetesClusterStorage holds CSI driver deployment settings.
+// Each driver has an independent managed/disabled control so drivers can run in parallel.
+type KubernetesClusterStorage struct {
+	// ThalassaCSI controls the Thalassa block CSI. Default managed.
+	ThalassaCSI *KubernetesClusterCSIDeployment `json:"thalassaCsi,omitempty"`
 }
 
 // KubernetesClusterPodSecurityStandards represents the pod security standards profile for a cluster.

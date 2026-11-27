@@ -282,6 +282,20 @@ func (c *Client) DeleteSnapshotPolicy(ctx context.Context, identity string) erro
 	return nil
 }
 
+// ExecuteSnapshotPolicy triggers an immediate execution of a snapshot policy.
+func (c *Client) ExecuteSnapshotPolicy(ctx context.Context, identity string) error {
+	if identity == "" {
+		return fmt.Errorf("snapshot policy identity is required")
+	}
+
+	req := c.R()
+	resp, err := c.Do(ctx, req, client.POST, fmt.Sprintf("%s/%s/execute", SnapshotPolicyEndpoint, identity))
+	if err != nil {
+		return err
+	}
+	return c.Check(resp)
+}
+
 type CreateSnapshotRequest struct {
 	// Name is the name of the snapshot. Must be unique within the organisation.
 	// The name is used for identification and display purposes.

@@ -150,6 +150,69 @@ func (c *Client) ConfigureServiceAccountIssuer(ctx context.Context, identity str
 	return c.Check(resp)
 }
 
+// AttachSecurityGroupToKubernetesCluster attaches a security group to the cluster control plane.
+// Idempotent when the security group is already attached.
+func (c *Client) AttachSecurityGroupToKubernetesCluster(ctx context.Context, identity string, request AttachSecurityGroupToKubernetesClusterRequest) (*KubernetesCluster, error) {
+	if identity == "" {
+		return nil, fmt.Errorf("cluster identity is required")
+	}
+	if request.SecurityGroupIdentity == "" {
+		return nil, fmt.Errorf("security group identity is required")
+	}
+
+	var cluster *KubernetesCluster
+	req := c.R().SetBody(request).SetResult(&cluster)
+	resp, err := c.Do(ctx, req, client.POST, fmt.Sprintf("%s/%s/security-groups/attach", KubernetesClusterEndpoint, identity))
+	if err != nil {
+		return nil, err
+	}
+	if err := c.Check(resp); err != nil {
+		return cluster, err
+	}
+	return cluster, nil
+}
+
+// DetachSecurityGroupFromKubernetesCluster detaches a security group from the cluster control plane.
+// Idempotent when the security group is not attached.
+func (c *Client) DetachSecurityGroupFromKubernetesCluster(ctx context.Context, identity, securityGroupIdentity string) (*KubernetesCluster, error) {
+	if identity == "" {
+		return nil, fmt.Errorf("cluster identity is required")
+	}
+	if securityGroupIdentity == "" {
+		return nil, fmt.Errorf("security group identity is required")
+	}
+
+	var cluster *KubernetesCluster
+	req := c.R().SetResult(&cluster)
+	resp, err := c.Do(ctx, req, client.DELETE, fmt.Sprintf("%s/%s/security-groups/%s", KubernetesClusterEndpoint, identity, securityGroupIdentity))
+	if err != nil {
+		return nil, err
+	}
+	if err := c.Check(resp); err != nil {
+		return cluster, err
+	}
+	return cluster, nil
+}
+
+// UpdateKubernetesClusterApiServerACL updates the public API server ACL without updating other cluster fields.
+// An empty AllowedCIDRs list clears the ACL.
+func (c *Client) UpdateKubernetesClusterApiServerACL(ctx context.Context, identity string, request UpdateKubernetesClusterApiServerACLRequest) (*KubernetesCluster, error) {
+	if identity == "" {
+		return nil, fmt.Errorf("cluster identity is required")
+	}
+
+	var cluster *KubernetesCluster
+	req := c.R().SetBody(request).SetResult(&cluster)
+	resp, err := c.Do(ctx, req, client.PUT, fmt.Sprintf("%s/%s/api-server-acl", KubernetesClusterEndpoint, identity))
+	if err != nil {
+		return nil, err
+	}
+	if err := c.Check(resp); err != nil {
+		return cluster, err
+	}
+	return cluster, nil
+}
+
 // GetUpgradableVersionsForCluster retrieves Kubernetes versions the cluster can upgrade to.
 func (c *Client) GetUpgradableVersionsForCluster(ctx context.Context, clusterIdentity string) ([]KubernetesVersion, error) {
 	if clusterIdentity == "" {

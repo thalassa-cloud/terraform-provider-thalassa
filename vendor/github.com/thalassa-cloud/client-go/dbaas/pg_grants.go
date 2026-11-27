@@ -40,6 +40,27 @@ func (c *Client) ListDbGrants(ctx context.Context, dbClusterIdentity string, lis
 	return grants, nil
 }
 
+// GetPgGrant retrieves a PostgreSQL grant by identity within a database cluster.
+func (c *Client) GetPgGrant(ctx context.Context, dbClusterIdentity string, grantIdentity string) (*DbClusterPostgresGrant, error) {
+	if dbClusterIdentity == "" {
+		return nil, fmt.Errorf("database cluster identity is required")
+	}
+	if grantIdentity == "" {
+		return nil, fmt.Errorf("postgres grant identity is required")
+	}
+
+	var grant *DbClusterPostgresGrant
+	req := c.R().SetResult(&grant)
+	resp, err := c.Do(ctx, req, client.GET, fmt.Sprintf("%s/%s/postgres-grants/%s", DbClusterEndpoint, dbClusterIdentity, grantIdentity))
+	if err != nil {
+		return nil, err
+	}
+	if err := c.Check(resp); err != nil {
+		return grant, err
+	}
+	return grant, nil
+}
+
 // CreatePgGrant creates a new PostgreSQL grant for a role on a database in a database cluster.
 func (c *Client) CreatePgGrant(ctx context.Context, dbClusterIdentity string, create CreatePgGrantRequest) (*DbClusterPostgresGrant, error) {
 	if dbClusterIdentity == "" {

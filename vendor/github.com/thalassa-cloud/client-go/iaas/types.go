@@ -85,11 +85,14 @@ type Subnet struct {
 	Labels      Labels      `json:"labels"`
 	Annotations Annotations `json:"annotations"`
 
-	Type        SubnetType   `json:"type"`
-	VpcIdentity string       `json:"vpcIdentity"`
-	Vpc         *Vpc         `json:"vpc"`
-	Cidr        string       `json:"cidr"`
-	Status      SubnetStatus `json:"status"`
+	Type        SubnetType `json:"type"`
+	VpcIdentity string     `json:"vpcIdentity"`
+	Vpc         *Vpc       `json:"vpc"`
+	// Cidr is the IPv4 CIDR for IPv4 and Dual subnets.
+	Cidr string `json:"cidr,omitempty"`
+	// CidrIPv6 is the IPv6 CIDR for IPv6 and Dual subnets.
+	CidrIPv6 string       `json:"cidrIPv6,omitempty"`
+	Status   SubnetStatus `json:"status"`
 
 	RouteTable *RouteTable `json:"routeTable,omitempty"`
 
@@ -460,11 +463,14 @@ type CreateSubnet struct {
 	Labels      Labels      `json:"labels,omitempty"`
 	Annotations Annotations `json:"annotations,omitempty"`
 	VpcIdentity string      `json:"vpcIdentity"`
-	// Cidr is the CIDR block for the subnet. i.e. 10.0.0.0/24.
-	// Supports both IPv4 and IPv6 and Dual-Stack (IPv4 and IPv6). Provide DualStack CIDR by using comma separated values. For example: "10.0.0.0/24,fc00::/64"
-	// CIDR subnets must be unique within the VPC and must fall within the VPC CIDR blocks associated with the VPC.
+	// Cidr is the IPv4 CIDR for IPv4 and Dual subnets (for example "10.0.0.0/24").
+	// Omit for IPv6-only subnets. At least one of Cidr or CidrIPv6 is required.
+	// CIDRs must be unique within the VPC and must fall within the VPC CIDR blocks.
 	// The CIDR may not be modified once the subnet is created.
-	Cidr string `json:"cidr"`
+	Cidr string `json:"cidr,omitempty"`
+	// CidrIPv6 is the IPv6 CIDR for IPv6 and Dual subnets (for example "fd00:110:1::/64").
+	// Set together with Cidr to create a Dual subnet.
+	CidrIPv6 string `json:"cidrIPv6,omitempty"`
 	// AssociatedRouteTableIdentity is the identity of the route table that will be associated with the subnet.
 	AssociatedRouteTableIdentity *string `json:"associatedRouteTableIdentity,omitempty"`
 }

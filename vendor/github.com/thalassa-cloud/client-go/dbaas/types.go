@@ -394,6 +394,18 @@ const (
 	DbClusterStatusUnknown               DbClusterStatus = "unknown"
 )
 
+// DbClusterPostgresDatabaseAutoUpdateExtensions is the auto-update policy for database extensions.
+type DbClusterPostgresDatabaseAutoUpdateExtensions string
+
+const (
+	// DbClusterPostgresDatabaseAutoUpdateExtensionsNone disables automatic extension upgrades.
+	DbClusterPostgresDatabaseAutoUpdateExtensionsNone DbClusterPostgresDatabaseAutoUpdateExtensions = "none"
+	// DbClusterPostgresDatabaseAutoUpdateExtensionsCustomerManaged auto-upgrades postgis, vector, and timescaledb.
+	DbClusterPostgresDatabaseAutoUpdateExtensionsCustomerManaged DbClusterPostgresDatabaseAutoUpdateExtensions = "customerManaged"
+	// DbClusterPostgresDatabaseAutoUpdateExtensionsAll auto-upgrades every enabled extension with an available upgrade.
+	DbClusterPostgresDatabaseAutoUpdateExtensionsAll DbClusterPostgresDatabaseAutoUpdateExtensions = "all"
+)
+
 type CreatePgDatabaseRequest struct {
 	// Name is the name of the database.
 	Name string `json:"name"`
@@ -412,6 +424,8 @@ type CreatePgDatabaseRequest struct {
 	ConnectionLimit *int `json:"connectionLimit,omitempty"`
 	// Extensions for the database
 	Extensions *PgDatabaseExtensions `json:"extensions,omitempty"`
+	// AutoUpdateExtensions controls automatic extension upgrades for this database.
+	AutoUpdateExtensions DbClusterPostgresDatabaseAutoUpdateExtensions `json:"autoUpdateExtensions,omitempty"`
 }
 
 type UpdatePgDatabaseRequest struct {
@@ -425,6 +439,9 @@ type UpdatePgDatabaseRequest struct {
 	ConnectionLimit *int `json:"connectionLimit,omitempty"`
 	// Extensions for the database
 	Extensions *PgDatabaseExtensions `json:"extensions,omitempty"`
+	// AutoUpdateExtensions controls automatic extension upgrades for this database.
+	// When omitted, the existing value is kept.
+	AutoUpdateExtensions *DbClusterPostgresDatabaseAutoUpdateExtensions `json:"autoUpdateExtensions,omitempty"`
 }
 
 type PgDatabaseExtensions struct {
@@ -435,6 +452,17 @@ type PgDatabaseExtensions struct {
 type DatabasePostgresExtension struct {
 	// Name is the name of the extension
 	Name string `json:"name"`
+	// Version pins the extension version. When empty, the image default is used.
+	Version string `json:"version,omitempty"`
+}
+
+// DatabasePostgresExtensionStatus describes an installed PostgreSQL extension and upgrade options.
+type DatabasePostgresExtensionStatus struct {
+	Name              string   `json:"name,omitempty"`
+	InstalledVersion  string   `json:"installedVersion,omitempty"`
+	DefaultVersion    string   `json:"defaultVersion,omitempty"`
+	AvailableVersions []string `json:"availableVersions,omitempty"`
+	UpgradeAvailable  bool     `json:"upgradeAvailable,omitempty"`
 }
 
 type CreatePgRoleRequest struct {
@@ -751,6 +779,13 @@ type DbClusterPostgresDatabase struct {
 
 	// ConnectionLimit is the maximum number of concurrent connections for the database. Default is -1, as per PostgreSQL default.
 	ConnectionLimit int64 `json:"connectionLimit,omitempty"`
+
+	// Extensions is the desired extension configuration for the database.
+	Extensions *PgDatabaseExtensions `json:"extensions,omitempty"`
+	// ExtensionStatus is observed PostgreSQL extension state (read-only).
+	ExtensionStatus []DatabasePostgresExtensionStatus `json:"extensionStatus,omitempty"`
+	// AutoUpdateExtensions controls automatic pinning of extension versions.
+	AutoUpdateExtensions DbClusterPostgresDatabaseAutoUpdateExtensions `json:"autoUpdateExtensions,omitempty"`
 
 	// DeleteScheduledAt is the date and time the database will be deleted
 	DeleteScheduledAt *time.Time `json:"deleteScheduledAt,omitempty"`

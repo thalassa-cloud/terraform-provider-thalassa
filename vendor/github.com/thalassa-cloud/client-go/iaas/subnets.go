@@ -150,7 +150,19 @@ func (c *Client) WaitUntilSubnetReady(ctx context.Context, identity string) (*Su
 }
 
 // CreateSubnet creates a new Subnet.
+//
+// Use Cidr for IPv4, CidrIPv6 for IPv6, or both for Dual.
 func (c *Client) CreateSubnet(ctx context.Context, create CreateSubnet) (*Subnet, error) {
+	if create.Name == "" {
+		return nil, errors.New("name is required")
+	}
+	if create.VpcIdentity == "" {
+		return nil, errors.New("vpcIdentity is required")
+	}
+	if create.Cidr == "" && create.CidrIPv6 == "" {
+		return nil, errors.New("at least one of cidr or cidrIPv6 is required")
+	}
+
 	var subnet *Subnet
 	req := c.R().
 		SetBody(create).SetResult(&subnet)
