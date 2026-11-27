@@ -26,6 +26,7 @@ var (
 		"thalassa_vpc_peering_connection":            resourceVpcPeeringConnection(),
 		"thalassa_vpc_peering_connection_acceptance": resourceVpcPeeringConnectionAcceptance(),
 		"thalassa_vpc_firewall_rule":                 resourceVpcFirewallRule(),
+		"thalassa_vpc_private_connector":             resourceVpcPrivateConnector(),
 		"thalassa_cloud_init_template":               resourceCloudInitTemplate(),
 	}
 
@@ -41,6 +42,7 @@ var (
 		"thalassa_vpc_firewall_rule":          DataSourceVpcFirewallRule(),
 		"thalassa_route_table":                DataSourceRouteTable(),
 		"thalassa_vpc_firewall_rules":         DataSourceVpcFirewallRules(),
+		"thalassa_vpc_private_connector":      dataSourceVpcPrivateConnector(),
 		"thalassa_security_group":             DataSourceSecurityGroup(),
 		"thalassa_volume_type":                DataSourceVolumeType(),
 		"thalassa_subnet":                     dataSourceSubnet(),
