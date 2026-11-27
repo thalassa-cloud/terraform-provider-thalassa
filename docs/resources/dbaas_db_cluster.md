@@ -108,12 +108,18 @@ output "db_cluster_port" {
 - `restore_from_backup_id` (String) ID of the backup to restore from when creating the cluster.
 - `restore_recovery_target` (Block List, Max: 1) Recovery target for Point-In-Time Recovery (PITR). Only used when restore_from_backup_id is specified. (see [below for nested schema](#nestedblock--restore_recovery_target))
 - `security_groups` (List of String) List of security groups associated with the cluster
+- `storage_auto_scale_enabled` (Boolean) Enable automatic storage expansion when usage exceeds the configured threshold
+- `storage_auto_scale_increase_percent` (Number) Percentage of current allocated storage to add per expansion. Default: 10
+- `storage_auto_scale_max_gb` (Number) Maximum provisioned storage in GB when autoscaling is enabled
+- `storage_auto_scale_max_increase_gb` (Number) Maximum storage added in a single expansion step in GB. Default: 100
+- `storage_auto_scale_threshold_percent` (Number) Usage percentage at which storage is expanded. Default: 90
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 
 ### Read-Only
 
 - `endpoint_ipv4` (String) IPv4 address of the cluster endpoint
 - `endpoint_ipv6` (String) IPv6 address of the cluster endpoint
+- `health_status` (List of Object) Database engine health signals for the cluster (see [below for nested schema](#nestedatt--health_status))
 - `id` (String) The ID of this resource.
 - `port` (Number) Port of the cluster endpoint
 - `status` (String) Status of the cluster
@@ -135,5 +141,23 @@ Optional:
 - `create` (String)
 - `delete` (String)
 - `update` (String)
+
+
+<a id="nestedatt--health_status"></a>
+### Nested Schema for `health_status`
+
+Read-Only:
+
+- `continuous_archiving` (List of Object) (see [below for nested schema](#nestedobjatt--health_status--continuous_archiving))
+
+<a id="nestedobjatt--health_status--continuous_archiving"></a>
+### Nested Schema for `health_status.continuous_archiving`
+
+Read-Only:
+
+- `healthy` (Boolean)
+- `last_transition_time` (String)
+- `message` (String)
+- `reason` (String)
 
  

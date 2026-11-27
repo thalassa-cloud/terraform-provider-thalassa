@@ -77,11 +77,37 @@ output "pg_database_name" {
 ### Optional
 
 - `allow_connections` (Boolean) If false then no one can connect to this database. Defaults to true.
+- `auto_update_extensions` (String) Automatic extension upgrade policy. Must be none, customerManaged, or all.
 - `connection_limit` (Number) The connection limit of the database
+- `extensions` (Block List) PostgreSQL extensions to install on the database (see [below for nested schema](#nestedblock--extensions))
 - `organisation_id` (String) Reference to the Organisation of the Db Cluster. If not provided, the organisation of the (Terraform) provider will be used.
 
 ### Read-Only
 
+- `extension_status` (List of Object) Observed PostgreSQL extension state (see [below for nested schema](#nestedatt--extension_status))
 - `id` (String) The ID of this resource.
+
+<a id="nestedblock--extensions"></a>
+### Nested Schema for `extensions`
+
+Required:
+
+- `name` (String) Name of the extension
+
+Optional:
+
+- `version` (String) Version of the extension. When empty, the image default is used.
+
+
+<a id="nestedatt--extension_status"></a>
+### Nested Schema for `extension_status`
+
+Read-Only:
+
+- `available_versions` (List of String)
+- `default_version` (String)
+- `installed_version` (String)
+- `name` (String)
+- `upgrade_available` (Boolean)
 
  

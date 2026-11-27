@@ -143,51 +143,43 @@ func resourcePgGrantRead(ctx context.Context, d *schema.ResourceData, m any) dia
 		return diag.FromErr(err)
 	}
 
-	// Since there's no GetPgGrant method, we can't directly read the grant.
-	// We'll verify the cluster exists and that the role and database still exist.
-	// The grant itself is managed by the API and we trust the state.
 	dbClusterId := d.Get("db_cluster_id").(string)
-	dbCluster, err := client.DBaaS().GetDbCluster(ctx, dbClusterId)
+	grantIdentity := d.Id()
+	if grantIdentity == "" {
+		grantIdentity = d.Get("id").(string)
+	}
+	if grantIdentity == "" {
+		grantIdentity = d.Get("name").(string)
+	}
+
+	grant, err := client.DBaaS().GetPgGrant(ctx, dbClusterId, grantIdentity)
 	if err != nil {
 		if tcclient.IsNotFound(err) {
 			d.SetId("")
-			return nil // a deleted db cluster means the pg grant is also deleted
+			return nil
 		}
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("error getting pg grant: %w", err))
 	}
-
-	// Verify the role still exists
-	roleName := d.Get("role_name").(string)
-	roleFound := false
-	for _, role := range dbCluster.PostgresRoles {
-		if strings.EqualFold(role.Name, roleName) {
-			roleFound = true
-			break
-		}
-	}
-	if !roleFound {
-		// Role was deleted, grant is likely gone too
+	if grant == nil {
 		d.SetId("")
 		return nil
 	}
 
-	// Verify the database still exists
-	databaseName := d.Get("database_name").(string)
-	databaseFound := false
-	for _, database := range dbCluster.PostgresDatabases {
-		if strings.EqualFold(database.Name, databaseName) {
-			databaseFound = true
-			break
-		}
+	if grant.Identity != "" {
+		d.SetId(grant.Identity)
+	} else {
+		d.SetId(grant.Name)
 	}
-	if !databaseFound {
-		// Database was deleted, grant is likely gone too
-		d.SetId("")
-		return nil
+	_ = d.Set("name", grant.Name)
+	_ = d.Set("db_cluster_id", dbClusterId)
+	_ = d.Set("read", grant.Read)
+	_ = d.Set("write", grant.Write)
+	if grant.Role != nil {
+		_ = d.Set("role_name", grant.Role.Name)
 	}
-
-	// Grant is assumed to exist if role and database exist
-	// We can't verify the actual grant without a GetPgGrant method
+	if grant.Database != nil {
+		_ = d.Set("database_name", grant.Database.Name)
+	}
 	return nil
 }
 

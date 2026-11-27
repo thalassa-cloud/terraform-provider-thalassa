@@ -180,31 +180,29 @@ func resourcePgRolesRead(ctx context.Context, d *schema.ResourceData, m any) dia
 		return diag.FromErr(err)
 	}
 	id := d.Get("id").(string)
-
 	dbClusterId := d.Get("db_cluster_id").(string)
 
-	dbCluster, err := waitForReadyDbCluster(ctx, client, dbClusterId)
+	role, err := client.DBaaS().GetPgRole(ctx, dbClusterId, id)
 	if err != nil {
 		if tcclient.IsNotFound(err) {
 			d.SetId("")
 			return nil
 		}
-		return diag.FromErr(err)
+		return diag.FromErr(fmt.Errorf("error getting pg role: %w", err))
+	}
+	if role == nil {
+		d.SetId("")
+		return nil
 	}
 
-	for _, role := range dbCluster.PostgresRoles {
-		if role.Identity == id {
-			_ = d.Set("name", role.Name)
-			_ = d.Set("db_cluster_id", dbClusterId)
-			_ = d.Set("connection_limit", role.ConnectionLimit)
-			_ = d.Set("create_db", role.CreateDb)
-			_ = d.Set("create_role", role.CreateRole)
-			_ = d.Set("login", role.Login)
-			return nil
-		}
-	}
-
-	return diag.FromErr(fmt.Errorf("role not found"))
+	d.SetId(role.Identity)
+	_ = d.Set("name", role.Name)
+	_ = d.Set("db_cluster_id", dbClusterId)
+	_ = d.Set("connection_limit", role.ConnectionLimit)
+	_ = d.Set("create_db", role.CreateDb)
+	_ = d.Set("create_role", role.CreateRole)
+	_ = d.Set("login", role.Login)
+	return nil
 }
 
 func resourcePgRolesUpdate(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {

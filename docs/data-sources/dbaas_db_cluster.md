@@ -36,6 +36,7 @@ Get an DB Cluster
 - `endpoint_ipv6` (String) IPv6 address of the cluster endpoint
 - `engine` (String) Database engine of the cluster
 - `engine_version` (String) Version of the database engine
+- `health_status` (List of Object) Database engine health signals for the cluster (see [below for nested schema](#nestedatt--health_status))
 - `id` (String) Identity of the DB Cluster
 - `labels` (Map of String) Labels of the DB Cluster
 - `parameters` (Map of String) Map of parameter name to database engine specific parameter value
@@ -43,5 +44,27 @@ Get an DB Cluster
 - `replicas` (Number) Number of instances in the cluster
 - `security_groups` (List of String) List of security groups associated with the cluster
 - `status` (String) Status of the cluster
+- `storage_auto_scale_enabled` (Boolean) Whether automatic storage expansion is enabled
+- `storage_auto_scale_increase_percent` (Number) Percentage of current allocated storage to add per expansion
+- `storage_auto_scale_max_gb` (Number) Maximum provisioned storage in GB when autoscaling is enabled
+- `storage_auto_scale_max_increase_gb` (Number) Maximum storage added in a single expansion step in GB
+- `storage_auto_scale_threshold_percent` (Number) Usage percentage at which storage is expanded
 - `subnet_id` (String) Subnet of the DB Cluster
-- `volume_type_class` (String) Storage type used to determine the size of the cluster storage 
+- `volume_type_class` (String) Storage type used to determine the size of the cluster storage
+
+<a id="nestedatt--health_status"></a>
+### Nested Schema for `health_status`
+
+Read-Only:
+
+- `continuous_archiving` (List of Object) (see [below for nested schema](#nestedobjatt--health_status--continuous_archiving))
+
+<a id="nestedobjatt--health_status--continuous_archiving"></a>
+### Nested Schema for `health_status.continuous_archiving`
+
+Read-Only:
+
+- `healthy` (Boolean)
+- `last_transition_time` (String)
+- `message` (String)
+- `reason` (String) 
