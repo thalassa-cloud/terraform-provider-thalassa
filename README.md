@@ -176,8 +176,6 @@ Many resources accept an optional `organisation_id` attribute to override the pr
 
 ### Key Management Service (KMS)
 
-> KMS is in early access. The API and resource schema may change.
-
 **Resources**
 
 | Resource | Description |
