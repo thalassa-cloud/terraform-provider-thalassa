@@ -45,7 +45,12 @@ func dataSourceSubnet() *schema.Resource {
 			"cidr": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "The CIDR block of the subnet",
+				Description: "IPv4 CIDR block of the subnet",
+			},
+			"cidr_ipv6": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "IPv6 CIDR block of the subnet",
 			},
 		},
 	}
@@ -84,6 +89,7 @@ func dataSourceSubnetRead(ctx context.Context, d *schema.ResourceData, m any) di
 				_ = d.Set("name", subnet.Name)
 				_ = d.Set("vpc_id", subnet.Vpc.Identity)
 				_ = d.Set("cidr", subnet.Cidr)
+				_ = d.Set("cidr_ipv6", subnet.CidrIPv6)
 				_ = d.Set("slug", subnet.Slug)
 				return nil
 			}
@@ -96,6 +102,7 @@ func dataSourceSubnetRead(ctx context.Context, d *schema.ResourceData, m any) di
 		_ = d.Set("name", subnet.Name)
 		_ = d.Set("vpc_id", subnet.Vpc.Identity)
 		_ = d.Set("cidr", subnet.Cidr)
+		_ = d.Set("cidr_ipv6", subnet.CidrIPv6)
 		_ = d.Set("slug", subnet.Slug)
 		return nil
 	}

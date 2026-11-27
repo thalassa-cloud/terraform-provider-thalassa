@@ -118,6 +118,11 @@ func DataSourceLoadBalancer() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
+			"instance_size": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Instance size of the Load Balancer",
+			},
 			"listeners": {
 				Type:        schema.TypeList,
 				Computed:    true,
@@ -256,6 +261,7 @@ func dataSourceLoadBalancerRead(ctx context.Context, d *schema.ResourceData, m a
 	}
 	_ = d.Set("external_ip_addresses", loadBalancer.ExternalIpAddresses)
 	_ = d.Set("delete_protection", loadBalancer.DeleteProtection)
+	_ = d.Set("instance_size", loadBalancer.InstanceSize)
 	_ = d.Set("status", loadBalancer.Status)
 	_ = d.Set("labels", loadBalancer.Labels)
 	_ = d.Set("annotations", loadBalancer.Annotations)

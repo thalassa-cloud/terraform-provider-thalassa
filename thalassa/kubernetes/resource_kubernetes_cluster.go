@@ -314,6 +314,24 @@ func resourceKubernetesCluster() *schema.Resource {
 				Description: "Disable the public Kubernetes API endpoint. When true, access the API only " +
 					"via the private VPC endpoint and provide your own connectivity.",
 			},
+			"storage": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				ForceNew:    true,
+				MaxItems:    1,
+				Description: "CSI storage driver deployment settings for the Kubernetes Cluster. Create-only.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"thalassa_csi": {
+							Type:         schema.TypeString,
+							Optional:     true,
+							ForceNew:     true,
+							ValidateFunc: validate.StringInSlice([]string{"managed", "disabled"}, false),
+							Description:  "Thalassa CSI driver deployment. Must be managed or disabled. Default: managed.",
+						},
+					},
+				},
+			},
 		},
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -419,6 +437,10 @@ func resourceKubernetesClusterCreate(ctx context.Context, d *schema.ResourceData
 	if maintenanceStartAt, ok := d.GetOk("maintenance_start_at"); ok {
 		startAt := uint(maintenanceStartAt.(int))
 		createKubernetesCluster.MaintenanceStartAt = &startAt
+	}
+
+	if storage, ok := d.GetOk("storage"); ok {
+		createKubernetesCluster.Storage = convertKubernetesClusterStorage(storage)
 	}
 
 	kubernetesCluster, err := client.Kubernetes().CreateKubernetesCluster(ctx, createKubernetesCluster)
@@ -573,6 +595,10 @@ func resourceKubernetesClusterRead(ctx context.Context, d *schema.ResourceData, 
 		_ = d.Set("region", kubernetesCluster.Region.Identity)
 	}
 
+	if kubernetesCluster.Configuration.Storage != nil {
+		_ = d.Set("storage", flattenKubernetesClusterStorage(kubernetesCluster.Configuration.Storage))
+	}
+
 	return nil
 }
 
@@ -619,11 +645,14 @@ func resourceKubernetesClusterUpdate(ctx context.Context, d *schema.ResourceData
 		PodSecurityStandardsProfile: convert.Ptr(kubernetes.KubernetesClusterPodSecurityStandards(d.Get("pod_security_standards_profile").(string))),
 		AuditLogProfile:             convert.Ptr(kubernetes.KubernetesClusterAuditLoggingProfile(d.Get("audit_log_profile").(string))),
 		DefaultNetworkPolicy:        convert.Ptr(kubernetes.KubernetesDefaultNetworkPolicies(d.Get("default_network_policy").(string))),
-		ApiServerACLs:               convertApiServerACLs(d.Get("api_server_acls")),
 		AutoUpgradePolicy:           kubernetes.KubernetesClusterAutoUpgradePolicy(d.Get("auto_upgrade_policy").(string)),
 		DisablePublicEndpoint:       convert.Ptr(d.Get("disable_public_endpoint").(bool)),
 		KubeProxyMode:               convert.Ptr(kubernetes.KubernetesClusterKubeProxyMode(d.Get("networking_kube_proxy_mode").(string))),
 		KubeProxyDeployment:         convert.Ptr(kubernetes.KubeProxyDeployment(d.Get("networking_kube_proxy_deployment").(string))),
+	}
+	if d.HasChange("api_server_acls") {
+		apiServerACLs := convertApiServerACLs(d.Get("api_server_acls"))
+		updateKubernetesCluster.ApiServerACLs = &apiServerACLs
 	}
 
 	if securityGroupAttachments, ok := d.GetOk("security_group_attachments"); ok {
@@ -783,6 +812,43 @@ func resourceKubernetesClusterDelete(ctx context.Context, d *schema.ResourceData
 
 	d.SetId("")
 	return nil
+}
+
+func convertKubernetesClusterStorage(storage any) *kubernetes.KubernetesClusterStorage {
+	if storage == nil {
+		return nil
+	}
+
+	storageList, ok := storage.([]any)
+	if !ok || len(storageList) == 0 || storageList[0] == nil {
+		return nil
+	}
+
+	cfg, ok := storageList[0].(map[string]any)
+	if !ok || cfg == nil {
+		return nil
+	}
+
+	result := &kubernetes.KubernetesClusterStorage{}
+	if v, exists := cfg["thalassa_csi"]; exists && v != nil {
+		if strVal, ok := v.(string); ok && strVal != "" {
+			deployment := kubernetes.KubernetesClusterCSIDeployment(strVal)
+			result.ThalassaCSI = &deployment
+		}
+	}
+	return result
+}
+
+func flattenKubernetesClusterStorage(storage *kubernetes.KubernetesClusterStorage) []any {
+	if storage == nil {
+		return nil
+	}
+
+	result := map[string]any{}
+	if storage.ThalassaCSI != nil {
+		result["thalassa_csi"] = string(*storage.ThalassaCSI)
+	}
+	return []any{result}
 }
 
 // convertApiServerACLs converts the API server ACLs from Terraform schema to the API format

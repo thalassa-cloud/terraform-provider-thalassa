@@ -116,6 +116,12 @@ func resourceLoadBalancer() *schema.Resource {
 				Description: "List identities of security group that will be attached to the Loadbalancer",
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
+			"instance_size": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				Description: "Instance size of the Loadbalancer (for example lb-gp-small). Use the thalassa_loadbalancer_instance_size data source to look up available sizes.",
+			},
 		},
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -149,6 +155,9 @@ func resourceLoadBalancerCreate(ctx context.Context, d *schema.ResourceData, m a
 	if v, ok := d.GetOk("reserved_ip_id"); ok {
 		reservedIPID := v.(string)
 		createLoadbalancer.ReservedIpID = &reservedIPID
+	}
+	if v, ok := d.GetOk("instance_size"); ok {
+		createLoadbalancer.InstanceSize = v.(string)
 	}
 
 	loadbalancer, err := client.IaaS().CreateLoadbalancer(ctx, createLoadbalancer)
@@ -234,6 +243,7 @@ func resourceLoadBalancerRead(ctx context.Context, d *schema.ResourceData, m any
 	}
 	_ = d.Set("external_ip_addresses", loadbalancer.ExternalIpAddresses)
 	_ = d.Set("delete_protection", loadbalancer.DeleteProtection)
+	_ = d.Set("instance_size", loadbalancer.InstanceSize)
 
 	// d.Set("internal", loadbalancer.InternalLoadbalancer)
 	securityGroupAttachments := make([]string, len(loadbalancer.SecurityGroups))
@@ -262,6 +272,10 @@ func resourceLoadBalancerUpdate(ctx context.Context, d *schema.ResourceData, m a
 	if d.HasChange("reserved_ip_id") {
 		reservedIPID := d.Get("reserved_ip_id").(string)
 		updateLoadbalancer.ReservedIpID = &reservedIPID
+	}
+	if d.HasChange("instance_size") {
+		instanceSize := d.Get("instance_size").(string)
+		updateLoadbalancer.InstanceSize = &instanceSize
 	}
 
 	// The load balancer API addresses the resource by identity. The computed slug is not a valid path key.

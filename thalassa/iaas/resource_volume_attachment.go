@@ -272,7 +272,7 @@ func resourceBlockVolumeAttachmentUpdate(ctx context.Context, d *schema.Resource
 		return diag.FromErr(fmt.Errorf("volume is not attached to the virtual machine"))
 	}
 
-	return nil
+	return resourceBlockVolumeAttachmentRead(ctx, d, m)
 }
 
 func resourceBlockVolumeAttachmentDelete(ctx context.Context, d *schema.ResourceData, m any) diag.Diagnostics {

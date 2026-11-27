@@ -112,6 +112,7 @@ resource "thalassa_kubernetes_cluster_role_binding" "monitoring_binding" {
 
 - `annotations` (Map of String) Annotations for the Kubernetes cluster role binding
 - `description` (String) A human-readable description of the Kubernetes cluster role binding
+- `kubernetes_cluster_id` (String) Optional Kubernetes cluster ID that scopes this binding to a single cluster. When omitted, the binding applies to all clusters in the organisation.
 - `labels` (Map of String) Labels for the Kubernetes cluster role binding
 - `note` (String) A human-readable note for the binding
 - `organisation_id` (String) Reference to the Organisation of the Kubernetes Cluster Role Binding. If not provided, the organisation of the (Terraform) provider will be used.

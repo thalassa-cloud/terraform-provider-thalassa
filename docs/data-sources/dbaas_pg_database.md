@@ -25,6 +25,29 @@ description: |-
 
 ### Read-Only
 
+- `auto_update_extensions` (String) Automatic extension upgrade policy
 - `connection_limit` (Number) The connection limit of the database
+- `extension_status` (List of Object) Observed PostgreSQL extension state (see [below for nested schema](#nestedatt--extension_status))
+- `extensions` (List of Object) PostgreSQL extensions installed on the database (see [below for nested schema](#nestedatt--extensions))
 - `id` (String) The ID of this resource.
-- `owner_role_id` (String) The ID of the owner role 
+- `owner_role_id` (String) The ID of the owner role
+
+<a id="nestedatt--extension_status"></a>
+### Nested Schema for `extension_status`
+
+Read-Only:
+
+- `available_versions` (List of String)
+- `default_version` (String)
+- `installed_version` (String)
+- `name` (String)
+- `upgrade_available` (Boolean)
+
+
+<a id="nestedatt--extensions"></a>
+### Nested Schema for `extensions`
+
+Read-Only:
+
+- `name` (String)
+- `version` (String) 

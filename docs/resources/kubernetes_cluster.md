@@ -142,6 +142,7 @@ output "node_pool_name" {
 - `pod_security_standards_profile` (String) Pod security standards profile of the Kubernetes Cluster. Must be one of: restricted, baseline, privileged. Default: baseline.
 - `region` (String) Region of the Kubernetes Cluster. Required for hosted-control-plane clusters.
 - `security_group_attachments` (List of String) List identities of security group that will be attached to the Kubernetes Cluster
+- `storage` (Block List, Max: 1) CSI storage driver deployment settings for the Kubernetes Cluster. Create-only. (see [below for nested schema](#nestedblock--storage))
 - `subnet_id` (String) Subnet of the Kubernetes Cluster. Required for managed clusters.
 
 ### Read-Only
@@ -180,5 +181,13 @@ Optional:
 - `scale_down_disabled` (Boolean) Flag to disable the scale down of node pools by the cluster autoscaler
 - `scale_down_unneeded_time` (String) Time after which a node can be scaled down by the cluster autoscaler
 - `scale_down_utilization_threshold` (Number) Utilization threshold for the cluster autoscaler. The autoscaler might scale down non-empty nodes with utilization below a threshold. To prevent this behavior, set the utilization threshold to 0
+
+
+<a id="nestedblock--storage"></a>
+### Nested Schema for `storage`
+
+Optional:
+
+- `thalassa_csi` (String) Thalassa CSI driver deployment. Must be managed or disabled. Default: managed.
 
 

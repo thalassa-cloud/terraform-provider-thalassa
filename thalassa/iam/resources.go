@@ -12,6 +12,9 @@ var (
 		"thalassa_iam_service_account_access_credential": ResourceServiceAccountAccessCredential(),
 		"thalassa_iam_federated_identity_provider":       ResourceFederatedIdentityProvider(),
 		"thalassa_iam_federated_identity":                ResourceFederatedIdentity(),
+		"thalassa_iam_policy":                            ResourceIamPolicy(),
+		"thalassa_iam_policy_rule":                       ResourceIamPolicyRule(),
+		"thalassa_iam_policy_binding":                    ResourceIamPolicyBinding(),
 	}
 
 	DataSourcesMap = map[string]*schema.Resource{
@@ -21,6 +24,7 @@ var (
 		"thalassa_iam_service_account":             DataSourceServiceAccount(),
 		"thalassa_iam_federated_identity_provider": DataSourceFederatedIdentityProvider(),
 		"thalassa_iam_federated_identity":          DataSourceFederatedIdentity(),
+		"thalassa_iam_resource_access_bindings":    DataSourceIamResourceAccessBindings(),
 		// "thalassa_iam_user": DataSourceUser(),
 	}
 )

@@ -137,6 +137,69 @@ func dataSourceDbCluster() *schema.Resource {
 				Computed:    true,
 				Description: "Port of the cluster endpoint",
 			},
+			"storage_auto_scale_enabled": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Whether automatic storage expansion is enabled",
+			},
+			"storage_auto_scale_max_gb": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Maximum provisioned storage in GB when autoscaling is enabled",
+			},
+			"storage_auto_scale_threshold_percent": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Usage percentage at which storage is expanded",
+			},
+			"storage_auto_scale_increase_percent": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Percentage of current allocated storage to add per expansion",
+			},
+			"storage_auto_scale_max_increase_gb": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Maximum storage added in a single expansion step in GB",
+			},
+			"health_status": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "Database engine health signals for the cluster",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"continuous_archiving": {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "WAL archiving health when continuous archiving is enabled",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"healthy": {
+										Type:        schema.TypeBool,
+										Computed:    true,
+										Description: "Whether continuous archiving is healthy",
+									},
+									"reason": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Machine-readable reason for the current status",
+									},
+									"message": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Human-readable message with additional detail",
+									},
+									"last_transition_time": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Time when the condition last changed, in RFC3339 format",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -234,6 +297,9 @@ func dataSourceDbClusterRead(ctx context.Context, d *schema.ResourceData, m any)
 		}
 		_ = d.Set("security_groups", securityGroupIds)
 	}
+
+	setDbClusterStorageAutoScaleState(d, DbCluster)
+	_ = d.Set("health_status", flattenDbClusterHealthStatus(DbCluster.HealthStatus))
 
 	return nil
 }

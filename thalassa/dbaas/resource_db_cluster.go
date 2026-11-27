@@ -315,6 +315,71 @@ func resourceDbCluster() *schema.Resource {
 				Description:  "The timeout in minutes to wait for the pre-destroy backup to complete. Only used when create_backup_before_destroy is true.",
 				ValidateFunc: validate.IntAtLeast(1),
 			},
+			"storage_auto_scale_enabled": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Description: "Enable automatic storage expansion when usage exceeds the configured threshold",
+			},
+			"storage_auto_scale_max_gb": {
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Description: "Maximum provisioned storage in GB when autoscaling is enabled",
+			},
+			"storage_auto_scale_threshold_percent": {
+				Type:         schema.TypeInt,
+				Optional:     true,
+				ValidateFunc: validate.IntBetween(1, 100),
+				Description:  "Usage percentage at which storage is expanded. Default: 90",
+			},
+			"storage_auto_scale_increase_percent": {
+				Type:         schema.TypeInt,
+				Optional:     true,
+				ValidateFunc: validate.IntBetween(1, 100),
+				Description:  "Percentage of current allocated storage to add per expansion. Default: 10",
+			},
+			"storage_auto_scale_max_increase_gb": {
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Description: "Maximum storage added in a single expansion step in GB. Default: 100",
+			},
+			"health_status": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "Database engine health signals for the cluster",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"continuous_archiving": {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "WAL archiving health when continuous archiving is enabled",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"healthy": {
+										Type:        schema.TypeBool,
+										Computed:    true,
+										Description: "Whether continuous archiving is healthy",
+									},
+									"reason": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Machine-readable reason for the current status",
+									},
+									"message": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Human-readable message with additional detail",
+									},
+									"last_transition_time": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Time when the condition last changed, in RFC3339 format",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
 		},
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -612,6 +677,22 @@ func resourceDbClusterCreate(ctx context.Context, d *schema.ResourceData, m any)
 		createDbCluster.Parameters = parameters
 	}
 
+	if v, ok := d.GetOk("storage_auto_scale_enabled"); ok {
+		createDbCluster.StorageAutoScaleEnabled = convert.Ptr(v.(bool))
+	}
+	if v, ok := d.GetOk("storage_auto_scale_max_gb"); ok {
+		createDbCluster.StorageAutoScaleMaxGB = convert.Ptr(uint64(v.(int)))
+	}
+	if v, ok := d.GetOk("storage_auto_scale_threshold_percent"); ok {
+		createDbCluster.StorageAutoScaleThresholdPercent = convert.Ptr(uint(v.(int)))
+	}
+	if v, ok := d.GetOk("storage_auto_scale_increase_percent"); ok {
+		createDbCluster.StorageAutoScaleIncreasePercent = convert.Ptr(uint(v.(int)))
+	}
+	if v, ok := d.GetOk("storage_auto_scale_max_increase_gb"); ok {
+		createDbCluster.StorageAutoScaleMaxIncreaseGB = convert.Ptr(uint64(v.(int)))
+	}
+
 	// Create the DbCluster
 	createdDbCluster, err := client.DBaaS().CreateDbCluster(ctx, createDbCluster)
 	if err != nil {
@@ -724,6 +805,9 @@ func resourceDbClusterRead(ctx context.Context, d *schema.ResourceData, m any) d
 		_ = d.Set("security_groups", securityGroupIds)
 	}
 
+	setDbClusterStorageAutoScaleState(d, DbCluster)
+	_ = d.Set("health_status", flattenDbClusterHealthStatus(DbCluster.HealthStatus))
+
 	return nil
 }
 
@@ -796,6 +880,22 @@ func resourceDbClusterUpdate(ctx context.Context, d *schema.ResourceData, m any)
 	// Handle DB object store
 	if dbObjectStoreIdentity, ok := d.GetOk("db_object_store_id"); ok {
 		updateDbCluster.DbObjectStoreIdentity = convert.Ptr(dbObjectStoreIdentity.(string))
+	}
+
+	if d.HasChange("storage_auto_scale_enabled") {
+		updateDbCluster.StorageAutoScaleEnabled = convert.Ptr(d.Get("storage_auto_scale_enabled").(bool))
+	}
+	if d.HasChange("storage_auto_scale_max_gb") {
+		updateDbCluster.StorageAutoScaleMaxGB = convert.Ptr(uint64(d.Get("storage_auto_scale_max_gb").(int)))
+	}
+	if d.HasChange("storage_auto_scale_threshold_percent") {
+		updateDbCluster.StorageAutoScaleThresholdPercent = convert.Ptr(uint(d.Get("storage_auto_scale_threshold_percent").(int)))
+	}
+	if d.HasChange("storage_auto_scale_increase_percent") {
+		updateDbCluster.StorageAutoScaleIncreasePercent = convert.Ptr(uint(d.Get("storage_auto_scale_increase_percent").(int)))
+	}
+	if d.HasChange("storage_auto_scale_max_increase_gb") {
+		updateDbCluster.StorageAutoScaleMaxIncreaseGB = convert.Ptr(uint64(d.Get("storage_auto_scale_max_increase_gb").(int)))
 	}
 
 	_, err = client.DBaaS().UpdateDbCluster(ctx, id, updateDbCluster)
@@ -913,4 +1013,34 @@ func resourceDbClusterDelete(ctx context.Context, d *schema.ResourceData, m any)
 	}
 	d.SetId("")
 	return nil
+}
+
+func setDbClusterStorageAutoScaleState(d *schema.ResourceData, cluster *dbaas.DbCluster) {
+	if cluster == nil {
+		return
+	}
+	_ = d.Set("storage_auto_scale_enabled", cluster.StorageAutoScaleEnabled)
+	_ = d.Set("storage_auto_scale_max_gb", int(cluster.StorageAutoScaleMaxGB))
+	_ = d.Set("storage_auto_scale_threshold_percent", int(cluster.StorageAutoScaleThresholdPercent))
+	_ = d.Set("storage_auto_scale_increase_percent", int(cluster.StorageAutoScaleIncreasePercent))
+	_ = d.Set("storage_auto_scale_max_increase_gb", int(cluster.StorageAutoScaleMaxIncreaseGB))
+}
+
+func flattenDbClusterHealthStatus(status dbaas.DbClusterHealthStatus) []any {
+	if status.ContinuousArchiving == nil {
+		return nil
+	}
+	condition := map[string]any{
+		"healthy": status.ContinuousArchiving.Healthy,
+		"reason":  status.ContinuousArchiving.Reason,
+		"message": status.ContinuousArchiving.Message,
+	}
+	if status.ContinuousArchiving.LastTransitionTime != nil {
+		condition["last_transition_time"] = status.ContinuousArchiving.LastTransitionTime.Format(time.RFC3339)
+	}
+	return []any{
+		map[string]any{
+			"continuous_archiving": []any{condition},
+		},
+	}
 }

@@ -75,6 +75,12 @@ func resourceKubernetesClusterRoleBinding() *schema.Resource {
 				ForceNew:    true,
 				Description: "The ID of the Kubernetes cluster role to bind",
 			},
+			"kubernetes_cluster_id": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
+				Description: "Optional Kubernetes cluster ID that scopes this binding to a single cluster. When omitted, the binding applies to all clusters in the organisation.",
+			},
 			"user_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
@@ -157,6 +163,10 @@ func resourceKubernetesClusterRoleBindingCreate(ctx context.Context, d *schema.R
 	} else if serviceAccountID != "" {
 		createRequest.ServiceAccountIdentity = &serviceAccountID
 	}
+	if v, ok := d.GetOk("kubernetes_cluster_id"); ok {
+		clusterID := v.(string)
+		createRequest.KubernetesClusterIdentity = &clusterID
+	}
 
 	binding, err := client.Kubernetes().CreateClusterRoleBinding(ctx, clusterRoleID, createRequest)
 	if err != nil {
@@ -230,6 +240,9 @@ func resourceKubernetesClusterRoleBindingRead(ctx context.Context, d *schema.Res
 		_ = d.Set("team_id", binding.OrganisationTeam.Identity)
 	} else if binding.ServiceAccount != nil {
 		_ = d.Set("service_account_id", binding.ServiceAccount.Identity)
+	}
+	if binding.KubernetesClusterIdentity != nil {
+		_ = d.Set("kubernetes_cluster_id", *binding.KubernetesClusterIdentity)
 	}
 
 	return nil

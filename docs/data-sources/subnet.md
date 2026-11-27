@@ -26,5 +26,6 @@ Get a subnet by name
 
 ### Read-Only
 
-- `cidr` (String) The CIDR block of the subnet
+- `cidr` (String) IPv4 CIDR block of the subnet
+- `cidr_ipv6` (String) IPv6 CIDR block of the subnet
 - `id` (String) The unique identifier of the subnet 

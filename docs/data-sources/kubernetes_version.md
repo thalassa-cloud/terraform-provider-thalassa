@@ -25,6 +25,7 @@ Get an Kubernetes version
 - `annotations` (Map of String) The annotations of the Kubernetes version.
 - `cilium_version` (String) The cilium version.
 - `cloud_controller_manager_version` (String) The cloud controller manager version.
+- `cluster_autoscaler_version` (String) The cluster autoscaler version.
 - `cni_plugins_version` (String) The CNI plugins version.
 - `containerd_version` (String) The containerd version.
 - `crictl_version` (String) The crictl version.
