@@ -36,7 +36,7 @@ One record per `(zone, name, type)` tuple. Only `ttl` and `values` are updatable
 {{ if .HasImport -}}
 ## Import
 
-Import ID: platform identity of the record (e.g. `dnsr-xyz`). `zone_id` must be set in configuration when importing.
+Import ID: `zone_id/record_id` (e.g. `dnsz-abc/dnsr-xyz`).
 
 {{codefile "shell" .ImportFile}}
 {{- end }}

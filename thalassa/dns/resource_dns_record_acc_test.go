@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccDnsRecord_basic(t *testing.T) {
@@ -92,13 +93,28 @@ func TestAccDnsRecord_import(t *testing.T) {
 			{
 				ResourceName:      "thalassa_dns_record.test",
 				ImportState:       true,
+				ImportStateIdFunc: testAccDnsRecordImportStateID,
 				ImportStateVerify: true,
-				// Keep the prior working directory so zone_id can resolve from
-				// configuration during post-import refresh (record Read needs zone_id).
-				ImportStatePersist: true,
 			},
 		},
 	})
+}
+
+func testAccDnsRecordImportStateID(state *terraform.State) (string, error) {
+	rs, ok := state.RootModule().Resources["thalassa_dns_record.test"]
+	if !ok {
+		return "", fmt.Errorf("resource thalassa_dns_record.test not found in state")
+	}
+	if rs.Primary == nil || rs.Primary.ID == "" {
+		return "", fmt.Errorf("resource thalassa_dns_record.test has no primary ID")
+	}
+
+	zoneID := rs.Primary.Attributes["zone_id"]
+	if zoneID == "" {
+		return "", fmt.Errorf("resource thalassa_dns_record.test has no zone_id")
+	}
+
+	return fmt.Sprintf("%s/%s", zoneID, rs.Primary.ID), nil
 }
 
 func testAccDnsRecordConfig(zoneName, name, recordType string, ttl int, values []string) string {
