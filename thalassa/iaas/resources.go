@@ -53,5 +53,7 @@ var (
 		"thalassa_snapshot":                   DataSourceSnapshot(),
 		"thalassa_snapshot_policy":            DataSourceSnapshotPolicy(),
 		"thalassa_cloud_init_template":        dataSourceCloudInitTemplate(),
+		"thalassa_endpoint":                   dataSourceEndpoint(),
+		"thalassa_endpoints":                  dataSourceEndpoints(),
 	}
 )
