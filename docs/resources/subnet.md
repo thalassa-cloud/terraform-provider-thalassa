@@ -65,13 +65,14 @@ output "subnet_id" {
 
 ### Required
 
-- `cidr` (String) CIDR of the Subnet
 - `name` (String) Name of the Subnet
 - `vpc_id` (String) VPC of the Subnet
 
 ### Optional
 
 - `annotations` (Map of String) Annotations for the Subnet
+- `cidr` (String) IPv4 CIDR of the Subnet. Required for IPv4 and dual-stack subnets. Omit for IPv6-only. At least one of cidr or cidr_ipv6 must be set.
+- `cidr_ipv6` (String) IPv6 CIDR of the Subnet. Required for IPv6 and dual-stack subnets. Omit for IPv4-only. At least one of cidr or cidr_ipv6 must be set.
 - `description` (String) A human readable description about the subnet
 - `labels` (Map of String) Labels for the Subnet
 - `organisation_id` (String) Reference to the Organisation of the Subnet. If not provided, the organisation of the (Terraform) provider will be used.

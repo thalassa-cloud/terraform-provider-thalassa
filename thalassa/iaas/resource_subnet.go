@@ -55,10 +55,19 @@ func resourceSubnet() *schema.Resource {
 			},
 			"cidr": {
 				Type:         schema.TypeString,
-				Required:     true,
+				Optional:     true,
 				ForceNew:     true,
 				ValidateFunc: validate.IsCIDR,
-				Description:  "CIDR of the Subnet",
+				Description:  "IPv4 CIDR of the Subnet. Required for IPv4 and dual-stack subnets. Omit for IPv6-only. At least one of cidr or cidr_ipv6 must be set.",
+				AtLeastOneOf: []string{"cidr", "cidr_ipv6"},
+			},
+			"cidr_ipv6": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ForceNew:     true,
+				ValidateFunc: validate.IsCIDR,
+				Description:  "IPv6 CIDR of the Subnet. Required for IPv6 and dual-stack subnets. Omit for IPv4-only. At least one of cidr or cidr_ipv6 must be set.",
+				AtLeastOneOf: []string{"cidr", "cidr_ipv6"},
 			},
 			"description": {
 				Type:         schema.TypeString,
@@ -134,6 +143,7 @@ func resourceSubnetCreate(ctx context.Context, d *schema.ResourceData, m any) di
 		Annotations: convert.ConvertToMap(d.Get("annotations")),
 		VpcIdentity: d.Get("vpc_id").(string),
 		Cidr:        d.Get("cidr").(string),
+		CidrIPv6:    d.Get("cidr_ipv6").(string),
 	}
 
 	if routeTable, ok := d.GetOk("route_table_id"); ok {
@@ -195,6 +205,7 @@ func resourceSubnetRead(ctx context.Context, d *schema.ResourceData, m any) diag
 	_ = d.Set("labels", subnet.Labels)
 	_ = d.Set("annotations", subnet.Annotations)
 	_ = d.Set("cidr", subnet.Cidr)
+	_ = d.Set("cidr_ipv6", subnet.CidrIPv6)
 	if subnet.Vpc != nil {
 		_ = d.Set("vpc_id", subnet.Vpc.Identity)
 	} else if subnet.VpcIdentity != "" {
