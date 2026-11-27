@@ -49,6 +49,7 @@ Get an Kubernetes cluster
 - `pod_security_standards_profile` (String) Pod security standards profile of the Kubernetes Cluster
 - `region` (String) Region of the Kubernetes Cluster. Required for hosted-control-plane clusters.
 - `slug` (String) The slug of the Kubernetes version.
+- `storage` (List of Object) CSI storage driver deployment settings for the Kubernetes Cluster (see [below for nested schema](#nestedatt--storage))
 - `subnet_id` (String) Subnet of the Kubernetes Cluster.
 - `vpc_id` (String) VPC of the Kubernetes Cluster.
 
@@ -76,3 +77,11 @@ Read-Only:
 - `scale_down_disabled` (Boolean)
 - `scale_down_unneeded_time` (String)
 - `scale_down_utilization_threshold` (Number)
+
+
+<a id="nestedatt--storage"></a>
+### Nested Schema for `storage`
+
+Read-Only:
+
+- `thalassa_csi` (String)

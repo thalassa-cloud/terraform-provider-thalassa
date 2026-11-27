@@ -247,6 +247,20 @@ func DataSourceKubernetesCluster() *schema.Resource {
 				Computed:    true,
 				Description: "Konnectivity port for the Kubernetes Cluster within the VPC",
 			},
+			"storage": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "CSI storage driver deployment settings for the Kubernetes Cluster",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"thalassa_csi": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Thalassa CSI driver deployment. Must be managed or disabled.",
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -345,6 +359,10 @@ func setKubernetesClusterDataSourceState(d *schema.ResourceData, cluster kuberne
 
 	_ = d.Set("labels", cluster.Labels)
 	_ = d.Set("annotations", cluster.Annotations)
+
+	if cluster.Configuration.Storage != nil {
+		_ = d.Set("storage", flattenKubernetesClusterStorage(cluster.Configuration.Storage))
+	}
 
 	return nil
 }

@@ -76,6 +76,11 @@ func DataSourceKubernetesVersion() *schema.Resource {
 				Computed:    true,
 				Description: "The istio version.",
 			},
+			"cluster_autoscaler_version": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The cluster autoscaler version.",
+			},
 			"annotations": {
 				Type:        schema.TypeMap,
 				Computed:    true,
@@ -123,6 +128,7 @@ func dataSourceKubernetesVersionRead(ctx context.Context, d *schema.ResourceData
 	_ = d.Set("cilium_version", version.CiliumVersion)
 	_ = d.Set("cloud_controller_manager_version", version.CloudControllerManagerVersion)
 	_ = d.Set("istio_version", version.IstioVersion)
+	_ = d.Set("cluster_autoscaler_version", version.ClusterAutoscalerVersion)
 
 	_ = d.Set("annotations", version.Annotations)
 
