@@ -645,10 +645,10 @@ func resourceKubernetesClusterUpdate(ctx context.Context, d *schema.ResourceData
 		PodSecurityStandardsProfile: convert.Ptr(kubernetes.KubernetesClusterPodSecurityStandards(d.Get("pod_security_standards_profile").(string))),
 		AuditLogProfile:             convert.Ptr(kubernetes.KubernetesClusterAuditLoggingProfile(d.Get("audit_log_profile").(string))),
 		DefaultNetworkPolicy:        convert.Ptr(kubernetes.KubernetesDefaultNetworkPolicies(d.Get("default_network_policy").(string))),
-		AutoUpgradePolicy:     kubernetes.KubernetesClusterAutoUpgradePolicy(d.Get("auto_upgrade_policy").(string)),
-		DisablePublicEndpoint: convert.Ptr(d.Get("disable_public_endpoint").(bool)),
-		KubeProxyMode:         convert.Ptr(kubernetes.KubernetesClusterKubeProxyMode(d.Get("networking_kube_proxy_mode").(string))),
-		KubeProxyDeployment:   convert.Ptr(kubernetes.KubeProxyDeployment(d.Get("networking_kube_proxy_deployment").(string))),
+		AutoUpgradePolicy:           kubernetes.KubernetesClusterAutoUpgradePolicy(d.Get("auto_upgrade_policy").(string)),
+		DisablePublicEndpoint:       convert.Ptr(d.Get("disable_public_endpoint").(bool)),
+		KubeProxyMode:               convert.Ptr(kubernetes.KubernetesClusterKubeProxyMode(d.Get("networking_kube_proxy_mode").(string))),
+		KubeProxyDeployment:         convert.Ptr(kubernetes.KubeProxyDeployment(d.Get("networking_kube_proxy_deployment").(string))),
 	}
 	if d.HasChange("api_server_acls") {
 		apiServerACLs := convertApiServerACLs(d.Get("api_server_acls"))
