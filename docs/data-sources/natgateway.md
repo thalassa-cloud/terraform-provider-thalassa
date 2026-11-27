@@ -32,6 +32,7 @@ Get a NAT Gateway by name, slug, or other attributes
 - `description` (String) A human readable description about the NAT Gateway
 - `endpoint_ip` (String) Endpoint IP of the NAT Gateway
 - `id` (String) The unique identifier of the NAT Gateway
+- `instance_size` (String) Instance size of the NAT Gateway
 - `security_group_attachments` (List of String) List of security group IDs attached to the NAT Gateway
 - `updated_at` (String) The timestamp when the NAT Gateway was last updated
 - `v4_ip` (String) V4 IP of the NAT Gateway

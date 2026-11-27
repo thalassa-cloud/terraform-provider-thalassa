@@ -68,6 +68,7 @@ output "nat_gateway_endpoint_ip" {
 
 - `annotations` (Map of String) Annotations for the NatGateway
 - `description` (String) A human readable description about the natGateway
+- `instance_size` (String) Instance size of the NAT Gateway (for example ng-gp-small). Use the thalassa_natgateway_instance_size data source to look up available sizes.
 - `labels` (Map of String) Labels for the NatGateway
 - `organisation_id` (String) Reference to the Organisation of the NatGateway. If not provided, the organisation of the (Terraform) provider will be used.
 - `reserved_ip_id` (String) Reserved IP ID to attach to this NAT gateway. Set to empty string to detach.

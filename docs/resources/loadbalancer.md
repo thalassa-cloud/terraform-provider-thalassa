@@ -73,6 +73,7 @@ output "loadbalancer_id" {
 - `annotations` (Map of String) Annotations for the Loadbalancer
 - `delete_protection` (Boolean) Delete protection for the Loadbalancer
 - `description` (String) A human readable description about the loadbalancer
+- `instance_size` (String) Instance size of the Loadbalancer (for example lb-gp-small). Use the thalassa_loadbalancer_instance_size data source to look up available sizes.
 - `internal` (Boolean) Internal loadbalancer
 - `labels` (Map of String) Labels for the Loadbalancer
 - `organisation_id` (String) Reference to the Organisation of the Loadbalancer. If not provided, the organisation of the (Terraform) provider will be used.

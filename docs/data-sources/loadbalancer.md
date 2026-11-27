@@ -33,6 +33,7 @@ Get a Load Balancer by name, slug, or other attributes
 - `description` (String) A human readable description about the Load Balancer
 - `external_ip_addresses` (List of String) The external IP addresses of the Load Balancer
 - `id` (String) The unique identifier of the Load Balancer
+- `instance_size` (String) Instance size of the Load Balancer
 - `ip_address` (String) The IP address of the Load Balancer
 - `listeners` (List of Object) List of listeners attached to the Load Balancer (see [below for nested schema](#nestedatt--listeners))
 - `security_group_attachments` (List of String) List of security group IDs attached to the Load Balancer

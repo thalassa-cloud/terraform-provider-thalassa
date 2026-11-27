@@ -110,6 +110,12 @@ func resourceNatGateway() *schema.Resource {
 					Description: "The identity of the security group that will be attached to the NAT Gateway",
 				},
 			},
+			"instance_size": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				Description: "Instance size of the NAT Gateway (for example ng-gp-small). Use the thalassa_natgateway_instance_size data source to look up available sizes.",
+			},
 		},
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -143,6 +149,9 @@ func resourceNatGatewayCreate(ctx context.Context, d *schema.ResourceData, m any
 	if v, ok := d.GetOk("reserved_ip_id"); ok {
 		reservedIPID := v.(string)
 		createNatGateway.ReservedIpID = &reservedIPID
+	}
+	if v, ok := d.GetOk("instance_size"); ok {
+		createNatGateway.InstanceSize = v.(string)
 	}
 
 	natGateway, err := client.IaaS().CreateNatGateway(ctx, createNatGateway)
@@ -219,6 +228,7 @@ func resourceNatGatewayRead(ctx context.Context, d *schema.ResourceData, m any) 
 	_ = d.Set("v4_ip", natGateway.V4IP)
 	_ = d.Set("v6_ip", natGateway.V6IP)
 	_ = d.Set("reserved_ip_id", natGateway.ReservedIpID)
+	_ = d.Set("instance_size", natGateway.InstanceSize)
 
 	securityGroupAttachments := make([]string, len(natGateway.SecurityGroups))
 	for i, securityGroup := range natGateway.SecurityGroups {
@@ -245,6 +255,10 @@ func resourceNatGatewayUpdate(ctx context.Context, d *schema.ResourceData, m any
 	if d.HasChange("reserved_ip_id") {
 		reservedIPID := d.Get("reserved_ip_id").(string)
 		updateNatGateway.ReservedIpID = &reservedIPID
+	}
+	if d.HasChange("instance_size") {
+		instanceSize := d.Get("instance_size").(string)
+		updateNatGateway.InstanceSize = &instanceSize
 	}
 
 	natGateway, err := client.IaaS().UpdateNatGateway(ctx, d.Get("id").(string), updateNatGateway)

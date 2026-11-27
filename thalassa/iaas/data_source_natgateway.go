@@ -116,6 +116,11 @@ func DataSourceNatGateway() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
+			"instance_size": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Instance size of the NAT Gateway",
+			},
 		},
 	}
 }
@@ -217,6 +222,7 @@ func dataSourceNatGatewayRead(ctx context.Context, d *schema.ResourceData, m any
 	_ = d.Set("status", natGateway.Status)
 	_ = d.Set("v4_ip", natGateway.V4IP)
 	_ = d.Set("v6_ip", natGateway.V6IP)
+	_ = d.Set("instance_size", natGateway.InstanceSize)
 	_ = d.Set("labels", natGateway.Labels)
 	_ = d.Set("annotations", natGateway.Annotations)
 	_ = d.Set("created_at", natGateway.CreatedAt.Format(time.RFC3339))
